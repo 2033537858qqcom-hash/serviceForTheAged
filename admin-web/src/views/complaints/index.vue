@@ -1,5 +1,6 @@
 <template>
   <div class="complaints-container">
+    <div class="page-intro"><div><div class="eyebrow">COMMUNITY FEEDBACK</div><h1>听见反馈，及时回应</h1><p>跟进服务意见，记录处理结果，让每次反馈有回应。</p></div></div>
     <el-card shadow="never" class="main-card">
       <div class="header-bar flex-between">
         <span style="font-weight: bold; font-size: 16px;">社区服务投诉与意见反馈</span>
@@ -8,7 +9,7 @@
 
       <el-table :data="tableData" v-loading="loading" stripe style="width: 100%">
         <el-table-column prop="id" label="编号" width="100" />
-        <el-table-column prop="orderId" label="关联订单ID" width="180" />
+        <el-table-column prop="orderId" label="关联订单编号" width="180" />
         <el-table-column prop="complaintTitle" label="投诉主题" width="180">
           <template #default="{ row }">
             <span style="font-weight: bold;">{{ row.complaintTitle }}</span>
@@ -35,7 +36,7 @@
             >
               处理答复
             </el-button>
-            <span v-else style="color: #52c41a; font-size: 13px;">已办结</span>
+            <span v-else style="color: #28785b; font-size: 13px;">已办结</span>
           </template>
         </el-table-column>
       </el-table>
@@ -48,7 +49,7 @@
           <span>{{ currentComplaint ? currentComplaint.complaintTitle : '' }}</span>
         </el-form-item>
         <el-form-item label="投诉内容">
-          <span style="color: #595959;">{{ currentComplaint ? currentComplaint.complaintContent : '' }}</span>
+          <span style="color: #54645a;">{{ currentComplaint ? currentComplaint.complaintContent : '' }}</span>
         </el-form-item>
         <el-form-item label="处理答复">
           <el-input v-model="handleForm.result" type="textarea" :rows="4" placeholder="填写社区调查核实结论及对居民的处理答复..." />

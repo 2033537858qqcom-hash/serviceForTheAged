@@ -5,6 +5,8 @@ import com.agedcare.common.utils.DistanceUtil;
 import com.agedcare.modules.dispatch.dto.CandidateEvaluationResult;
 import com.agedcare.modules.dispatch.entity.StaffBooking;
 import com.agedcare.modules.dispatch.mapper.StaffBookingMapper;
+import com.agedcare.modules.elder.entity.ElderProfile;
+import com.agedcare.modules.elder.mapper.ElderProfileMapper;
 import com.agedcare.modules.order.entity.ServiceOrder;
 import com.agedcare.modules.order.mapper.ServiceOrderMapper;
 import com.agedcare.modules.staff.entity.StaffProfile;
@@ -41,6 +43,7 @@ public class DispatchScoreEngine {
     private final StaffShiftMapper staffShiftMapper;
     private final StaffBookingMapper staffBookingMapper;
     private final ServiceOrderMapper serviceOrderMapper;
+    private final ElderProfileMapper elderProfileMapper;
     private final ObjectMapper objectMapper;
 
     @Value("${dispatch.speed-km-per-hour:15.0}")
@@ -125,9 +128,18 @@ public class DispatchScoreEngine {
 
         // 2. 服务区域检查
         if (StringUtils.hasText(order.getAddressSnapshot()) && StringUtils.hasText(staff.getServiceArea())) {
-            if (!order.getAddressSnapshot().contains(staff.getServiceArea())
-                    && !staff.getServiceArea().contains("阳光")) {
-                result.setExcludeReason("服务地址不在该人员负责网格区域");
+            String area = staff.getServiceArea().trim();
+            boolean areaMatch = "全网格".equals(area) || "全区".equals(area) || "通用".equals(area)
+                    || order.getAddressSnapshot().contains(area)
+                    || area.contains(order.getAddressSnapshot());
+            if (!areaMatch && elderProfileMapper != null && order.getElderId() != null) {
+                ElderProfile elder = elderProfileMapper.selectById(order.getElderId());
+                if (elder != null && StringUtils.hasText(elder.getCommunity())) {
+                    areaMatch = elder.getCommunity().contains(area) || area.contains(elder.getCommunity());
+                }
+            }
+            if (!areaMatch) {
+                result.setExcludeReason("服务地址不在该人员负责网格区域(" + area + ")");
                 recordContext(result, debugContext);
                 return result;
             }
@@ -241,20 +253,30 @@ public class DispatchScoreEngine {
 
         // 检查该单结束后前往下一单是否可行
         if (nextBooking != null) {
+            double nextDestLat = originLat;
+            double nextDestLng = originLng;
+            boolean hasNextCoord = false;
             ServiceOrder nextOrder = serviceOrderMapper.selectById(nextBooking.getOrderId());
             if (nextOrder != null && nextOrder.getLatitude() != null && nextOrder.getLongitude() != null) {
-                double nextDist = DistanceUtil.calculateDistanceKm(destLat, destLng, nextOrder.getLatitude().doubleValue(), nextOrder.getLongitude().doubleValue());
-                int nextTravel = DistanceUtil.estimateTravelMinutes(nextDist, speedKmPerHour, bufferMinutes);
-                if (order.getPlannedEndAt().plusMinutes(nextTravel).isAfter(nextBooking.getStartTime())) {
-                    result.setExcludeReason(String.format("将导致后续任务无法按时到达(需路程%d分钟)", nextTravel));
-                    recordContext(result, debugContext);
-                    return result;
-                }
+                nextDestLat = nextOrder.getLatitude().doubleValue();
+                nextDestLng = nextOrder.getLongitude().doubleValue();
+                hasNextCoord = true;
+            }
+            double nextDist = hasNextCoord
+                    ? DistanceUtil.calculateDistanceKm(destLat, destLng, nextDestLat, nextDestLng)
+                    : 2.0; // 缺省邻近网格保底预估2km
+            int nextTravel = DistanceUtil.estimateTravelMinutes(nextDist, speedKmPerHour, bufferMinutes);
+            if (order.getPlannedEndAt().plusMinutes(nextTravel).isAfter(nextBooking.getStartTime())) {
+                result.setExcludeReason(String.format("将导致后续任务无法按时到达(需路程%d分钟)", nextTravel));
+                recordContext(result, debugContext);
+                return result;
             }
         }
 
         // 检查是否在排班工作时间内
-        if (requiredDepart.toLocalTime().isBefore(shiftStart) || order.getPlannedEndAt().toLocalTime().isAfter(shiftEnd)) {
+        LocalDateTime shiftStartDt = orderDate.atTime(shiftStart);
+        LocalDateTime shiftEndDt = orderDate.atTime(shiftEnd);
+        if (requiredDepart.isBefore(shiftStartDt) || order.getPlannedEndAt().isAfter(shiftEndDt)) {
             result.setExcludeReason(String.format("超出服务人员工作班次范围(%s~%s)", shiftStart, shiftEnd));
             recordContext(result, debugContext);
             return result;
@@ -276,25 +298,23 @@ public class DispatchScoreEngine {
         BigDecimal metricD = BigDecimal.valueOf(dVal).setScale(4, RoundingMode.HALF_UP);
         result.setMetricD(metricD);
 
-        // 2. 指标 Q: 服务质量均分 (先验4.0, 5条)
+        // 2. 指标 Q: 服务质量均分 (消除二次贝叶斯平滑)
         double qRating = staff.getPriorRating() != null ? staff.getPriorRating().doubleValue() : priorRating;
-        int nOrders = staff.getTotalOrders() != null ? staff.getTotalOrders() : 0;
-        double smoothedRating = (qRating * nOrders + priorSamples * priorRating) / (nOrders + priorSamples);
-        // 归一化到 0~1: (smoothed - 1) / 4
-        double qVal = Math.max(0.0, Math.min(1.0, (smoothedRating - 1.0) / 4.0));
+        // 归一化到 0~1: (qRating - 1) / 4
+        double qVal = Math.max(0.0, Math.min(1.0, (qRating - 1.0) / 4.0));
         BigDecimal metricQ = BigDecimal.valueOf(qVal).setScale(4, RoundingMode.HALF_UP);
         result.setMetricQ(metricQ);
 
-        // 3. 指标 L: 当日工作量余量
+        // 3. 指标 L: 当日工作量余量 (计入任务时长与出行耗时)
         long shiftTotalMinutes = Duration.between(shiftStart, shiftEnd).toMinutes();
         if (shiftTotalMinutes <= 0) shiftTotalMinutes = 480; // 默认8小时
 
         long occupiedMinutesToday = 0;
         for (StaffBooking b : dayBookings) {
-            occupiedMinutesToday += Duration.between(b.getStartTime(), b.getEndTime()).toMinutes();
+            occupiedMinutesToday += Math.max(0, Duration.between(b.getStartTime(), b.getEndTime()).toMinutes());
         }
         int thisOrderMinutes = order.getDurationMinutesSnapshot() != null ? order.getDurationMinutesSnapshot() : 60;
-        double lVal = Math.max(0.0, 1.0 - (double) (occupiedMinutesToday + thisOrderMinutes) / (double) shiftTotalMinutes);
+        double lVal = Math.max(0.0, 1.0 - (double) (occupiedMinutesToday + thisOrderMinutes + travelMinutes) / (double) shiftTotalMinutes);
         BigDecimal metricL = BigDecimal.valueOf(lVal).setScale(4, RoundingMode.HALF_UP);
         result.setMetricL(metricL);
 

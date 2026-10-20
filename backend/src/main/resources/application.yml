@@ -22,11 +22,17 @@ mybatis-plus:
       id-type: assign_id
       table-underline: true
 
-# 微信小程序开发接入配置
+# 运行模式: 生产环境默认关闭，开启时需显式传入 APP_DEV_MODE=true
+app:
+  dev-mode: ${APP_DEV_MODE:false}
+  lan-sync:
+    enabled: false
+
+# 微信小程序接入配置(支持环境变量注入)
 wechat:
   miniapp:
-    appid: wxc3039ae6e2412b11
-    secret: 38c9b661e8e9286bc8ab4729e9b6ff0e
+    appid: ${WECHAT_APPID:}
+    secret: ${WECHAT_SECRET:}
 
 # 智能派单核心参数配置 (支持动态注入与实验调节)
 dispatch:
@@ -44,7 +50,7 @@ dispatch:
     rating: 4.0
     samples: 5
 
-# JWT 鉴权配置
+# JWT 鉴权配置(支持环境变量注入)
 jwt:
-  secret: AgedCareSuperSecretKey2026SecureSecurityTokenCommunity987654321
+  secret: ${JWT_SECRET:}
   expiration: 604800000 # 7天 (毫秒)

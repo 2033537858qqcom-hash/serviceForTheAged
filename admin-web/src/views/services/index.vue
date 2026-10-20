@@ -1,5 +1,6 @@
 <template>
   <div class="services-container">
+    <div class="page-intro"><div><div class="eyebrow">SERVICE CATALOG</div><h1>把日常所需，送到家门口</h1><p>维护社区服务项目、价格、服务范围与预约说明。</p></div></div>
     <el-card shadow="never" class="main-card">
       <div class="header-bar flex-between">
         <span style="font-weight: bold; font-size: 16px;">养老服务项目配置</span>
@@ -19,7 +20,7 @@
         </el-table-column>
         <el-table-column prop="price" label="基准单价" width="120">
           <template #default="{ row }">
-            <span style="color: #ff4d4f; font-weight: bold;">¥{{ row.price }}</span>
+            <span style="color: var(--danger); font-weight: bold;">¥{{ row.price }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="durationMinutes" label="预计时长" width="120">
@@ -29,8 +30,8 @@
         </el-table-column>
         <el-table-column prop="requiredSkills" label="必需技能资质" width="160">
           <template #default="{ row }">
-            <el-tag size="small" type="warning" v-if="row.requiredSkills">{{ row.requiredSkills }}</el-tag>
-            <span v-else style="color: #8c8c8c;">无硬性要求</span>
+            <el-tag size="small" type="info" v-if="row.requiredSkills">{{ displaySkills(row.requiredSkills) }}</el-tag>
+            <span v-else style="color: var(--muted);">无硬性要求</span>
           </template>
         </el-table-column>
         <el-table-column prop="serviceArea" label="覆盖区域" width="140" />
@@ -66,10 +67,10 @@
         </el-form-item>
         <el-form-item label="服务类别">
           <el-select v-model="currentItem.category" style="width: 100%;">
-            <el-option label="助餐送餐 (MEAL)" value="MEAL" />
-            <el-option label="居家保洁 (CLEANING)" value="CLEANING" />
-            <el-option label="代买代办 (ERRAND)" value="ERRAND" />
-            <el-option label="陪同就医办事 (ESCORT)" value="ESCORT" />
+            <el-option label="助餐送餐" value="MEAL" />
+            <el-option label="居家保洁" value="CLEANING" />
+            <el-option label="代买代办" value="ERRAND" />
+            <el-option label="陪同就医办事" value="ESCORT" />
           </el-select>
         </el-form-item>
         <el-form-item label="基准单价(元)">
@@ -78,8 +79,10 @@
         <el-form-item label="预计时长(分钟)">
           <el-input-number v-model="currentItem.durationMinutes" :step="15" :min="15" :max="480" />
         </el-form-item>
-        <el-form-item label="必需技能代码">
-          <el-input v-model="currentItem.requiredSkills" placeholder="如：COOKING 或 CLEANING，逗号分隔" />
+        <el-form-item label="所需技能">
+          <el-select v-model="selectedSkills" multiple filterable allow-create default-first-option placeholder="选择技能，可输入补充技能" style="width:100%">
+            <el-option v-for="(name, code) in skillNames" :key="code" :label="name" :value="code" />
+          </el-select>
         </el-form-item>
         <el-form-item label="服务区域">
           <el-input v-model="currentItem.serviceArea" placeholder="阳光花园社区" />
@@ -97,13 +100,15 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import request from '../../utils/request'
 
 const loading = ref(false)
 const tableData = ref([])
 const modalVisible = ref(false)
+const skillNames = { COOKING: '助餐服务', CLEANING: '居家保洁', ERRAND: '代买代办', ESCORT: '陪同办事', NURSING: '基础照护护理' }
+const displaySkills = (value) => String(value).split(',').map(code => skillNames[code.trim()] || code.trim()).join('、')
 
 const catTextMap = {
   'MEAL': '助餐送餐',
@@ -128,6 +133,10 @@ const currentItem = reactive({
   requiredSkills: '',
   serviceArea: '阳光花园社区',
   description: ''
+})
+const selectedSkills = computed({
+  get: () => (currentItem.requiredSkills || '').split(',').map(code => code.trim()).filter(Boolean),
+  set: value => { currentItem.requiredSkills = value.join(',') }
 })
 
 const fetchData = () => {

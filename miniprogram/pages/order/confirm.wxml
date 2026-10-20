@@ -14,5 +14,5 @@
     <textarea class="comment-input" placeholder="请记录您对服务态度、准时程度、操作规范等方面的意见..." value="{{content}}" bindinput="onInputContent" maxlength="200" />
   </view>
 
-  <button class="btn-primary btn-submit {{isElderMode ? 'btn-large' : ''}}" bindtap="submitReview">提交评价</button>
+  <button class="btn-primary btn-submit {{isElderMode ? 'btn-large' : ''}}" loading="{{submitting}}" disabled="{{submitting}}" bindtap="submitReview">提交评价</button>
 </view>

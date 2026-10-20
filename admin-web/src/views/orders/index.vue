@@ -1,5 +1,6 @@
 <template>
   <div class="orders-container">
+    <div class="page-intro"><div><div class="eyebrow">SERVICE ORDERS</div><h1>每一次服务，都有迹可循</h1><p>查看预约进度、协调人员安排，跟进服务完成情况。</p></div></div>
     <el-card shadow="never" class="filter-card">
       <el-form :inline="true" :model="queryForm">
         <el-form-item label="订单编号">
@@ -7,14 +8,14 @@
         </el-form-item>
         <el-form-item label="订单状态">
           <el-select v-model="queryForm.status" placeholder="全部状态" clearable style="width: 160px;">
-            <el-option label="待派单 (WAIT_DISPATCH)" value="WAIT_DISPATCH" />
-            <el-option label="待接单 (WAIT_ACCEPT)" value="WAIT_ACCEPT" />
-            <el-option label="待上门 (WAIT_VISIT)" value="WAIT_VISIT" />
-            <el-option label="服务中 (IN_SERVICE)" value="IN_SERVICE" />
-            <el-option label="待确认 (WAIT_CONFIRM)" value="WAIT_CONFIRM" />
-            <el-option label="已完成 (COMPLETED)" value="COMPLETED" />
-            <el-option label="待人工 (WAIT_MANUAL)" value="WAIT_MANUAL" />
-            <el-option label="已取消 (CANCELLED)" value="CANCELLED" />
+            <el-option label="等待安排" value="WAIT_DISPATCH" />
+            <el-option label="等待接单" value="WAIT_ACCEPT" />
+            <el-option label="待上门" value="WAIT_VISIT" />
+            <el-option label="服务中" value="IN_SERVICE" />
+            <el-option label="待确认" value="WAIT_CONFIRM" />
+            <el-option label="已完成" value="COMPLETED" />
+            <el-option label="需要协调" value="WAIT_MANUAL" />
+            <el-option label="已取消" value="CANCELLED" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -26,10 +27,10 @@
 
     <el-card shadow="never" class="table-card">
       <el-table :data="tableData" v-loading="loading" stripe style="width: 100%">
-        <el-table-column prop="order.orderNo" label="订单号" width="180" />
-        <el-table-column prop="order.serviceNameSnapshot" label="服务项目" width="140">
+        <el-table-column prop="order.serviceNameSnapshot" label="服务项目 / 订单编号" min-width="215">
           <template #default="{ row }">
-            <span style="font-weight: bold;">{{ row.order.serviceNameSnapshot }}</span>
+            <div class="cell-title">{{ row.order.serviceNameSnapshot }}</div>
+            <div class="cell-note">{{ row.order.orderNo }}</div>
           </template>
         </el-table-column>
         <el-table-column prop="elder.name" label="服务老人" width="120">
@@ -37,13 +38,7 @@
             <span>{{ row.elder ? row.elder.name : '老人' }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="order.priceSnapshot" label="费用" width="100">
-          <template #default="{ row }">
-            <span style="color: #ff4d4f; font-weight: bold;">¥{{ row.order.priceSnapshot }}</span>
-          </template>
-        </el-table-column>
         <el-table-column prop="order.plannedStartAt" label="预约时间" width="170" />
-        <el-table-column prop="order.addressSnapshot" label="服务地址" min-width="180" show-overflow-tooltip />
         <el-table-column prop="order.status" label="状态" width="120">
           <template #default="{ row }">
             <el-tag :type="statusTagMap[row.order.status] || 'info'">
@@ -51,18 +46,23 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="履约师傅" width="140">
+        <el-table-column label="服务人员" width="120">
           <template #default="{ row }">
             <span v-if="row.currentStaff">{{ row.currentStaff.user.realName }}</span>
-            <span v-else style="color: #8c8c8c;">尚未分配</span>
+            <span v-else style="color: var(--muted);">尚未分配</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="220" fixed="right">
+        <el-table-column label="操作" width="145" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" link size="small" @click="openDetail(row.order.id)">详情</el-button>
-            <el-button type="warning" link size="small" v-if="canReassign(row.order.status)" @click="openReassign(row)">改派</el-button>
-            <el-button type="success" link size="small" v-if="row.order.status === 'WAIT_CONFIRM'" @click="adminConfirm(row.order.id)">代确认</el-button>
-            <el-button type="danger" link size="small" v-if="canCancel(row.order.status)" @click="handleCancel(row.order.id)">取消</el-button>
+            <el-button type="primary" link @click="openDetail(row.order.id)">查看</el-button>
+            <el-dropdown v-if="canReassign(row.order.status) || canCancel(row.order.status) || row.order.status === 'WAIT_CONFIRM'" trigger="click" class="row-more">
+              <el-button link aria-label="更多订单操作">更多</el-button>
+              <template #dropdown><el-dropdown-menu>
+                <el-dropdown-item v-if="canReassign(row.order.status)" @click="openReassign(row)">安排改派</el-dropdown-item>
+                <el-dropdown-item v-if="row.order.status === 'WAIT_CONFIRM'" @click="adminConfirm(row.order.id)">代确认完成</el-dropdown-item>
+                <el-dropdown-item v-if="canCancel(row.order.status)" @click="handleCancel(row.order.id)">取消订单</el-dropdown-item>
+              </el-dropdown-menu></template>
+            </el-dropdown>
           </template>
         </el-table-column>
       </el-table>
@@ -134,7 +134,7 @@
               type="primary"
             >
               <strong>{{ statusTextMap[log.toStatus] || log.toStatus }}</strong>
-              <div style="color: #595959; font-size: 13px; margin-top: 4px;">{{ log.reason }}</div>
+              <div style="color: #54645a; font-size: 13px; margin-top: 4px;">{{ log.reason }}</div>
             </el-timeline-item>
           </el-timeline>
         </div>
@@ -145,7 +145,7 @@
     <el-dialog v-model="reassignVisible" title="人工调度改派" width="500px">
       <el-form :model="reassignForm" label-width="100px">
         <el-form-item label="改派给人员">
-          <el-select v-model="reassignForm.newStaffId" placeholder="选择目标服务师傅" style="width: 100%;">
+          <el-select v-model="reassignForm.newStaffId" placeholder="选择目标服务人员" style="width: 100%;">
             <el-option
               v-for="s in staffList"
               :key="s.profile.id"
@@ -168,9 +168,11 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '../../utils/request'
 
+const route = useRoute()
 const loading = ref(false)
 const tableData = ref([])
 const total = ref(0)
@@ -221,7 +223,7 @@ const fetchData = () => {
   loading.value = true
   request.get('/orders/page', { params: queryForm }).then(res => {
     tableData.value = res.records || []
-    total.value = res.total || 0
+    total.value = Number(res.total || 0)
   }).finally(() => {
     loading.value = false
   })
@@ -298,6 +300,7 @@ const handleCancel = (orderId) => {
 
 onMounted(() => {
   fetchData()
+  if (route.query.orderId) openDetail(String(route.query.orderId))
 })
 </script>
 

@@ -1,46 +1,122 @@
-const request = require('../../utils/request.js');
-const app = getApp();
+const navigation = require('../../utils/navigation.js');
+const { lightTap } = require('../../utils/feedback.js');
+const { getCachedService, loadService } = require('../../utils/service-catalog.js');
+
+function getAppSafe() {
+  try {
+    return getApp() || { globalData: {} };
+  } catch (_) {
+    return { globalData: {} };
+  }
+}
+
+const app = new Proxy({}, {
+  get(_, prop) {
+    const instance = getAppSafe();
+    const val = instance[prop];
+    if (typeof val === 'function') return val.bind(instance);
+    return val;
+  },
+  set(_, prop, val) {
+    const instance = getAppSafe();
+    instance[prop] = val;
+    return true;
+  }
+});
 
 Page({
   data: {
     serviceId: null,
     service: null,
-    isElderMode: false
+    loading: true,
+    loadError: false,
+    isElderMode: false,
+    loginSheet: false
   },
 
   onLoad(options) {
+    const app = getAppSafe();
     if (options && options.id) {
-      this.setData({ serviceId: options.id });
-      this.loadServiceDetail(options.id);
+      const cached = getCachedService(options.id);
+      this.setData({
+        serviceId: options.id,
+        service: cached,
+        loading: !cached,
+        isElderMode: Boolean(app.globalData?.isElderMode)
+      });
+      return this.loadServiceDetail();
+    } else {
+      this.setData({ loading: false, loadError: true });
     }
   },
 
   onShow() {
-    this.setData({ isElderMode: app.globalData.isElderMode });
+    const app = getAppSafe();
+    const isElder = Boolean(app.globalData?.isElderMode);
+    if (this.data.isElderMode !== isElder) {
+      this.setData({ isElderMode: isElder });
+    }
+    const currentBase = app.globalData?.baseUrl || '';
+    if (this._serviceContext !== currentBase && this.data.serviceId) {
+      return this.loadServiceDetail();
+    }
   },
 
-  loadServiceDetail(id) {
-    request.get(`/service-items/${id}`).then(data => {
-      this.setData({ service: data });
+  onUnload() {
+    this._disposed = true;
+  },
+
+  loadServiceDetail() {
+    const app = getAppSafe();
+    const context = app.globalData?.baseUrl || '';
+    if (!this.data.serviceId) return Promise.resolve();
+    if (this._pending && this._serviceContext === context) return this._pending;
+    if (this._serviceContext !== undefined && this._serviceContext !== context && !this.data.service) {
+      this.setData({ service: null });
+    }
+    this._serviceContext = context;
+    if (!this.data.service) {
+      this.setData({ loading: true, loadError: false });
+    }
+    const valid = () => !this._disposed && (app.globalData?.baseUrl || '') === context && this._pending === task;
+    const task = loadService(this.data.serviceId).then(data => {
+      if (valid() && data) {
+        this.setData({ service: data, loadError: false });
+      }
+    }).catch(err => {
+      console.warn('[service/detail loadService error]', err);
+      if (valid() && !this.data.service) {
+        this.setData({ loadError: true });
+      }
+    }).finally(() => {
+      if (valid()) {
+        this._pending = null;
+        this.setData({ loading: false });
+      }
     });
+    this._pending = task;
+    return task;
   },
 
   goToBook() {
-    if (!app.globalData.token) {
-      wx.showModal({
-        title: '提示',
-        content: '预约服务请先登录',
-        confirmText: '去登录',
-        success(res) {
-          if (res.confirm) {
-            wx.switchTab({ url: '/pages/user/profile' });
-          }
-        }
-      });
+    lightTap();
+    const app = getAppSafe();
+    const returnUrl = `/pages/order/create?serviceId=${this.data.serviceId}`;
+    if (!app.globalData?.token) {
+      this._loginReturn = returnUrl;
+      this.setData({ loginSheet: true });
       return;
     }
-    wx.navigateTo({
-      url: `/pages/order/create?serviceId=${this.data.serviceId}`
-    });
+    navigation.navigateTo({ url: returnUrl });
+  },
+
+  closeLoginSheet() {
+    this.setData({ loginSheet: false });
+  },
+
+  confirmLogin() {
+    const returnUrl = this._loginReturn || `/pages/order/create?serviceId=${this.data.serviceId}`;
+    this.setData({ loginSheet: false });
+    navigation.toLogin(returnUrl);
   }
 });

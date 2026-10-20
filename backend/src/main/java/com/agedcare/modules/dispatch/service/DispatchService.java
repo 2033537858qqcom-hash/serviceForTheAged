@@ -1,5 +1,6 @@
 package com.agedcare.modules.dispatch.service;
 
+import com.agedcare.common.api.ResultCode;
 import com.agedcare.common.enums.BookingStatus;
 import com.agedcare.common.enums.DispatchStatus;
 import com.agedcare.common.enums.OrderStatus;
@@ -21,6 +22,7 @@ import com.agedcare.modules.order.mapper.ServiceOrderMapper;
 import com.agedcare.modules.staff.entity.StaffProfile;
 import com.agedcare.modules.staff.mapper.StaffProfileMapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -68,6 +70,16 @@ public class DispatchService {
         }
 
         int currentRound = order.getDispatchRound() != null ? order.getDispatchRound() : 1;
+
+        // 如果订单处于待人工状态，管理员重新触发调度时递增轮次，避免被上一轮历史超限次数阻断
+        if (OrderStatus.WAIT_MANUAL.getCode().equals(oldStatus)) {
+            currentRound = currentRound + 1;
+            order.setDispatchRound(currentRound);
+            order.setStatus(OrderStatus.WAIT_DISPATCH.getCode());
+            serviceOrderMapper.updateById(order);
+            recordStatusLog(order.getId(), OrderStatus.WAIT_MANUAL.getCode(), OrderStatus.WAIT_DISPATCH.getCode(),
+                    String.format("管理员重新触发调度，开启第%d轮派单", currentRound));
+        }
 
         // 2. 运行打分引擎评估全部候选
         List<CandidateEvaluationResult> evaluations = dispatchScoreEngine.evaluateAllCandidates(order);
@@ -195,29 +207,57 @@ public class DispatchService {
     @Transactional(rollbackFor = Exception.class)
     public void acceptDispatch(Long dispatchId) {
         LoginUser currentUser = UserContext.getUser();
+        if (currentUser == null) {
+            throw new BusinessException(ResultCode.UNAUTHORIZED);
+        }
+
         DispatchAttempt attempt = dispatchAttemptMapper.selectById(dispatchId);
         if (attempt == null) {
             throw new BusinessException("派单记录不存在");
         }
 
+        // 权限校验：必须是管理员或者被派单的服务人员本人
+        if (!UserRole.ADMIN.getCode().equals(currentUser.getRole())) {
+            StaffProfile staff = staffProfileMapper.selectOne(new LambdaQueryWrapper<StaffProfile>()
+                    .eq(StaffProfile::getUserId, currentUser.getId()));
+            if (staff == null || !staff.getId().equals(attempt.getStaffId())) {
+                throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "您无权操作此派单记录");
+            }
+        }
+
+        // 悲观锁锁定订单
+        ServiceOrder order = serviceOrderMapper.selectByIdForUpdate(attempt.getOrderId());
+        if (order == null) {
+            throw new BusinessException("目标订单不存在");
+        }
+
+        // 订单状态与当前派单ID双重校验
+        if (!OrderStatus.WAIT_ACCEPT.getCode().equals(order.getStatus())) {
+            throw new BusinessException("订单当前状态非待接单，无法接单");
+        }
+        if (order.getCurrentDispatchId() == null || !order.getCurrentDispatchId().equals(attempt.getId())) {
+            throw new BusinessException("该派单已失效或已被改派，无法接单");
+        }
+
+        // 派单状态和超时时间校验
+        attempt = dispatchAttemptMapper.selectById(dispatchId);
         if (!DispatchStatus.PENDING.getCode().equals(attempt.getStatus())) {
             throw new BusinessException("该派单非待接单状态，无法接单");
         }
-
-        if (LocalDateTime.now().isAfter(attempt.getDeadline())) {
+        if (attempt.getDeadline() != null && LocalDateTime.now().isAfter(attempt.getDeadline())) {
             throw new BusinessException("接单已超时失效");
         }
 
-        ServiceOrder order = serviceOrderMapper.selectByIdForUpdate(attempt.getOrderId());
-        if (order == null || !OrderStatus.WAIT_ACCEPT.getCode().equals(order.getStatus())) {
-            throw new BusinessException("订单状态已变更，无法接单");
+        // 条件更新派单状态为 ACCEPTED（防止并发重复确认）
+        int updatedRows = dispatchAttemptMapper.update(null, new LambdaUpdateWrapper<DispatchAttempt>()
+                .eq(DispatchAttempt::getId, attempt.getId())
+                .eq(DispatchAttempt::getStatus, DispatchStatus.PENDING.getCode())
+                .set(DispatchAttempt::getStatus, DispatchStatus.ACCEPTED.getCode())
+                .set(DispatchAttempt::getAcceptedAt, LocalDateTime.now())
+                .set(DispatchAttempt::getUpdatedAt, LocalDateTime.now()));
+        if (updatedRows == 0) {
+            throw new BusinessException("接单状态已被并发修改，接单失败");
         }
-
-        // 更新派单状态为 ACCEPTED
-        attempt.setStatus(DispatchStatus.ACCEPTED.getCode());
-        attempt.setAcceptedAt(LocalDateTime.now());
-        attempt.setUpdatedAt(LocalDateTime.now());
-        dispatchAttemptMapper.updateById(attempt);
 
         // 更新预留状态为 CONFIRMED
         StaffBooking booking = staffBookingMapper.selectOne(new LambdaQueryWrapper<StaffBooking>()
@@ -243,28 +283,51 @@ public class DispatchService {
      */
     @Transactional(rollbackFor = Exception.class)
     public void rejectDispatch(Long dispatchId, String reason) {
+        LoginUser currentUser = UserContext.getUser();
+        if (currentUser == null) {
+            throw new BusinessException(ResultCode.UNAUTHORIZED);
+        }
+
         DispatchAttempt attempt = dispatchAttemptMapper.selectById(dispatchId);
         if (attempt == null) {
             throw new BusinessException("派单记录不存在");
         }
 
-        if (!DispatchStatus.PENDING.getCode().equals(attempt.getStatus())) {
-            throw new BusinessException("派单已非待接单状态");
+        // 权限校验：必须是管理员或者被派单的服务人员本人
+        if (!UserRole.ADMIN.getCode().equals(currentUser.getRole())) {
+            StaffProfile staff = staffProfileMapper.selectOne(new LambdaQueryWrapper<StaffProfile>()
+                    .eq(StaffProfile::getUserId, currentUser.getId()));
+            if (staff == null || !staff.getId().equals(attempt.getStaffId())) {
+                throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "您无权操作此派单记录");
+            }
         }
 
+        // 悲观锁锁定订单
         ServiceOrder order = serviceOrderMapper.selectByIdForUpdate(attempt.getOrderId());
         if (order == null) {
             throw new BusinessException("订单不存在");
         }
 
-        // 1. 本次派单失效
-        attempt.setStatus(DispatchStatus.REJECTED.getCode());
-        attempt.setRejectedAt(LocalDateTime.now());
-        attempt.setRejectReason(reason != null ? reason : "人员自主拒单");
-        attempt.setUpdatedAt(LocalDateTime.now());
-        dispatchAttemptMapper.updateById(attempt);
+        if (!OrderStatus.WAIT_ACCEPT.getCode().equals(order.getStatus())) {
+            throw new BusinessException("订单当前状态已不可拒单");
+        }
+        if (order.getCurrentDispatchId() == null || !order.getCurrentDispatchId().equals(attempt.getId())) {
+            throw new BusinessException("该派单已非当前有效派单");
+        }
 
-        // 2. 释放预留
+        // 条件更新派单为 REJECTED
+        int updatedRows = dispatchAttemptMapper.update(null, new LambdaUpdateWrapper<DispatchAttempt>()
+                .eq(DispatchAttempt::getId, attempt.getId())
+                .eq(DispatchAttempt::getStatus, DispatchStatus.PENDING.getCode())
+                .set(DispatchAttempt::getStatus, DispatchStatus.REJECTED.getCode())
+                .set(DispatchAttempt::getRejectedAt, LocalDateTime.now())
+                .set(DispatchAttempt::getRejectReason, reason != null ? reason : "人员自主拒单")
+                .set(DispatchAttempt::getUpdatedAt, LocalDateTime.now()));
+        if (updatedRows == 0) {
+            throw new BusinessException("派单状态已被修改，拒单失败");
+        }
+
+        // 释放预留
         StaffBooking booking = staffBookingMapper.selectOne(new LambdaQueryWrapper<StaffBooking>()
                 .eq(StaffBooking::getDispatchId, attempt.getId()));
         if (booking != null) {
@@ -273,14 +336,14 @@ public class DispatchService {
             staffBookingMapper.updateById(booking);
         }
 
-        // 3. 订单回退待派单状态并触发重派
+        // 订单回退待派单状态并触发重派
         order.setStatus(OrderStatus.WAIT_DISPATCH.getCode());
         order.setCurrentDispatchId(null);
         order.setUpdatedAt(LocalDateTime.now());
         serviceOrderMapper.updateById(order);
 
         recordStatusLog(order.getId(), OrderStatus.WAIT_ACCEPT.getCode(), OrderStatus.WAIT_DISPATCH.getCode(),
-                String.format("服务人员#%d拒单: %s，系统重新检索派单", attempt.getStaffId(), attempt.getRejectReason()));
+                String.format("服务人员#%d拒单: %s，系统重新检索派单", attempt.getStaffId(), reason != null ? reason : "人员自主拒单"));
 
         // 自动选择下一个候选
         dispatchOrder(order.getId(), null, "AUTO");
@@ -291,18 +354,39 @@ public class DispatchService {
      */
     @Transactional(rollbackFor = Exception.class)
     public void handleTimeoutAttempt(DispatchAttempt attempt) {
+        if (attempt == null || attempt.getOrderId() == null) {
+            return;
+        }
+
         ServiceOrder order = serviceOrderMapper.selectByIdForUpdate(attempt.getOrderId());
         if (order == null || !OrderStatus.WAIT_ACCEPT.getCode().equals(order.getStatus())) {
             return;
         }
 
-        attempt.setStatus(DispatchStatus.EXPIRED.getCode());
-        attempt.setExpiredAt(LocalDateTime.now());
-        attempt.setUpdatedAt(LocalDateTime.now());
-        dispatchAttemptMapper.updateById(attempt);
+        if (order.getCurrentDispatchId() == null || !order.getCurrentDispatchId().equals(attempt.getId())) {
+            return;
+        }
+
+        DispatchAttempt latestAttempt = dispatchAttemptMapper.selectById(attempt.getId());
+        if (latestAttempt == null || !DispatchStatus.PENDING.getCode().equals(latestAttempt.getStatus())) {
+            return;
+        }
+        if (latestAttempt.getDeadline() != null && LocalDateTime.now().isBefore(latestAttempt.getDeadline())) {
+            return;
+        }
+
+        int updatedRows = dispatchAttemptMapper.update(null, new LambdaUpdateWrapper<DispatchAttempt>()
+                .eq(DispatchAttempt::getId, latestAttempt.getId())
+                .eq(DispatchAttempt::getStatus, DispatchStatus.PENDING.getCode())
+                .set(DispatchAttempt::getStatus, DispatchStatus.EXPIRED.getCode())
+                .set(DispatchAttempt::getExpiredAt, LocalDateTime.now())
+                .set(DispatchAttempt::getUpdatedAt, LocalDateTime.now()));
+        if (updatedRows == 0) {
+            return;
+        }
 
         StaffBooking booking = staffBookingMapper.selectOne(new LambdaQueryWrapper<StaffBooking>()
-                .eq(StaffBooking::getDispatchId, attempt.getId()));
+                .eq(StaffBooking::getDispatchId, latestAttempt.getId()));
         if (booking != null) {
             booking.setStatus(BookingStatus.RELEASED.getCode());
             booking.setUpdatedAt(LocalDateTime.now());
@@ -315,7 +399,7 @@ public class DispatchService {
         serviceOrderMapper.updateById(order);
 
         recordStatusLog(order.getId(), OrderStatus.WAIT_ACCEPT.getCode(), OrderStatus.WAIT_DISPATCH.getCode(),
-                String.format("派单给服务人员#%d接单超时(120秒)，系统自动释放并重派", attempt.getStaffId()));
+                String.format("派单给服务人员#%d接单超时，系统自动释放并重派", latestAttempt.getStaffId()));
 
         dispatchOrder(order.getId(), null, "AUTO");
     }
@@ -355,13 +439,14 @@ public class DispatchService {
         }
 
         // 增加调度轮次
+        String prevStatus = order.getStatus();
         order.setDispatchRound((order.getDispatchRound() != null ? order.getDispatchRound() : 1) + 1);
         order.setStatus(OrderStatus.WAIT_DISPATCH.getCode());
         order.setCurrentDispatchId(null);
         order.setUpdatedAt(LocalDateTime.now());
         serviceOrderMapper.updateById(order);
 
-        recordStatusLog(order.getId(), order.getStatus(), OrderStatus.WAIT_DISPATCH.getCode(),
+        recordStatusLog(order.getId(), prevStatus, OrderStatus.WAIT_DISPATCH.getCode(),
                 "管理员发起改派调度: " + reason);
 
         // 如果指定了新人员则直接派给新人员，否则重新自动调度

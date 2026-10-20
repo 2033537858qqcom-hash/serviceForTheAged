@@ -1,5 +1,6 @@
 {
   "pages": [
+    "pages/auth/login",
     "pages/index/index",
     "pages/service/list",
     "pages/service/detail",
@@ -14,34 +15,45 @@
   ],
   "window": {
     "backgroundTextStyle": "light",
-    "navigationBarBackgroundColor": "#1890ff",
-    "navigationBarTitleText": "阳光社区居家养老服务",
-    "navigationBarTextStyle": "white"
+    "navigationBarBackgroundColor": "#F6F7F3",
+    "navigationBarTitleText": "颐邻 · 社区养老服务",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#F6F7F3"
   },
   "tabBar": {
-    "color": "#666666",
-    "selectedColor": "#1890ff",
+    "custom": true,
+    "color": "#64716A",
+    "selectedColor": "#176B5D",
     "backgroundColor": "#ffffff",
     "borderStyle": "black",
     "list": [
       {
         "pagePath": "pages/index/index",
-        "text": "首页"
+        "text": "首页",
+        "iconPath": "assets/icons/home-muted.png",
+        "selectedIconPath": "assets/icons/home.png"
       },
       {
         "pagePath": "pages/service/list",
-        "text": "服务预约"
+        "text": "服务",
+        "iconPath": "assets/icons/service-muted.png",
+        "selectedIconPath": "assets/icons/service.png"
       },
       {
         "pagePath": "pages/order/list",
-        "text": "订单中心"
+        "text": "订单",
+        "iconPath": "assets/icons/order-muted.png",
+        "selectedIconPath": "assets/icons/order.png"
       },
       {
         "pagePath": "pages/user/profile",
-        "text": "我的"
+        "text": "我的",
+        "iconPath": "assets/icons/user-muted.png",
+        "selectedIconPath": "assets/icons/user.png"
       }
     ]
   },
   "style": "v2",
+  "lazyCodeLoading": "requiredComponents",
   "sitemapLocation": "sitemap.json"
 }

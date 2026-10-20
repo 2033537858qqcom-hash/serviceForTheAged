@@ -1,96 +1,14 @@
-<view class="container {{isElderMode ? 'elder-mode' : ''}}">
-  <!-- 顶部状态栏与关爱模式开关 -->
-  <view class="header-card">
-    <view class="flex-between">
-      <view>
-        <view class="community-title">阳光花园社区</view>
-        <view class="welcome-text">居家养老 · 贴心直达</view>
-      </view>
-      <view class="mode-switch-box flex-row" bindtap="toggleMode">
-        <text class="mode-text">{{isElderMode ? '普通模式' : '关爱大字版'}}</text>
-        <switch checked="{{isElderMode}}" color="#1890ff" bindchange="onModeChange"/>
-      </view>
-    </view>
-  </view>
-
-  <!-- 紧急求助/服务热线快捷栏 -->
-  <view class="emergency-bar flex-between" bindtap="callHotline">
-    <view class="flex-row">
-      <text class="emergency-icon">📞</text>
-      <text class="emergency-label">社区养老24小时服务热线</text>
-    </view>
-    <text class="emergency-btn">一键呼叫</text>
-  </view>
-
-  <!-- 核心四大服务快捷入口 -->
-  <view class="section-title">养老便民服务</view>
-  <view class="service-grid">
-    <view class="grid-item" bindtap="goToService" data-category="MEAL">
-      <view class="grid-icon bg-meal">🍱</view>
-      <view class="grid-name">助餐送餐</view>
-      <view class="grid-desc">营养热餐 配送上门</view>
-    </view>
-    <view class="grid-item" bindtap="goToService" data-category="CLEANING">
-      <view class="grid-icon bg-cleaning">🧹</view>
-      <view class="grid-name">居家保洁</view>
-      <view class="grid-desc">居室整理 消毒除尘</view>
-    </view>
-    <view class="grid-item" bindtap="goToService" data-category="ERRAND">
-      <view class="grid-icon bg-errand">🛒</view>
-      <view class="grid-name">代买代办</view>
-      <view class="grid-desc">日常采买 费用代缴</view>
-    </view>
-    <view class="grid-item" bindtap="goToService" data-category="ESCORT">
-      <view class="grid-icon bg-escort">🚶</view>
-      <view class="grid-name">陪同就医</view>
-      <view class="grid-desc">就诊挂号 全程陪办</view>
-    </view>
-  </view>
-
-  <!-- 服务人员专属工作台快捷入口 (服务人员身份展示) -->
-  <view class="card staff-banner flex-between" wx:if="{{isStaff}}" bindtap="goToWorkbench">
-    <view class="flex-row">
-      <view class="staff-badge">工</view>
-      <view>
-        <view class="staff-title">服务人员工作台</view>
-        <view class="staff-sub">接单、打卡开始、提交现场服务记录</view>
-      </view>
-    </view>
-    <view class="arrow">进入 ›</view>
-  </view>
-
-  <!-- 活跃进行中订单卡片 -->
-  <view class="section-title" wx:if="{{activeOrder}}">进行中的订单</view>
-  <view class="card active-order-card" wx:if="{{activeOrder}}" bindtap="goToOrderDetail" data-id="{{activeOrder.order.id}}">
-    <view class="flex-between order-header">
-      <text class="service-name">{{activeOrder.order.serviceNameSnapshot}}</text>
-      <text class="tag tag-info">{{statusTextMap[activeOrder.order.status] || activeOrder.order.status}}</text>
-    </view>
-    <view class="order-info-line">预约时间：{{activeOrder.order.plannedStartAt}}</view>
-    <view class="order-info-line">服务对象：{{activeOrder.elder.name}} ({{activeOrder.elder.address}})</view>
-    <view class="order-footer flex-between" wx:if="{{activeOrder.currentStaff}}">
-      <text class="staff-info">接单师傅：{{activeOrder.currentStaff.user.realName}} ({{activeOrder.currentStaff.user.phone}})</text>
-      <text class="detail-link">查看详情 ›</text>
-    </view>
-  </view>
-
-  <!-- 热门项目列表推荐 -->
-  <view class="section-title flex-between">
-    <text>推荐服务项目</text>
-    <text class="more-link" bindtap="goToServiceList">全部 ›</text>
-  </view>
-  <view class="service-list">
-    <view class="card service-card flex-between" wx:for="{{serviceItems}}" wx:key="id" bindtap="goToServiceDetail" data-id="{{item.id}}">
-      <view class="service-main">
-        <view class="item-title">{{item.name}}</view>
-        <view class="item-desc">{{item.description}}</view>
-        <view class="item-meta flex-row">
-          <text class="price">¥{{item.price}}</text>
-          <text class="duration">/ {{item.durationMinutes}}分钟</text>
-          <text class="area-tag">{{item.serviceArea}}</text>
-        </view>
-      </view>
-      <button class="btn-primary btn-book" size="mini">预约</button>
-    </view>
-  </view>
+<view class="container home-page {{isElderMode ? 'elder-mode' : ''}}">
+  <view class="home-header" style="{{titleStyle}}"><view class="home-brand"><view class="home-brand-icon"><image src="/assets/icons/home.png" /></view><view><view class="brand-name">颐邻<text>.</text></view><view class="brand-community">阳光花园社区</view></view></view><button class="care-mode-control" bindtap="toggleMode"><image src="/assets/icons/care.png" /><text>{{isElderMode ? '标准版' : '大字版'}}</text></button></view>
+  <view class="welcome-panel"><view class="welcome-kicker">家门口的服务，身边的关怀</view><view class="welcome-title"><view>照护在身边，</view><view>安心每一天。</view></view><view class="welcome-caption">日常生活的小事，我们一起照应。</view><view class="welcome-contact" bindtap="callHotline"><image src="/assets/icons/phone.png"/><text>联系社区</text><text class="contact-hours">08:00—20:00</text><image class="contact-arrow" src="/assets/icons/arrow.png" /></view></view>
+  <view class="section-title home-section-heading"><text>今天，需要什么帮助？</text><text class="section-note">社区便民服务</text></view>
+  <view class="service-stage"><view class="service-entry service-entry-main spring" hover-class="spring-in" hover-stay-time="80" bindtap="goToService" data-category="MEAL"><view class="service-entry-icon meal-icon"><image src="/assets/icons/meal.png" /></view><view class="grid-name">助餐送餐</view><view class="grid-desc">热餐送到家门口，是每天最常需要的一件事。</view></view><view class="service-stack"><view class="service-entry spring" hover-class="spring-in" hover-stay-time="80" bindtap="goToService" data-category="CLEANING"><view class="service-entry-icon"><image src="/assets/icons/cleaning.png" /></view><view class="grid-name">居家保洁</view></view><view class="service-entry spring" hover-class="spring-in" hover-stay-time="80" bindtap="goToService" data-category="ERRAND"><view class="service-entry-icon"><image src="/assets/icons/errand.png" /></view><view class="grid-name">代买代办</view></view><view class="service-entry spring" hover-class="spring-in" hover-stay-time="80" bindtap="goToService" data-category="ESCORT"><view class="service-entry-icon"><image src="/assets/icons/escort.png" /></view><view class="grid-name">陪同办事</view></view></view></view>
+  <view wx:if="{{isStaff}}" class="card staff-banner flex-between" bindtap="goToWorkbench"><view class="flex-row"><image class="ui-icon" src="/assets/icons/staff.png"/><view><view class="staff-title">服务人员工作台</view><view class="staff-sub">查看安排，及时回应服务需要</view></view></view><image class="ui-icon-small" src="/assets/icons/arrow.png"/></view>
+  <block wx:if="{{activeOrder}}"><view class="section-title">您的服务进度</view><view class="progress-overlap"><text class="tag tag-info order-status-tag">{{statusTextMap[activeOrder.order.status]}}</text><view class="card active-order-card spring" hover-class="spring-in" hover-stay-time="80" bindtap="goToOrderDetail" data-id="{{activeOrder.order.id}}"><view class="flex-between"><view class="service-name">{{activeOrder.order.serviceNameSnapshot}}</view></view><view class="active-order-meta"><image src="/assets/icons/calendar.png"/><text>{{activeOrder.order.plannedStartAt}}</text></view><view class="active-order-meta"><image src="/assets/icons/user.png"/><text>{{activeOrder.elder ? activeOrder.elder.name : '服务对象'}}<text wx:if="{{activeOrder.currentStaff}}"> · 服务人员 {{activeOrder.currentStaff.user.realName}}</text></text></view><view class="order-footer flex-between"><text>查看服务安排</text><image class="ui-icon-small" src="/assets/icons/arrow.png"/></view></view></view></block>
+  <view class="section-title home-section-heading"><text>为您提供的服务</text><view class="more-link" bindtap="goToServiceList">查看全部<image src="/assets/icons/arrow.png" /></view></view>
+  <view wx:if="{{servicesLoading}}" class="empty-tip">正在为您查找社区服务…</view>
+  <view wx:elif="{{serviceError}}" class="card service-empty"><view>服务信息暂时未能加载</view><button class="retry-button" bindtap="loadServiceItems">重新加载</button></view>
+  <view wx:elif="{{!serviceItems.length}}" class="card service-empty">新的社区服务正在准备中</view>
+  <view wx:else class="service-list"><view class="card home-service-card spring" hover-class="spring-in" hover-stay-time="80" wx:for="{{serviceItems}}" wx:key="id" bindtap="goToServiceDetail" data-id="{{item.id}}"><view class="service-list-icon"><image src="/assets/icons/{{categoryIcons[item.category] || 'service'}}.png"/></view><view class="service-main"><view class="item-title">{{item.name}}</view><view class="item-desc">{{item.description}}</view><view class="item-meta"><text class="price">¥{{item.price}}</text><text class="duration"> / 次 · 约{{item.durationMinutes}}分钟</text></view></view><image class="ui-icon-small" src="/assets/icons/arrow.png"/></view></view>
+  <view class="home-footer">熟悉的社区 · 用心的照护</view>
 </view>

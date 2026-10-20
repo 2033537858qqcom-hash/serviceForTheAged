@@ -1,5 +1,6 @@
 package com.agedcare.modules.staff.service;
 
+import com.agedcare.common.api.ResultCode;
 import com.agedcare.common.enums.UserRole;
 import com.agedcare.common.exception.BusinessException;
 import com.agedcare.common.security.LoginUser;
@@ -23,6 +24,7 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -84,10 +86,27 @@ public class StaffService {
 
     @Transactional(rollbackFor = Exception.class)
     public void updateStaffStatus(Long staffId, String status) {
+        LoginUser currentUser = UserContext.getUser();
+        if (currentUser == null) {
+            throw new BusinessException(ResultCode.UNAUTHORIZED);
+        }
+
+        if (!Set.of("AVAILABLE", "RESTING", "BUSY").contains(status)) {
+            throw new BusinessException("无效的工作状态: " + status);
+        }
+
         StaffProfile profile = staffProfileMapper.selectById(staffId);
         if (profile == null) {
-            throw new BusinessException("人员不存在");
+            throw new BusinessException("人员档案不存在");
         }
+
+        // 权限校验：管理员或服务人员本人
+        boolean isAdmin = UserRole.ADMIN.getCode().equalsIgnoreCase(currentUser.getRole());
+        boolean isSelf = currentUser.getId().equals(profile.getUserId());
+        if (!isAdmin && !isSelf) {
+            throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "无权修改其他服务人员的工作状态");
+        }
+
         profile.setCurrentStatus(status);
         profile.setUpdatedAt(LocalDateTime.now());
         staffProfileMapper.updateById(profile);
@@ -159,7 +178,17 @@ public class StaffService {
     private StaffDetailVO assembleStaffDetail(StaffProfile profile) {
         StaffDetailVO vo = new StaffDetailVO();
         vo.setProfile(profile);
-        vo.setUser(sysUserMapper.selectById(profile.getUserId()));
+        SysUser user = sysUserMapper.selectById(profile.getUserId());
+        if (user != null) {
+            vo.setUser(com.agedcare.modules.user.dto.UserSummaryVO.builder()
+                    .id(user.getId())
+                    .username(user.getUsername())
+                    .realName(user.getRealName())
+                    .phone(user.getPhone())
+                    .avatar(user.getAvatar())
+                    .role(user.getRole())
+                    .build());
+        }
         vo.setSkills(staffSkillMapper.selectList(new LambdaQueryWrapper<StaffSkill>()
                 .eq(StaffSkill::getStaffId, profile.getId())));
         vo.setShifts(staffShiftMapper.selectList(new LambdaQueryWrapper<StaffShift>()

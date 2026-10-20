@@ -42,8 +42,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -71,14 +73,21 @@ public class OrderService {
             throw new BusinessException("请先登录后下单");
         }
 
-        // 1. 幂等性校验
+        // 1. 幂等性校验 (用户作用域 + 核心字段摘要比对)
         if (StringUtils.hasText(dto.getIdempotencyKey())) {
             ServiceOrder existing = serviceOrderMapper.selectOne(new LambdaQueryWrapper<ServiceOrder>()
                     .eq(ServiceOrder::getIdempotencyKey, dto.getIdempotencyKey()));
             if (existing != null) {
+                if (!existing.getRequesterUserId().equals(currentUser.getId())) {
+                    throw new BusinessException(409, "幂等键已被其他请求占用，请重试");
+                }
                 // 相同幂等键，如果关键参数一致，返回已有订单；如果不一致，拒绝处理
-                if (existing.getElderId().equals(dto.getElderId()) && existing.getServiceItemId().equals(dto.getServiceItemId())) {
-                    log.info("命中重复提交幂等键: {}", dto.getIdempotencyKey());
+                boolean paramsMatch = existing.getElderId().equals(dto.getElderId())
+                        && existing.getServiceItemId().equals(dto.getServiceItemId())
+                        && existing.getPlannedStartAt().equals(dto.getPlannedStartAt())
+                        && Objects.equals(existing.getAddressSnapshot(), dto.getAddress());
+                if (paramsMatch) {
+                    log.info("命中当前用户重复提交幂等键: {}", dto.getIdempotencyKey());
                     return existing;
                 } else {
                     throw new BusinessException(409, "相同幂等键对应不同参数内容，拒绝处理");
@@ -126,7 +135,7 @@ public class OrderService {
                 .plannedStartAt(dto.getPlannedStartAt())
                 .plannedEndAt(plannedEndAt)
                 .addressSnapshot(dto.getAddress())
-                .longitude(dto.getLongitude() != null ? dto.getLongitude() : elderProfileMapper.selectById(elder.getId()).getAge() != null ? new java.math.BigDecimal("116.407396") : null)
+                .longitude(dto.getLongitude() != null ? dto.getLongitude() : new java.math.BigDecimal("116.407396"))
                 .latitude(dto.getLatitude() != null ? dto.getLatitude() : new java.math.BigDecimal("39.904199"))
                 .coordinateType(StringUtils.hasText(dto.getCoordinateType()) ? dto.getCoordinateType() : "GCJ02")
                 .contactNameSnapshot(dto.getContactName())
@@ -237,7 +246,15 @@ public class OrderService {
             wrapper.like(ServiceOrder::getOrderNo, query.getOrderNo());
         }
         if (StringUtils.hasText(query.getStatus())) {
-            wrapper.eq(ServiceOrder::getStatus, query.getStatus());
+            if (query.getStatus().contains(",")) {
+                List<String> statusList = Arrays.stream(query.getStatus().split(","))
+                        .map(String::trim)
+                        .filter(StringUtils::hasText)
+                        .collect(Collectors.toList());
+                wrapper.in(ServiceOrder::getStatus, statusList);
+            } else {
+                wrapper.eq(ServiceOrder::getStatus, query.getStatus().trim());
+            }
         }
         if (query.getElderId() != null) {
             wrapper.eq(ServiceOrder::getElderId, query.getElderId());
@@ -278,10 +295,41 @@ public class OrderService {
     }
 
     public OrderVO getOrderDetail(Long orderId) {
+        LoginUser currentUser = UserContext.getUser();
+        if (currentUser == null) {
+            throw new BusinessException(com.agedcare.common.api.ResultCode.UNAUTHORIZED);
+        }
         ServiceOrder order = serviceOrderMapper.selectById(orderId);
         if (order == null) {
             throw new BusinessException("订单不存在");
         }
+
+        // 对象级访问权限校验 (修复 B2)
+        if (!UserRole.ADMIN.getCode().equalsIgnoreCase(currentUser.getRole())) {
+            if (UserRole.RESIDENT.getCode().equalsIgnoreCase(currentUser.getRole())) {
+                boolean isRequester = order.getRequesterUserId().equals(currentUser.getId());
+                if (!isRequester) {
+                    ElderProfile elder = elderProfileMapper.selectById(order.getElderId());
+                    if (elder == null) {
+                        throw new BusinessException(403, "无权查看该订单详情");
+                    }
+                    elderProfileService.checkAccessPermission(elder);
+                }
+            } else if (UserRole.STAFF.getCode().equalsIgnoreCase(currentUser.getRole())) {
+                StaffProfile staff = staffProfileMapper.selectOne(new LambdaQueryWrapper<StaffProfile>()
+                        .eq(StaffProfile::getUserId, currentUser.getId()));
+                if (staff == null) {
+                    throw new BusinessException(403, "未找到关联服务人员档案");
+                }
+                Long assignedCount = dispatchAttemptMapper.selectCount(new LambdaQueryWrapper<DispatchAttempt>()
+                        .eq(DispatchAttempt::getOrderId, order.getId())
+                        .eq(DispatchAttempt::getStaffId, staff.getId()));
+                if (assignedCount == null || assignedCount == 0) {
+                    throw new BusinessException(403, "服务人员无权查看非指派给本人的订单详情");
+                }
+            }
+        }
+
         return assembleOrderVO(order);
     }
 

@@ -32,21 +32,47 @@ public class FamilyBindingService {
     private final ElderProfileMapper elderProfileMapper;
     private final SysUserMapper sysUserMapper;
 
+    public ElderProfile searchElderByPhone(String phone) {
+        if (!StringUtils.hasText(phone)) {
+            throw new BusinessException("请输入老人联系电话");
+        }
+        ElderProfile elder = elderProfileMapper.selectOne(new LambdaQueryWrapper<ElderProfile>()
+                .eq(ElderProfile::getPhone, phone.trim())
+                .eq(ElderProfile::getStatus, 1)
+                .last("LIMIT 1"));
+        if (elder == null) {
+            throw new BusinessException("未找到电话为 " + phone + " 的老人档案");
+        }
+        if (StringUtils.hasText(elder.getIdCard()) && elder.getIdCard().length() >= 10) {
+            elder.setIdCard(elder.getIdCard().substring(0, 6) + "********" + elder.getIdCard().substring(elder.getIdCard().length() - 4));
+        }
+        return elder;
+    }
+
     @Transactional(rollbackFor = Exception.class)
-    public FamilyBinding applyBinding(Long elderId, String relation, String proofMaterials) {
+    public FamilyBinding applyBinding(Long elderId, String elderPhone, String elderName, String relation, String proofMaterials) {
         LoginUser currentUser = UserContext.getUser();
         if (currentUser == null) {
             throw new BusinessException("请先登录");
         }
 
-        ElderProfile elder = elderProfileMapper.selectById(elderId);
+        ElderProfile elder = null;
+        if (elderId != null) {
+            elder = elderProfileMapper.selectById(elderId);
+        } else if (StringUtils.hasText(elderPhone)) {
+            elder = elderProfileMapper.selectOne(new LambdaQueryWrapper<ElderProfile>()
+                    .eq(ElderProfile::getPhone, elderPhone.trim())
+                    .eq(ElderProfile::getStatus, 1)
+                    .last("LIMIT 1"));
+        }
+
         if (elder == null) {
-            throw new BusinessException("目标老人档案不存在");
+            throw new BusinessException("未找到目标老人档案，请核对手机号或先创建老人建档");
         }
 
         Long existingCount = familyBindingMapper.selectCount(new LambdaQueryWrapper<FamilyBinding>()
                 .eq(FamilyBinding::getFamilyUserId, currentUser.getId())
-                .eq(FamilyBinding::getElderId, elderId)
+                .eq(FamilyBinding::getElderId, elder.getId())
                 .in(FamilyBinding::getStatus, FamilyBindingStatus.PENDING.getCode(), FamilyBindingStatus.APPROVED.getCode()));
         if (existingCount > 0) {
             throw new BusinessException("已存在审核中或已通过的绑定关系，请勿重复申请");
@@ -54,7 +80,7 @@ public class FamilyBindingService {
 
         FamilyBinding binding = FamilyBinding.builder()
                 .familyUserId(currentUser.getId())
-                .elderId(elderId)
+                .elderId(elder.getId())
                 .relation(relation)
                 .proofMaterials(proofMaterials != null ? proofMaterials : "")
                 .status(FamilyBindingStatus.PENDING.getCode())
@@ -140,7 +166,17 @@ public class FamilyBindingService {
         FamilyBindingVO vo = new FamilyBindingVO();
         BeanUtils.copyProperties(binding, vo);
         vo.setElder(elderProfileMapper.selectById(binding.getElderId()));
-        vo.setFamilyUser(sysUserMapper.selectById(binding.getFamilyUserId()));
+        SysUser user = sysUserMapper.selectById(binding.getFamilyUserId());
+        if (user != null) {
+            vo.setFamilyUser(com.agedcare.modules.user.dto.UserSummaryVO.builder()
+                    .id(user.getId())
+                    .username(user.getUsername())
+                    .realName(user.getRealName())
+                    .phone(user.getPhone())
+                    .avatar(user.getAvatar())
+                    .role(user.getRole())
+                    .build());
+        }
         return vo;
     }
 }

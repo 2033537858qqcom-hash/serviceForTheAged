@@ -1,0 +1,7 @@
+.sheet-mask { position: fixed; inset: 0; z-index: 80; background: rgba(36, 52, 46, .42); display: flex; align-items: flex-end; }
+.sheet-panel { width: 100%; background: #fff; border-radius: 28rpx 28rpx 0 0; padding: 16rpx 32rpx calc(28rpx + env(safe-area-inset-bottom)); transition: transform 280ms cubic-bezier(.34, 1.28, .4, 1); }
+.sheet-handle { width: 72rpx; height: 8rpx; border-radius: 8rpx; background: #d5ddd4; margin: 8rpx auto 24rpx; }
+.sheet-title { font-size: var(--font-section); font-weight: 600; color: var(--text-main); }
+.sheet-body { margin-top: 12rpx; color: var(--text-regular); font-size: var(--font-caption); line-height: 1.7; }
+.sheet-confirm { margin-top: 28rpx; }
+.sheet-dismiss { margin-top: 12rpx; background: transparent; color: var(--text-secondary); font-size: var(--font-caption); min-height: 72rpx; }

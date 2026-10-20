@@ -1,13 +1,42 @@
+const navigation = require('../../utils/navigation.js');
+const { syncTabBar } = require('../../utils/tab-bar.js');
 // pages/index/index.js
 const request = require('../../utils/request.js');
-const app = getApp();
+const { loadCatalog } = require('../../utils/service-catalog.js');
+const { orderCard, sessionKey } = require('../../utils/list-state.js');
+const { lightTap } = require('../../utils/feedback.js');
+
+function getAppSafe() {
+  try {
+    return getApp() || { globalData: {} };
+  } catch (_) {
+    return { globalData: {} };
+  }
+}
+const app = new Proxy({}, {
+  get(_, prop) {
+    const instance = getAppSafe();
+    const val = instance[prop];
+    if (typeof val === 'function') return val.bind(instance);
+    return val;
+  },
+  set(_, prop, val) {
+    const instance = getAppSafe();
+    instance[prop] = val;
+    return true;
+  }
+});
 
 Page({
   data: {
     isElderMode: false,
     isStaff: false,
     serviceItems: [],
+    servicesLoading: false,
+    serviceError: false,
+    categoryIcons: { MEAL: 'meal', CLEANING: 'cleaning', ERRAND: 'errand', ESCORT: 'escort' },
     activeOrder: null,
+    titleStyle: '',
     statusTextMap: {
       'WAIT_DISPATCH': '待派单',
       'WAIT_ACCEPT': '待接单',
@@ -21,53 +50,110 @@ Page({
   },
 
   onShow() {
-    this.setData({
-      isElderMode: app.globalData.isElderMode,
-      isStaff: app.globalData.role === 'STAFF'
-    });
-    this.loadServiceItems();
-    this.loadActiveOrder();
+    syncTabBar(this, 0);
+    const app = getAppSafe();
+    const patch = {};
+    const isElder = Boolean(app.globalData?.isElderMode);
+    const isStaff = app.globalData?.role === 'STAFF';
+    if (this.data.isElderMode !== isElder) patch.isElderMode = isElder;
+    if (this.data.isStaff !== isStaff) patch.isStaff = isStaff;
+    if (Object.keys(patch).length) this.setData(patch);
+    return Promise.all([this.loadServiceItems(), this.loadActiveOrder()]);
+  },
+
+  onUnload() { this._disposed = true; },
+
+  onPageScroll(event) {
+    const progress = Math.max(0, Math.min(1, (event.scrollTop || 0) / 160));
+    const step = Math.round(progress * 16) / 16;
+    if (step === this._titleProgress) return;
+    this._titleProgress = step;
+    const calm = this.data.isElderMode ? 0.65 : 1;
+    const shift = Math.round(step * 28 * calm);
+    const lift = Math.round(step * -18 * calm);
+    const scale = (1 - step * 0.14 * calm).toFixed(3);
+    this.setData({ titleStyle: `transform: translate3d(${shift}rpx, ${lift}rpx, 0) scale(${scale}); background: rgba(246,247,243,${step});` });
   },
 
   onPullDownRefresh() {
-    this.loadServiceItems();
-    this.loadActiveOrder();
-    wx.stopPullDownRefresh();
+    return Promise.all([this.loadServiceItems(true), this.loadActiveOrder(true)])
+      .finally(() => wx.stopPullDownRefresh());
   },
 
   onModeChange(e) {
     const isElder = e.detail.value;
     app.toggleElderMode(isElder);
+    syncTabBar(this, 0);
     this.setData({ isElderMode: isElder });
   },
 
   toggleMode() {
     const isElder = !this.data.isElderMode;
     app.toggleElderMode(isElder);
+    syncTabBar(this, 0);
     this.setData({ isElderMode: isElder });
   },
 
-  loadServiceItems() {
-    request.get('/service-items/list-available').then(data => {
-      this.setData({ serviceItems: data || [] });
-    }).catch(err => {
-      console.log('获取服务列表失败', err);
+  loadServiceItems(force = false) {
+    const context = app.globalData.baseUrl || '';
+    if (this._catalogContext !== context) {
+      this._catalogContext = context; this._catalogPromise = null; this._catalogRows = null;
+      if (this.data.serviceItems.length) this.setData({ serviceItems: [] });
+    }
+    if (this._catalogPromise) return this._catalogPromise;
+    if (!this.data.serviceItems.length) this.setData({ servicesLoading: true, serviceError: false });
+    const task = loadCatalog(force === true).then(rows => {
+      if (this._disposed || (app.globalData.baseUrl || '') !== context) return;
+      if (this._catalogRows !== rows) {
+        this._catalogRows = rows;
+        this.setData({ serviceItems: rows.slice(0, 3), serviceError: false });
+      }
+    }).catch(() => {
+      if (!this._disposed && this._catalogContext === context && !this.data.serviceItems.length) this.setData({ serviceError: true });
+    }).finally(() => {
+      if (this._catalogPromise === task) {
+        if (!this._disposed && this.data.servicesLoading) this.setData({ servicesLoading: false });
+        this._catalogPromise = null;
+      }
     });
+    this._catalogPromise = task;
+    return task;
   },
 
-  loadActiveOrder() {
-    if (!app.globalData.token) return;
-    request.get('/orders/page', { pageNum: 1, pageSize: 5 }).then(data => {
-      if (data && data.records && data.records.length > 0) {
-        // 查找一条进行中的订单
-        const active = data.records.find(item => 
-          ['WAIT_DISPATCH', 'WAIT_ACCEPT', 'WAIT_VISIT', 'IN_SERVICE', 'WAIT_CONFIRM'].includes(item.order.status)
-        );
-        this.setData({ activeOrder: active || null });
-      } else {
-        this.setData({ activeOrder: null });
+  loadActiveOrder(force = false) {
+    const context = sessionKey(app);
+    if (this._activeContext !== context) {
+      this._activeContext = context; this._activeAt = 0; this._activeTask = null; this._activeRefreshAfter = false;
+      if (this.data.activeOrder) this.setData({ activeOrder: null });
+    }
+    if (!app.globalData.token) return Promise.resolve();
+    const version = app.globalData.ordersVersion || 0;
+    if (this._activeTask) {
+      if (this._activeRequestVersion !== version) this._activeRefreshAfter = true;
+      return this._activeTask;
+    }
+    if (!force && this._activeVersion === version && this._activeAt && Date.now() - this._activeAt < 15000) return Promise.resolve();
+    this._activeRequestVersion = version;
+    const task = request.get('/orders/page', {
+      pageNum: 1, pageSize: 1,
+      status: 'WAIT_DISPATCH,WAIT_ACCEPT,WAIT_VISIT,IN_SERVICE,WAIT_CONFIRM,WAIT_MANUAL'
+    }).then(data => {
+      if (this._disposed || sessionKey(app) !== context) return;
+      if (version !== (app.globalData.ordersVersion || 0)) { this._activeRefreshAfter = true; return; }
+      const row = data?.records?.[0];
+      this.setData({ activeOrder: row ? orderCard(row) : null });
+      this._activeAt = Date.now(); this._activeVersion = version;
+    }).catch(() => {}).finally(() => {
+      if (this._activeTask === task) {
+        this._activeTask = null;
+        if (this._activeRefreshAfter && !this._disposed) {
+          this._activeRefreshAfter = false;
+          return this.loadActiveOrder(true);
+        }
       }
-    }).catch(() => {});
+    });
+    this._activeTask = task;
+    return task;
   },
 
   callHotline() {
@@ -84,34 +170,34 @@ Page({
   },
 
   goToService(e) {
+    lightTap();
     const category = e.currentTarget.dataset.category;
-    wx.navigateTo({
-      url: `/pages/service/list?category=${category}`
-    });
+    app.globalData.serviceCategory = category;
+    navigation.switchTab({ url: '/pages/service/list' });
   },
 
   goToServiceList() {
-    wx.switchTab({
+    navigation.switchTab({
       url: '/pages/service/list'
     });
   },
 
   goToServiceDetail(e) {
     const id = e.currentTarget.dataset.id;
-    wx.navigateTo({
+    navigation.navigateTo({
       url: `/pages/service/detail?id=${id}`
     });
   },
 
   goToOrderDetail(e) {
     const id = e.currentTarget.dataset.id;
-    wx.navigateTo({
+    navigation.navigateTo({
       url: `/pages/order/detail?id=${id}`
     });
   },
 
   goToWorkbench() {
-    wx.navigateTo({
+    navigation.navigateTo({
       url: '/pages/staff/workbench'
     });
   }

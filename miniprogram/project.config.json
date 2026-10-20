@@ -17,7 +17,6 @@
     "checkSiteMap": true,
     "uploadWithSourceMap": true,
     "compileHotReLoad": false,
-    "lazyCodeLoading": "requiredComponents",
     "babelSetting": {
       "ignore": [],
       "disablePlugins": [],

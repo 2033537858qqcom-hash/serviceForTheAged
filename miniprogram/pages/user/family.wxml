@@ -1,17 +1,28 @@
 <view class="container {{isElderMode ? 'elder-mode' : ''}}">
   <view class="card apply-card">
-    <view class="card-title">申请绑定/代约老人</view>
+    <view class="card-title">为家人预约服务</view>
     <view class="form-tip">提交亲属关系证明，由社区管理员核验通过后，即可代老人预约各项居家养老服务。</view>
-    
-    <view class="form-item">
-      <text class="label">选择老人</text>
+
+    <view class="form-item" wx:if="{{allElders.length > 0}}">
+      <text class="label">快捷选择已有老人</text>
       <picker range="{{allElders}}" range-key="name" value="{{selectedElderIndex}}" bindchange="onElderChange">
         <view class="picker-box flex-between">
-          <text wx:if="{{targetElder}}">{{targetElder.name}} ({{targetElder.address}})</text>
-          <text wx:else class="placeholder">请选择要绑定的老人 ›</text>
+          <text wx:if="{{targetElder && selectedElderIndex >= 0}}">{{targetElder.name}} ({{targetElder.address}})</text>
+          <text wx:else class="placeholder">从我的档案中选择 ›</text>
           <text class="arrow">▼</text>
         </view>
       </picker>
+    </view>
+
+    <view class="form-item">
+      <text class="label">按老人手机号精准查询绑定</text>
+      <view class="flex-row search-row">
+        <input class="input-box" type="number" placeholder="输入老人预留手机号" value="{{searchPhone}}" bindinput="onInputSearchPhone" />
+        <button class="search-button" bindtap="searchElder">查找</button>
+      </view>
+      <view wx:if="{{targetElder}}" class="search-result">
+        ✓ 已定位老人：{{targetElder.name}} ({{targetElder.community || targetElder.address}})
+      </view>
     </view>
 
     <view class="form-item">

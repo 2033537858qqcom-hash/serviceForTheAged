@@ -1,7 +1,7 @@
 package com.agedcare.modules.family.dto;
 
 import com.agedcare.modules.elder.entity.ElderProfile;
-import com.agedcare.modules.user.entity.SysUser;
+import com.agedcare.modules.user.dto.UserSummaryVO;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -19,7 +19,7 @@ public class FamilyBindingVO {
     private String reviewReason;
     private LocalDateTime createdAt;
 
-    // 关联显示
+    // 关联安全脱敏显示
     private ElderProfile elder;
-    private SysUser familyUser;
+    private UserSummaryVO familyUser;
 }

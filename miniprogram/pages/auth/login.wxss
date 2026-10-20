@@ -1,0 +1,521 @@
+page {
+  background-color: #ffffff;
+  height: 100vh;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.login-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding: 24rpx 48rpx 60rpx;
+  box-sizing: border-box;
+  justify-content: space-between;
+}
+
+/* 顶栏 */
+.top-nav-bar {
+  padding-top: 10rpx;
+  height: 80rpx;
+  align-items: center;
+}
+
+.nav-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #222;
+}
+
+.guest-skip-btn {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  font-size: 26rpx;
+  color: #8c9689;
+  padding: 8rpx 16rpx;
+  background: #f4f6f1;
+  border-radius: 24rpx;
+}
+
+.arrow-symbol {
+  font-size: 30rpx;
+  line-height: 1;
+}
+
+/* 居中插画舞台 */
+.hero-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 20rpx;
+}
+
+.illustration-stage {
+  position: relative;
+  width: 580rpx;
+  height: 380rpx;
+  margin-bottom: 30rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 漂浮装饰微元素 */
+.brand-mark { width: 112rpx; height: 112rpx; margin: 12rpx auto 28rpx; border-radius: 32rpx; background: #e4edde; display: flex; align-items: center; justify-content: center; }
+.brand-mark image { width: 64rpx; height: 64rpx; }
+.doodle { display: none; }
+.doodle-clock { top: 20rpx; left: 160rpx; animation-delay: 0.2s; }
+.doodle-heart { top: 30rpx; right: 140rpx; animation-delay: 0.8s; font-size: 36rpx; }
+.doodle-star  { bottom: 60rpx; left: 30rpx; animation-delay: 1.2s; }
+.doodle-mail  { top: 120rpx; left: 40rpx; animation-delay: 0.5s; }
+.doodle-thumb { top: 100rpx; right: 40rpx; animation-delay: 1.5s; }
+
+@keyframes floatDoodle {
+  0% { transform: translateY(0) scale(0.95); opacity: 0.75; }
+  100% { transform: translateY(-12rpx) scale(1.05); opacity: 1; }
+}
+
+/* 社区照护车与人物矢量场景 */
+.truck-scene {
+  position: relative;
+  width: 500rpx;
+  height: 290rpx;
+}
+
+/* 送护车 */
+.van-body {
+  position: absolute;
+  left: 20rpx;
+  bottom: 30rpx;
+  width: 440rpx;
+  height: 210rpx;
+}
+
+.van-cab {
+  position: absolute;
+  left: 0;
+  bottom: 24rpx;
+  width: 140rpx;
+  height: 140rpx;
+  background: #3b454e;
+  border-radius: 20rpx 0 0 10rpx;
+}
+
+.van-window {
+  position: absolute;
+  top: 16rpx;
+  left: 16rpx;
+  width: 76rpx;
+  height: 60rpx;
+  background: #d4e8f7;
+  border-radius: 12rpx 0 0 0;
+}
+
+.van-light {
+  position: absolute;
+  bottom: 24rpx;
+  left: 0;
+  width: 14rpx;
+  height: 24rpx;
+  background: #f59e0b;
+  border-radius: 0 6rpx 6rpx 0;
+}
+
+.van-cargo {
+  position: absolute;
+  left: 130rpx;
+  bottom: 24rpx;
+  width: 300rpx;
+  height: 180rpx;
+  background: #d93829;
+  border-radius: 16rpx 16rpx 10rpx 0;
+  box-shadow: inset 0 -6rpx 0 rgba(0,0,0,0.15);
+  padding: 14rpx;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.cargo-logo {
+  font-size: 20rpx;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 2rpx;
+  border-bottom: 1rpx solid rgba(255,255,255,0.3);
+  padding-bottom: 6rpx;
+}
+
+.cargo-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8rpx;
+}
+
+.cargo-box {
+  background: #fff0d4;
+  border: 1rpx dashed #d97706;
+  border-radius: 6rpx;
+  font-size: 18rpx;
+  color: #92400e;
+  text-align: center;
+  padding: 8rpx 0;
+  font-weight: 600;
+}
+
+.wheel {
+  position: absolute;
+  bottom: 4rpx;
+  width: 62rpx;
+  height: 62rpx;
+  background: #252b31;
+  border-radius: 50%;
+  border: 8rpx solid #c8d1d8;
+  box-sizing: border-box;
+}
+.wheel-front { left: 40rpx; }
+.wheel-rear { left: 340rpx; }
+
+/* 照护师傅人物 */
+.courier-figure {
+  position: absolute;
+  right: 170rpx;
+  bottom: 30rpx;
+  width: 120rpx;
+  height: 230rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 10;
+}
+
+.courier-cap {
+  width: 60rpx;
+  height: 22rpx;
+  background: #d93829;
+  border-radius: 14rpx 14rpx 0 0;
+  position: relative;
+}
+.courier-cap::after {
+  content: '';
+  position: absolute;
+  right: -8rpx;
+  bottom: 0;
+  width: 24rpx;
+  height: 8rpx;
+  background: #d93829;
+  border-radius: 0 4rpx 4rpx 0;
+}
+
+.courier-head {
+  width: 52rpx;
+  height: 52rpx;
+  background: #fde68a;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.face-smile {
+  width: 20rpx;
+  height: 10rpx;
+  border-bottom: 3rpx solid #78350f;
+  border-radius: 0 0 10rpx 10rpx;
+  margin-top: 10rpx;
+}
+
+.courier-body {
+  width: 68rpx;
+  height: 80rpx;
+  background: #d93829;
+  border-radius: 10rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.care-package {
+  background: #fef3c7;
+  border: 1rpx solid #b45309;
+  border-radius: 6rpx;
+  padding: 6rpx 10rpx;
+  font-size: 16rpx;
+  font-weight: bold;
+  color: #b45309;
+  box-shadow: 0 2rpx 6rpx rgba(0,0,0,0.15);
+}
+
+.courier-legs {
+  width: 48rpx;
+  height: 60rpx;
+  background: #f1f5f9;
+  border-left: 20rpx solid #e2e8f0;
+  box-sizing: border-box;
+}
+
+/* 标语文字 */
+.brand-title {
+  font-size: 38rpx;
+  font-weight: 700;
+  color: #1f2937;
+  letter-spacing: 2rpx;
+}
+
+.brand-sub {
+  font-size: 26rpx;
+  color: #6b7280;
+  margin-top: 12rpx;
+}
+
+/* 操作按钮区 */
+.action-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+/* 微信/手机号快捷登录主大按钮 */
+.btn-quick-login {
+  width: 100% !important;
+  height: 100rpx;
+  background: #07c160;
+  border-radius: 50rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 34rpx;
+  font-weight: 600;
+  letter-spacing: 1rpx;
+  box-shadow: 0 12rpx 28rpx rgba(7, 193, 96, 0.32);
+  border: none;
+  transition: transform 0.15s, opacity 0.15s;
+}
+
+.btn-quick-login:active, .btn-quick-login.spring-in {
+  transform: scale(0.92);
+}
+
+.wechat-icon {
+  width: 36rpx;
+  height: 36rpx;
+  margin-right: 14rpx;
+  filter: brightness(0) invert(1);
+}
+
+/* 次级文字按钮 */
+.secondary-btn {
+  font-size: 30rpx;
+  color: #8c9689;
+  padding: 24rpx 0;
+  cursor: pointer;
+  letter-spacing: 1rpx;
+}
+
+.secondary-btn:active {
+  color: #1f2937;
+}
+
+/* 演示答辩一键体验入口卡片 */
+.demo-switch-entry {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  background: #f4f8f4;
+  border: 1rpx solid #dbe8db;
+  border-radius: 36rpx;
+  padding: 14rpx 28rpx;
+  margin-top: 16rpx;
+}
+
+.demo-chip {
+  background: #176B5D;
+  color: #ffffff;
+  font-size: 20rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 12rpx;
+  font-weight: 500;
+}
+
+.demo-text {
+  font-size: 24rpx;
+  color: #3b5042;
+}
+
+.demo-arrow {
+  color: #7b9483;
+  font-size: 28rpx;
+  line-height: 1;
+}
+
+/* 底部协议 */
+.agreement-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-bottom: 20rpx;
+}
+
+.agreement-row {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  max-width: 95%;
+}
+
+.custom-checkbox {
+  width: 34rpx;
+  height: 34rpx;
+  border-radius: 8rpx;
+  border: 2rpx solid #c4cbcf;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+  font-weight: bold;
+  color: transparent;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.custom-checkbox.is-checked {
+  background: #07c160;
+  border-color: #07c160;
+}
+.check-stroke { width: 16rpx; height: 8rpx; border-left: 4rpx solid #fff; border-bottom: 4rpx solid #fff; transform: rotate(-45deg) scale(0); }
+.custom-checkbox.is-checked .check-stroke { animation: draw-check 280ms ease forwards; }
+@keyframes draw-check { 50% { transform: rotate(-45deg) scaleX(1) scaleY(0); } 100% { transform: rotate(-45deg) scale(1); } }
+
+.agreement-label {
+  font-size: 24rpx;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+.doc-link {
+  color: #176B5D;
+  text-decoration: underline;
+}
+
+/* 账号密码/注册弹窗 */
+.modal-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  padding: 40rpx;
+}
+
+.account-modal-card {
+  width: 100%;
+  background: #ffffff;
+  border-radius: 32rpx;
+  padding: 40rpx;
+  box-shadow: 0 20rpx 50rpx rgba(0, 0, 0, 0.2);
+}
+
+.modal-tab-header {
+  border-bottom: 1rpx solid #e5e7eb;
+  padding-bottom: 20rpx;
+  margin-bottom: 30rpx;
+}
+
+.modal-tab {
+  font-size: 32rpx;
+  color: #6b7280;
+  padding-right: 40rpx;
+  position: relative;
+}
+
+.modal-tab.active {
+  color: #176B5D;
+  font-weight: 700;
+}
+
+.modal-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -22rpx;
+  left: 0;
+  width: 60rpx;
+  height: 6rpx;
+  background: #176B5D;
+  border-radius: 4rpx;
+}
+
+.modal-close-icon {
+  font-size: 36rpx;
+  color: #9ca3af;
+  padding: 10rpx;
+}
+
+.form-group {
+  margin-bottom: 24rpx;
+}
+
+.input-label {
+  display: block;
+  font-size: 26rpx;
+  color: #4b5563;
+  margin-bottom: 10rpx;
+}
+
+.input-field {
+  height: 84rpx;
+  background: #f8fafc;
+  border: 1rpx solid #e2e8f0;
+  border-radius: 16rpx;
+  padding: 0 24rpx;
+  font-size: 28rpx;
+  color: #1e293b;
+}
+
+.modal-submit-btn {
+  margin-top: 36rpx !important;
+  height: 90rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  border-radius: 20rpx;
+}
+
+/* 协议详情弹窗 */
+.doc-modal-card {
+  width: 100%;
+  max-height: 80vh;
+  background: #ffffff;
+  border-radius: 32rpx;
+  padding: 40rpx;
+  display: flex;
+  flex-direction: column;
+}
+
+.doc-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #1f2937;
+  text-align: center;
+  margin-bottom: 24rpx;
+}
+
+.doc-scroll-content {
+  flex: 1;
+  max-height: 50vh;
+  padding: 10rpx 0;
+}
+
+.doc-text {
+  font-size: 26rpx;
+  color: #4b5563;
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+
+.doc-confirm-btn {
+  margin-top: 24rpx !important;
+}

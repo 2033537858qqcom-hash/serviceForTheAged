@@ -1,12 +1,12 @@
 <template>
   <div class="staff-container">
+    <div class="page-intro"><div><div class="eyebrow">CARE TEAM</div><h1>让合适的人，做好每一项服务</h1><p>核验人员资质，管理技能、工作状态与服务排班。</p></div></div>
     <el-card shadow="never" class="main-card">
       <div class="header-bar flex-between">
         <span style="font-weight: bold; font-size: 16px;">社区养老服务队伍与排班调度</span>
       </div>
 
       <el-table :data="tableData" v-loading="loading" stripe style="width: 100%">
-        <el-table-column prop="profile.id" label="人员工号" width="120" />
         <el-table-column label="姓名" width="140">
           <template #default="{ row }">
             <span style="font-weight: bold;">{{ row.user ? row.user.realName : '' }}</span>
@@ -17,8 +17,8 @@
             {{ row.user ? row.user.phone : '' }}
           </template>
         </el-table-column>
-        <el-table-column prop="profile.serviceArea" label="常驻负责网格" width="140" />
-        <el-table-column prop="profile.baseStationName" label="常驻出发站点" min-width="160" show-overflow-tooltip />
+        <el-table-column prop="profile.serviceArea" label="服务网格" width="140" />
+        <el-table-column prop="profile.baseStationName" label="出发站点" min-width="160" show-overflow-tooltip />
         <el-table-column prop="profile.currentStatus" label="工作状态" width="120">
           <template #default="{ row }">
             <el-tag :type="row.profile.currentStatus === 'AVAILABLE' ? 'success' : 'info'">
@@ -33,7 +33,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="具备专业资质技能" min-width="200">
+        <el-table-column label="专业技能" min-width="200">
           <template #default="{ row }">
             <el-tag v-for="sk in row.skills" :key="sk.id" size="small" style="margin-right: 6px;">
               {{ sk.skillName }}
@@ -41,9 +41,9 @@
             <span v-if="!row.skills || row.skills.length === 0" style="color: #bfbfbf; font-size: 12px;">暂无资质</span>
           </template>
         </el-table-column>
-        <el-table-column label="平滑均分" width="110">
+        <el-table-column label="服务评分" width="110">
           <template #default="{ row }">
-            <span style="color: #faad14; font-weight: bold;">{{ row.profile.priorRating }} 分</span>
+            <span style="color: #9b691d; font-weight: bold;">{{ row.profile.priorRating }} 分</span>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="200" fixed="right">
@@ -115,11 +115,11 @@
       <el-form :model="skillForm" label-width="100px">
         <el-form-item label="技能分类">
           <el-select v-model="skillForm.skillCode" style="width: 100%;">
-            <el-option label="助餐烹饪 (COOKING)" value="COOKING" />
-            <el-option label="居家保洁 (CLEANING)" value="CLEANING" />
-            <el-option label="跑腿代办 (ERRAND)" value="ERRAND" />
-            <el-option label="助行陪办 (ESCORT)" value="ESCORT" />
-            <el-option label="基础照护护理 (NURSING)" value="NURSING" />
+            <el-option label="助餐烹饪" value="COOKING" />
+            <el-option label="居家保洁" value="CLEANING" />
+            <el-option label="跑腿代办" value="ERRAND" />
+            <el-option label="助行陪办" value="ESCORT" />
+            <el-option label="基础照护护理" value="NURSING" />
           </el-select>
         </el-form-item>
         <el-form-item label="技能名称">

@@ -1,9 +1,19 @@
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/aged_care_db?useUnicode=true&characterEncoding=utf8mb4&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
-    username: root
-    password: 123456
+    url: jdbc:mysql://localhost:3306/aged_care_db?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:123456}
+
+app:
+  dev-mode: ${APP_DEV_MODE:true}
+  lan-sync:
+    enabled: true
+
+wechat:
+  miniapp:
+    appid: ${WECHAT_APPID:wxc3039ae6e2412b11}
+    secret: ${WECHAT_SECRET:38c9b661e8e9286bc8ab4729e9b6ff0e}
 
 springdoc:
   api-docs:

@@ -1,11 +1,34 @@
+const navigation = require('../../utils/navigation.js');
 const request = require('../../utils/request.js');
-const app = getApp();
+
+function getAppSafe() {
+  try {
+    return getApp() || { globalData: {} };
+  } catch (_) {
+    return { globalData: {} };
+  }
+}
+
+const app = new Proxy({}, {
+  get(_, prop) {
+    const instance = getAppSafe();
+    const val = instance[prop];
+    if (typeof val === 'function') return val.bind(instance);
+    return val;
+  },
+  set(_, prop, val) {
+    const instance = getAppSafe();
+    instance[prop] = val;
+    return true;
+  }
+});
 
 Page({
   data: {
     allElders: [],
     selectedElderIndex: -1,
     targetElder: null,
+    searchPhone: '',
     relation: '',
     proofMaterials: '',
     bindings: [],
@@ -25,7 +48,10 @@ Page({
   },
 
   onShow() {
-    this.setData({ isElderMode: app.globalData.isElderMode });
+    const app = getAppSafe();
+    const isElder = Boolean(app.globalData?.isElderMode);
+    if (this.data.isElderMode !== isElder) this.setData({ isElderMode: isElder });
+    if (!navigation.requireLogin('/pages/user/family')) return;
     this.loadData();
   },
 
@@ -46,13 +72,36 @@ Page({
     });
   },
 
+  onInputSearchPhone(e) {
+    this.setData({ searchPhone: e.detail.value });
+  },
+
+  searchElder() {
+    const { searchPhone } = this.data;
+    if (!searchPhone || !searchPhone.trim()) {
+      wx.showToast({ title: '请输入老人联系电话', icon: 'none' });
+      return;
+    }
+    wx.showLoading({ title: '正在查询...' });
+    request.get(`/family-bindings/search-elder?phone=${encodeURIComponent(searchPhone.trim())}`).then(elder => {
+      wx.hideLoading();
+      this.setData({
+        targetElder: elder,
+        selectedElderIndex: -1
+      });
+      wx.showToast({ title: `已找到 ${elder.name}`, icon: 'success' });
+    }).catch(() => {
+      wx.hideLoading();
+    });
+  },
+
   onInputRelation(e) { this.setData({ relation: e.detail.value }); },
   onInputProof(e) { this.setData({ proofMaterials: e.detail.value }); },
 
   submitApply() {
-    const { targetElder, relation, proofMaterials } = this.data;
-    if (!targetElder) {
-      wx.showToast({ title: '请选择要绑定的老人', icon: 'none' });
+    const { targetElder, searchPhone, relation, proofMaterials } = this.data;
+    if (!targetElder && !searchPhone) {
+      wx.showToast({ title: '请选择或搜索要绑定的老人', icon: 'none' });
       return;
     }
     if (!relation.trim()) {
@@ -61,7 +110,8 @@ Page({
     }
 
     request.post('/family-bindings/apply', {
-      elderId: targetElder.id,
+      elderId: targetElder ? targetElder.id : null,
+      elderPhone: searchPhone ? searchPhone.trim() : null,
       relation,
       proofMaterials
     }).then(() => {
@@ -69,6 +119,7 @@ Page({
       this.setData({
         targetElder: null,
         selectedElderIndex: -1,
+        searchPhone: '',
         relation: '',
         proofMaterials: ''
       });
@@ -82,7 +133,7 @@ Page({
     wx.showModal({
       title: '撤销授权',
       content: '确定撤销与该老人的绑定代约关系吗？',
-      confirmColor: '#ff4d4f',
+      confirmColor: '#b83a3a',
       success(res) {
         if (res.confirm) {
           request.post(`/family-bindings/${id}/revoke`).then(() => {

@@ -7,6 +7,7 @@ import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
@@ -18,14 +19,34 @@ import java.util.Map;
 @Component
 public class JwtTokenProvider {
 
-    @Value("${jwt.secret}")
+    @Value("${jwt.secret:}")
     private String secret;
 
-    @Value("${jwt.expiration}")
+    @Value("${jwt.expiration:604800000}")
     private long expiration;
 
+    @Value("${app.dev-mode:false}")
+    private boolean devMode;
+
+    private volatile SecretKey signingKey;
+
     private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        if (signingKey != null) {
+            return signingKey;
+        }
+        synchronized (this) {
+            if (signingKey == null) {
+                if (StringUtils.hasText(secret) && secret.getBytes(StandardCharsets.UTF_8).length >= 32) {
+                    signingKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+                } else if (devMode) {
+                    log.warn("JWT Secret 未配置或长度不足32字节，开发模式下生成临时内存密钥");
+                    signingKey = Jwts.SIG.HS256.key().build();
+                } else {
+                    throw new IllegalStateException("生产环境必须通过环境变量 JWT_SECRET 配置至少256位（32字节）密钥！");
+                }
+            }
+        }
+        return signingKey;
     }
 
     public String generateToken(LoginUser user) {

@@ -40,6 +40,8 @@ public class ServiceOrder implements Serializable {
     private String contactPhoneSnapshot;
     private String remark;
     private String status; // WAIT_DISPATCH, WAIT_ACCEPT, WAIT_VISIT, IN_SERVICE, WAIT_CONFIRM, COMPLETED, WAIT_MANUAL, CANCELLED
+
+    @com.baomidou.mybatisplus.annotation.TableField(updateStrategy = com.baomidou.mybatisplus.annotation.FieldStrategy.ALWAYS)
     private Long currentDispatchId;
     private Integer dispatchRound;
     private String idempotencyKey;

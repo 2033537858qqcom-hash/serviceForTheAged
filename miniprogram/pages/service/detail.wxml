@@ -1,3 +1,28 @@
+<view class="container page-state {{isElderMode ? 'elder-mode' : ''}}" wx:if="{{!service}}">
+  <view wx:if="{{loading}}" aria-label="正在加载服务详情">
+    <view class="card main-info-card">
+      <view class="skeleton-block skeleton-title"></view>
+      <view class="skeleton-block skeleton-price"></view>
+      <view class="flex-row tags-row">
+        <view class="skeleton-block skeleton-tag"></view>
+        <view class="skeleton-block skeleton-tag"></view>
+      </view>
+    </view>
+    <view class="card detail-section">
+      <view class="skeleton-block skeleton-section"></view>
+      <view class="skeleton-block skeleton-body"></view>
+      <view class="skeleton-block skeleton-body skeleton-short"></view>
+    </view>
+    <view class="card detail-section">
+      <view class="skeleton-block skeleton-section"></view>
+      <view class="tips-item"><view class="skeleton-block skeleton-tip"></view></view>
+      <view class="tips-item"><view class="skeleton-block skeleton-tip"></view></view>
+      <view class="tips-item"><view class="skeleton-block skeleton-tip skeleton-short"></view></view>
+    </view>
+    <view class="page-state-tip">正在加载服务详情…</view>
+  </view>
+  <view class="card empty-tip" wx:elif="{{loadError}}">服务信息暂时未能加载<button class="retry-button" bindtap="loadServiceDetail">重新加载</button></view>
+</view>
 <view class="container {{isElderMode ? 'elder-mode' : ''}}" wx:if="{{service}}">
   <view class="card main-info-card">
     <view class="service-title">{{service.name}}</view>
@@ -15,9 +40,9 @@
 
   <view class="card detail-section">
     <view class="section-title">预约须知</view>
-    <view class="tips-item">• 服务至少提前30分钟预约，由平台为您智能匹配最合适的服务师傅。</view>
-    <view class="tips-item">• 服务人员均通过社区实名核验与技能审核，佩戴社区工牌持证上门。</view>
-    <view class="tips-item">• 服务开始前可随时取消订单并全额释放排班；服务开始后保留现场履约记录。</view>
+    <view class="tips-item">• 服务至少提前30分钟预约，由平台为您智能匹配合适的服务人员。</view>
+    <view class="tips-item">• 预约后可在订单中查看安排进度与服务人员信息，上门前请保持电话畅通。</view>
+    <view class="tips-item">• 服务开始前，可在订单详情中取消预约；服务完成后，请核对记录并确认。</view>
   </view>
 
   <!-- 底部固定预约栏 -->
@@ -26,6 +51,7 @@
       <text class="price-label">总计：</text>
       <text class="total-price">¥{{service.price}}</text>
     </view>
-    <button class="btn-primary btn-submit {{isElderMode ? 'btn-large' : ''}}" bindtap="goToBook">立即预约服务</button>
+    <button class="btn-primary btn-submit {{isElderMode ? 'btn-large' : ''}}" hover-class="spring-in" hover-stay-time="80" bindtap="goToBook">立即预约服务</button>
   </view>
+  <bottom-sheet show="{{loginSheet}}" title="请先登录" content="登录后即可预约服务，并为家人和自己查看进度。" confirm-text="去登录" dismiss-text="再想想" bind:close="closeLoginSheet" bind:confirm="confirmLogin"></bottom-sheet>
 </view>

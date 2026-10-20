@@ -26,6 +26,8 @@ public class FamilyBindingController {
     @Data
     public static class ApplyDTO {
         private Long elderId;
+        private String elderPhone;
+        private String elderName;
         private String relation;
         private String proofMaterials;
     }
@@ -37,10 +39,16 @@ public class FamilyBindingController {
         private String reason;
     }
 
+    @Operation(summary = "按电话精确查询社区老人档案(供家属申请绑定前核实)")
+    @GetMapping("/search-elder")
+    public Result<com.agedcare.modules.elder.entity.ElderProfile> searchElder(@RequestParam String phone) {
+        return Result.success(familyBindingService.searchElderByPhone(phone));
+    }
+
     @Operation(summary = "提交家属代约/监护绑定申请")
     @PostMapping("/apply")
     public Result<FamilyBinding> apply(@RequestBody ApplyDTO dto) {
-        return Result.success(familyBindingService.applyBinding(dto.getElderId(), dto.getRelation(), dto.getProofMaterials()));
+        return Result.success(familyBindingService.applyBinding(dto.getElderId(), dto.getElderPhone(), dto.getElderName(), dto.getRelation(), dto.getProofMaterials()));
     }
 
     @Operation(summary = "查询我的家属绑定列表")

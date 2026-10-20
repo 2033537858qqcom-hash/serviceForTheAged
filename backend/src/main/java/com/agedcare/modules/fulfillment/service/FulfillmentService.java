@@ -1,5 +1,6 @@
 package com.agedcare.modules.fulfillment.service;
 
+import com.agedcare.common.api.ResultCode;
 import com.agedcare.common.enums.BookingStatus;
 import com.agedcare.common.enums.OrderStatus;
 import com.agedcare.common.enums.UserRole;
@@ -60,6 +61,10 @@ public class FulfillmentService {
     @Transactional(rollbackFor = Exception.class)
     public void startService(Long orderId) {
         LoginUser currentUser = UserContext.getUser();
+        if (currentUser == null) {
+            throw new BusinessException(ResultCode.UNAUTHORIZED);
+        }
+
         ServiceOrder order = serviceOrderMapper.selectByIdForUpdate(orderId);
         if (order == null) {
             throw new BusinessException("订单不存在");
@@ -69,12 +74,49 @@ public class FulfillmentService {
             throw new BusinessException("订单当前状态不可开始服务: " + order.getStatus());
         }
 
+        if (order.getCurrentDispatchId() == null) {
+            throw new BusinessException("订单无有效派单记录，无法开始服务");
+        }
+
+        DispatchAttempt attempt = dispatchAttemptMapper.selectById(order.getCurrentDispatchId());
+        if (attempt == null) {
+            throw new BusinessException("未找到订单对应派单信息");
+        }
+
+        // 权限校验：非管理员只能由被指派的服务人员开始服务
+        if (!UserRole.ADMIN.getCode().equalsIgnoreCase(currentUser.getRole())) {
+            StaffProfile staff = staffProfileMapper.selectOne(new LambdaQueryWrapper<StaffProfile>()
+                    .eq(StaffProfile::getUserId, currentUser.getId()));
+            if (staff == null || !staff.getId().equals(attempt.getStaffId())) {
+                throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "只有当前接单的服务人员才能开始服务");
+            }
+        }
+
         order.setStatus(OrderStatus.IN_SERVICE.getCode());
         order.setUpdatedAt(LocalDateTime.now());
         serviceOrderMapper.updateById(order);
 
+        // 记录实际开始服务时间
+        ServiceRecord existingRecord = serviceRecordMapper.selectOne(new LambdaQueryWrapper<ServiceRecord>()
+                .eq(ServiceRecord::getOrderId, order.getId()));
+        if (existingRecord == null) {
+            ServiceRecord newRecord = ServiceRecord.builder()
+                    .orderId(order.getId())
+                    .staffId(attempt.getStaffId())
+                    .actualStartAt(LocalDateTime.now())
+                    .createdAt(LocalDateTime.now())
+                    .updatedAt(LocalDateTime.now())
+                    .build();
+            serviceRecordMapper.insert(newRecord);
+        } else {
+            existingRecord.setStaffId(attempt.getStaffId());
+            existingRecord.setActualStartAt(LocalDateTime.now());
+            existingRecord.setUpdatedAt(LocalDateTime.now());
+            serviceRecordMapper.updateById(existingRecord);
+        }
+
         recordStatusLog(order.getId(), OrderStatus.WAIT_VISIT.getCode(), OrderStatus.IN_SERVICE.getCode(),
-                "服务人员已到达服务现场，开始提供上门服务");
+                String.format("服务人员#%d已到达现场，开始提供上门服务", attempt.getStaffId()));
     }
 
     /**
@@ -83,6 +125,10 @@ public class FulfillmentService {
     @Transactional(rollbackFor = Exception.class)
     public void submitServiceRecord(ServiceRecord record) {
         LoginUser currentUser = UserContext.getUser();
+        if (currentUser == null) {
+            throw new BusinessException(ResultCode.UNAUTHORIZED);
+        }
+
         ServiceOrder order = serviceOrderMapper.selectByIdForUpdate(record.getOrderId());
         if (order == null) {
             throw new BusinessException("订单不存在");
@@ -92,13 +138,52 @@ public class FulfillmentService {
             throw new BusinessException("只有服务中状态的订单才能提交服务记录");
         }
 
+        if (order.getCurrentDispatchId() == null) {
+            throw new BusinessException("订单无有效派单记录");
+        }
+
+        DispatchAttempt attempt = dispatchAttemptMapper.selectById(order.getCurrentDispatchId());
+        if (attempt == null) {
+            throw new BusinessException("未找到订单派单信息");
+        }
+
+        // 权限校验：非管理员只能由当前被派单人员提交
+        if (!UserRole.ADMIN.getCode().equalsIgnoreCase(currentUser.getRole())) {
+            StaffProfile staff = staffProfileMapper.selectOne(new LambdaQueryWrapper<StaffProfile>()
+                    .eq(StaffProfile::getUserId, currentUser.getId()));
+            if (staff == null || !staff.getId().equals(attempt.getStaffId())) {
+                throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "只有当前接单的服务人员才能提交履约记录");
+            }
+        }
+
+        // 补齐 staffId
+        record.setStaffId(attempt.getStaffId());
+
+        ServiceRecord existing = serviceRecordMapper.selectOne(new LambdaQueryWrapper<ServiceRecord>()
+                .eq(ServiceRecord::getOrderId, order.getId()));
+
+        // 如果前端未传 actualStartAt，从已有记录获取，或兜底推断
+        if (record.getActualStartAt() == null) {
+            if (existing != null && existing.getActualStartAt() != null) {
+                record.setActualStartAt(existing.getActualStartAt());
+            } else {
+                record.setActualStartAt(LocalDateTime.now().minusMinutes(30));
+            }
+        }
+
+        if (record.getActualEndAt() == null) {
+            record.setActualEndAt(LocalDateTime.now());
+        }
+
         if (record.getActualEndAt().isBefore(record.getActualStartAt())) {
             throw new BusinessException("实际结束时间不能早于开始时间");
         }
 
+        if (!StringUtils.hasText(record.getServiceSummary())) {
+            throw new BusinessException("请填写服务情况与工作说明");
+        }
+
         // 保存或更新履约记录
-        ServiceRecord existing = serviceRecordMapper.selectOne(new LambdaQueryWrapper<ServiceRecord>()
-                .eq(ServiceRecord::getOrderId, order.getId()));
         if (existing == null) {
             record.setCreatedAt(LocalDateTime.now());
             record.setUpdatedAt(LocalDateTime.now());
@@ -110,14 +195,12 @@ public class FulfillmentService {
         }
 
         // 释放或完结排班预留
-        if (order.getCurrentDispatchId() != null) {
-            StaffBooking booking = staffBookingMapper.selectOne(new LambdaQueryWrapper<StaffBooking>()
-                    .eq(StaffBooking::getDispatchId, order.getCurrentDispatchId()));
-            if (booking != null) {
-                booking.setStatus(BookingStatus.FINISHED.getCode());
-                booking.setUpdatedAt(LocalDateTime.now());
-                staffBookingMapper.updateById(booking);
-            }
+        StaffBooking booking = staffBookingMapper.selectOne(new LambdaQueryWrapper<StaffBooking>()
+                .eq(StaffBooking::getDispatchId, order.getCurrentDispatchId()));
+        if (booking != null) {
+            booking.setStatus(BookingStatus.FINISHED.getCode());
+            booking.setUpdatedAt(LocalDateTime.now());
+            staffBookingMapper.updateById(booking);
         }
 
         // 订单状态流转至 WAIT_CONFIRM (待老人或家属确认)
@@ -126,7 +209,7 @@ public class FulfillmentService {
         serviceOrderMapper.updateById(order);
 
         recordStatusLog(order.getId(), OrderStatus.IN_SERVICE.getCode(), OrderStatus.WAIT_CONFIRM.getCode(),
-                "服务人员已提交服务记录，等待老人或家属确认完成");
+                String.format("服务人员#%d已提交服务记录，等待老人或家属确认完成", attempt.getStaffId()));
     }
 
     /**
@@ -135,6 +218,10 @@ public class FulfillmentService {
     @Transactional(rollbackFor = Exception.class)
     public void confirmOrder(Long orderId, String note) {
         LoginUser currentUser = UserContext.getUser();
+        if (currentUser == null) {
+            throw new BusinessException(ResultCode.UNAUTHORIZED);
+        }
+
         ServiceOrder order = serviceOrderMapper.selectByIdForUpdate(orderId);
         if (order == null) {
             throw new BusinessException("订单不存在");
@@ -144,7 +231,7 @@ public class FulfillmentService {
             throw new BusinessException("订单非待确认状态");
         }
 
-        // 权限校验
+        // 权限校验：非管理员只能由下单人或已绑定的老人/家属确认
         if (!UserRole.ADMIN.getCode().equalsIgnoreCase(currentUser.getRole())
                 && !order.getRequesterUserId().equals(currentUser.getId())) {
             ElderProfile elder = elderProfileMapper.selectById(order.getElderId());
@@ -183,6 +270,10 @@ public class FulfillmentService {
     @Transactional(rollbackFor = Exception.class)
     public void submitReview(ServiceReview review) {
         LoginUser currentUser = UserContext.getUser();
+        if (currentUser == null) {
+            throw new BusinessException(ResultCode.UNAUTHORIZED);
+        }
+
         ServiceOrder order = serviceOrderMapper.selectById(review.getOrderId());
         if (order == null) {
             throw new BusinessException("订单不存在");
@@ -190,6 +281,13 @@ public class FulfillmentService {
 
         if (!OrderStatus.COMPLETED.getCode().equals(order.getStatus())) {
             throw new BusinessException("订单尚未完成，暂无法评价");
+        }
+
+        // 权限校验：非管理员只能由下单人或关联家属/老人评价
+        if (!UserRole.ADMIN.getCode().equalsIgnoreCase(currentUser.getRole())
+                && !order.getRequesterUserId().equals(currentUser.getId())) {
+            ElderProfile elder = elderProfileMapper.selectById(order.getElderId());
+            elderProfileService.checkAccessPermission(elder);
         }
 
         Long existingCount = serviceReviewMapper.selectCount(new LambdaQueryWrapper<ServiceReview>()

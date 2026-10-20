@@ -10,7 +10,7 @@
 
   <!-- 服务对象选择 -->
   <view class="card form-card">
-    <view class="form-title">服务对象 (老人)</view>
+    <view class="form-title"><text class="section-number">01</text>为谁预约</view>
     <picker range="{{elders}}" range-key="name" value="{{elderIndex}}" bindchange="onElderChange">
       <view class="picker-box flex-between">
         <text wx:if="{{selectedElder}}">{{selectedElder.name}} ({{selectedElder.age}}岁 - {{selectedElder.community}})</text>
@@ -23,27 +23,27 @@
 
   <!-- 预约时间选择 -->
   <view class="card form-card">
-    <view class="form-title">预约上门时间</view>
+    <view class="form-title"><text class="section-number">02</text>希望什么时候上门</view>
     <view class="flex-between time-pickers">
       <picker mode="date" value="{{selectedDate}}" start="{{startDate}}" end="{{endDate}}" bindchange="onDateChange">
         <view class="picker-item flex-between">
           <text>{{selectedDate || '选择服务日期'}}</text>
-          <text class="picker-icon">📅</text>
+          <image class="picker-icon" src="/assets/icons/calendar.png" />
         </view>
       </picker>
       <picker mode="time" value="{{selectedTime}}" start="08:00" end="18:00" bindchange="onTimeChange">
         <view class="picker-item flex-between">
           <text>{{selectedTime || '选择到达时间'}}</text>
-          <text class="picker-icon">⏰</text>
+          <image class="picker-icon" src="/assets/icons/time.png" />
         </view>
       </picker>
     </view>
-    <view class="time-tip">• 请选择至少提前30分钟的时间(工作时间 08:00 - 18:00)</view>
+    <view class="time-tip">请至少提前30分钟预约，服务时间以人员安排为准。</view>
   </view>
 
   <!-- 上门地址与联系方式 -->
   <view class="card form-card">
-    <view class="form-title">上门地址与联系人</view>
+    <view class="form-title"><text class="section-number">03</text>上门地址与联系信息</view>
     <view class="form-item flex-row">
       <text class="form-label">服务地址</text>
       <input class="form-input" placeholder="详细居住地址" value="{{address}}" bindinput="onInputAddress" />
@@ -58,12 +58,19 @@
     </view>
     <view class="form-item flex-row">
       <text class="form-label">特殊备注</text>
-      <input class="form-input" placeholder="如钥匙位置、注意事项等(选填)" value="{{remark}}" bindinput="onInputRemark" />
+      <input class="form-input" placeholder="上门联系方法、需要留意的事项（选填）" value="{{remark}}" bindinput="onInputRemark" />
     </view>
   </view>
 
   <!-- 提交下单按钮 -->
   <view class="submit-box">
-    <button class="btn-primary btn-submit-order {{isElderMode ? 'btn-large' : ''}}" loading="{{submitting}}" bindtap="submitOrder">确认提交预约</button>
+    <view class="submit-price" wx:if="{{service}}">
+      <text class="submit-price-label">服务费用</text>
+      <view>¥{{service.price}}<text> / 次</text></view>
+    </view>
+    <button class="btn-primary btn-submit-order {{submitPhase === 'done' ? 'is-done' : ''}} {{isElderMode ? 'btn-large' : ''}}" hover-class="spring-in" loading="{{submitting && submitPhase !== 'done'}}" disabled="{{submitting}}" bindtap="submitOrder">
+      <text wx:if="{{submitPhase !== 'done'}}">确认提交预约</text>
+      <view wx:else class="done-check"></view>
+    </button>
   </view>
 </view>

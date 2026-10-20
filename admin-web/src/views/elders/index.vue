@@ -1,9 +1,10 @@
 <template>
   <div class="elders-container">
+    <div class="page-intro"><div><div class="eyebrow">ELDER PROFILES</div><h1>把照护，落实到每一位老人</h1><p>管理老人档案与照护需求，核验家属代约关系。</p></div></div>
     <el-card shadow="never" class="main-card">
       <el-tabs v-model="activeTab">
         <!-- Tab 1: 老人档案管理 -->
-        <el-tab-pane label="社区老人档案库" name="elders">
+        <el-tab-pane label="老人档案" name="elders">
           <div class="filter-bar flex-between">
             <el-form :inline="true" :model="elderQuery">
               <el-form-item label="老人姓名">
@@ -46,7 +47,7 @@
         </el-tab-pane>
 
         <!-- Tab 2: 家属代约绑定审核 -->
-        <el-tab-pane label="家属代约绑定与授权审核" name="bindings">
+        <el-tab-pane label="家属代约审核" name="bindings">
           <el-table :data="bindingsData" v-loading="loadingBindings" stripe style="width: 100%">
             <el-table-column label="老人姓名" width="140">
               <template #default="{ row }">
@@ -56,7 +57,7 @@
             <el-table-column label="申请家属" width="160">
               <template #default="{ row }">
                 {{ row.familyUser ? (row.familyUser.realName || row.familyUser.username) : '' }}
-                <span style="font-size: 12px; color: #8c8c8c;">({{ row.familyUser ? row.familyUser.phone : '' }})</span>
+                <span style="font-size: 12px; color: var(--muted);">({{ row.familyUser ? row.familyUser.phone : '' }})</span>
               </template>
             </el-table-column>
             <el-table-column prop="relation" label="亲属关系" width="120">

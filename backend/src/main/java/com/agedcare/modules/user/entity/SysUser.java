@@ -20,11 +20,16 @@ public class SysUser implements Serializable {
     @TableId(type = IdType.ASSIGN_ID)
     private Long id;
     private String username;
+
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private String password;
+
     private String realName;
     private String phone;
     private String avatar;
     private String role; // ADMIN, STAFF, RESIDENT
+
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private String openid;
     private Integer status; // 1-正常 0-禁用
     private LocalDateTime createdAt;

@@ -1,14 +1,48 @@
+const navigation = require('../../utils/navigation.js');
 const request = require('../../utils/request.js');
-const app = getApp();
+const { taskCard, sessionKey, markOrdersChanged } = require('../../utils/list-state.js');
+
+function getAppSafe() {
+  try {
+    return getApp() || { globalData: {} };
+  } catch (_) {
+    return { globalData: {} };
+  }
+}
+
+const app = new Proxy({}, {
+  get(_, prop) {
+    const instance = getAppSafe();
+    const val = instance[prop];
+    if (typeof val === 'function') return val.bind(instance);
+    return val;
+  },
+  set(_, prop, val) {
+    const instance = getAppSafe();
+    instance[prop] = val;
+    return true;
+  }
+});
+
+const TASK_TABS = [
+  { key: '', label: '全部安排' },
+  { key: 'WAIT_VISIT', label: '待上门' },
+  { key: 'IN_SERVICE', label: '服务中' },
+  { key: 'WAIT_CONFIRM,COMPLETED', label: '已完工' }
+];
 
 Page({
   data: {
     staffProfile: null,
     pendingAttempt: null,
-    myTasks: [],
+    filteredTasks: [],
+    taskTabs: TASK_TABS,
+    currentTaskTabIndex: 0,
     showRecordModal: false,
     currentOrderId: null,
     recordSummary: '',
+    actionLoading: false,
+    loadError: false,
     isElderMode: false,
     statusTextMap: {
       'WAIT_VISIT': '待上门',
@@ -25,41 +59,91 @@ Page({
   },
 
   onShow() {
-    this.setData({ isElderMode: app.globalData.isElderMode });
-    this.loadStaffData();
+    this._hidden = false;
+    const app = getAppSafe();
+    const context = sessionKey(app);
+    if (this._context !== context) {
+      this._context = context; this._tasks = []; this._loadedAt = 0;
+      this._staffPromise = null; this._tasksPromise = null;
+      this.setData({ staffProfile: null, pendingAttempt: null, filteredTasks: [] });
+    }
+    const isElder = Boolean(app.globalData?.isElderMode);
+    if (this.data.isElderMode !== isElder) this.setData({ isElderMode: isElder });
+    if (!navigation.requireLogin('/pages/staff/workbench')) {
+      return Promise.resolve();
+    }
+    return this.loadStaffData();
   },
-
-  onPullDownRefresh() {
-    this.loadStaffData();
-    wx.stopPullDownRefresh();
+  onHide() { this._hidden = true; },
+  onUnload() { this._disposed = true; },
+  onPullDownRefresh() { return this.loadStaffData(true).finally(() => wx.stopPullDownRefresh()); },
+  changeTaskTab(e) {
+    const index = Number(e.currentTarget.dataset.index);
+    if (index === this.data.currentTaskTabIndex || !TASK_TABS[index]) return;
+    this.filterTasks(index);
   },
-
-  loadStaffData() {
-    request.get('/staff/my-profile').then(profile => {
-      this.setData({ staffProfile: profile });
-      this.loadTasks();
-    }).catch(() => {
-      wx.showModal({
-        title: '提示',
-        content: '当前账号未绑定服务人员档案',
-        showCancel: false
-      });
+  filterTasks(index) {
+    const keys = TASK_TABS[index].key.split(',');
+    const tasks = this._tasks || [];
+    const filteredTasks = TASK_TABS[index].key ? tasks.filter(item => keys.includes(item.order.status)) : tasks;
+    this.setData({ currentTaskTabIndex: index, filteredTasks });
+  },
+  loadStaffData(force = false) {
+    if (this._staffPromise) return this._staffPromise;
+    const version = app.globalData.ordersVersion || 0;
+    if (!force && this._loadedVersion === version && this._loadedAt && Date.now() - this._loadedAt < 15000) return Promise.resolve();
+    const context = sessionKey(app);
+    this.setData({ loadError: false });
+    const profileTask = request.get('/staff/my-profile').then(profile => {
+      if (this._disposed || sessionKey(app) !== context) return;
+      this.setData({ staffProfile: { user: { realName: profile.user.realName }, profile: {
+        id: profile.profile.id, priorRating: profile.profile.priorRating,
+        totalOrders: profile.profile.totalOrders, currentStatus: profile.profile.currentStatus,
+        auditStatus: profile.profile.auditStatus
+      } } });
     });
+    // Independent reads run together rather than waiting for the profile response.
+    const task = Promise.all([profileTask, this.loadTasks()]).then(() => {
+      if (sessionKey(app) === context) { this._loadedAt = Date.now(); this._loadedVersion = version; }
+    }).catch(() => {
+      if (!this._disposed && sessionKey(app) === context) this.setData({ loadError: true });
+    }).finally(() => { if (this._staffPromise === task) this._staffPromise = null; });
+    this._staffPromise = task;
+    return task;
   },
-
   loadTasks() {
-    request.get('/orders/page', { pageNum: 1, pageSize: 20 }).then(data => {
-      const records = (data && data.records) || [];
-      // 检查是否有待接单 (WAIT_ACCEPT 并且当前派单对应自己)
-      const pending = records.find(item => item.order.status === 'WAIT_ACCEPT' && item.currentDispatch && item.currentDispatch.status === 'PENDING');
-      
-      // 其它正在履约的订单
-      const tasks = records.filter(item => ['WAIT_VISIT', 'IN_SERVICE', 'WAIT_CONFIRM', 'COMPLETED'].includes(item.order.status));
-
-      this.setData({
-        pendingAttempt: pending ? { attempt: pending.currentDispatch, order: pending.order, elder: pending.elder } : null,
-        myTasks: tasks
-      });
+    if (this._tasksPromise) return this._tasksPromise;
+    const context = sessionKey(app);
+    const task = request.get('/orders/page', { pageNum: 1, pageSize: 20 }).then(data => {
+      if (this._disposed || sessionKey(app) !== context) return;
+      const records = (data?.records || []).map(taskCard);
+      const pending = records.find(item => item.order.status === 'WAIT_ACCEPT' && item.currentDispatch?.status === 'PENDING');
+      this._tasks = records.filter(item => ['WAIT_VISIT', 'IN_SERVICE', 'WAIT_CONFIRM', 'COMPLETED'].includes(item.order.status));
+      this.setData({ pendingAttempt: pending ? { attempt: pending.currentDispatch, order: pending.order, elder: pending.elder } : null });
+      this.filterTasks(this.data.currentTaskTabIndex);
+    }).finally(() => { if (this._tasksPromise === task) this._tasksPromise = null; });
+    this._tasksPromise = task;
+    return task;
+  },
+  onDispatchExpired() {
+    // Query once after the current load settles; the child emits once per deadline.
+    return Promise.resolve(this._tasksPromise).catch(() => {}).then(() => {
+      if (!this._hidden && !this._disposed) return this.loadTasks();
+    }).catch(() => { if (!this._disposed) this.setData({ loadError: true }); });
+  },
+  performAction(url, body, message, changesOrders = true) {
+    if (this.data.actionLoading) return Promise.resolve();
+    this.setData({ actionLoading: true });
+    return request.post(url, body).then(() => {
+      if (changesOrders) markOrdersChanged();
+      if (this._disposed) return;
+      wx.showToast({ title: message, icon: 'success' });
+      this.closeRecordModal();
+      // A read started before the mutation must finish before the fresh read.
+      return Promise.all([this._staffPromise, this._tasksPromise].map(pending => Promise.resolve(pending).catch(() => {})))
+        .then(() => { if (!this._disposed) return this.loadStaffData(true); });
+    }).catch(() => {}).finally(() => {
+      if (!this._disposed) this.setData({ actionLoading: false });
     });
   },
 
@@ -67,18 +151,12 @@ Page({
     const val = e.detail.value;
     const newStatus = val === '1' ? 'RESTING' : 'AVAILABLE';
     const staffId = this.data.staffProfile.profile.id;
-    request.post(`/staff/${staffId}/status?status=${newStatus}`).then(() => {
-      wx.showToast({ title: '工作状态已更新', icon: 'success' });
-      this.loadStaffData();
-    });
+    return this.performAction(`/staff/${staffId}/status?status=${newStatus}`, undefined, '工作状态已更新', false);
   },
 
   acceptDispatch(e) {
     const dispatchId = e.currentTarget.dataset.id;
-    request.post(`/dispatch/accept/${dispatchId}`).then(() => {
-      wx.showToast({ title: '接单成功，请按时上门', icon: 'success' });
-      this.loadStaffData();
-    });
+    return this.performAction(`/dispatch/accept/${dispatchId}`, undefined, '接单成功，请按时上门');
   },
 
   rejectDispatch(e) {
@@ -87,13 +165,10 @@ Page({
     wx.showModal({
       title: '拒绝接单',
       content: '确认无法接单吗？系统将自动释放并重派其他人员。',
-      confirmColor: '#ff4d4f',
+      confirmColor: '#b83a3a',
       success(res) {
         if (res.confirm) {
-          request.post('/dispatch/reject', { dispatchId, reason: '人员当前工作安排冲突' }).then(() => {
-            wx.showToast({ title: '已拒单并释放预留', icon: 'none' });
-            that.loadStaffData();
-          });
+          that.performAction('/dispatch/reject', { dispatchId, reason: '人员当前工作安排冲突' }, '已拒单并释放预留');
         }
       }
     });
@@ -101,14 +176,12 @@ Page({
 
   startService(e) {
     const orderId = e.currentTarget.dataset.id;
-    request.post(`/fulfillment/start/${orderId}`).then(() => {
-      wx.showToast({ title: '已签到，开始服务', icon: 'success' });
-      this.loadStaffData();
-    });
+    return this.performAction(`/fulfillment/start/${orderId}`, undefined, '已签到，开始服务');
   },
 
   openSubmitRecordModal(e) {
     const orderId = e.currentTarget.dataset.id;
+    this._recordSummary = '';
     this.setData({
       showRecordModal: true,
       currentOrderId: orderId,
@@ -121,11 +194,12 @@ Page({
   },
 
   onInputSummary(e) {
-    this.setData({ recordSummary: e.detail.value });
+    this._recordSummary = e.detail.value;
   },
 
   submitRecord() {
-    const { currentOrderId, recordSummary } = this.data;
+    const { currentOrderId } = this.data;
+    const recordSummary = this._recordSummary || this.data.recordSummary;
     if (!recordSummary.trim()) {
       wx.showToast({ title: '请填写服务情况说明', icon: 'none' });
       return;
@@ -133,19 +207,13 @@ Page({
 
     const pad = n => (n < 10 ? '0' + n : n);
     const now = new Date();
-    const start = new Date(now.getTime() - 60 * 60 * 1000); // 假设施工作业1小时
     const formatTime = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 
-    request.post('/fulfillment/submit-record', {
+    return this.performAction('/fulfillment/submit-record', {
       orderId: currentOrderId,
-      actualStartAt: formatTime(start),
       actualEndAt: formatTime(now),
       serviceSummary: recordSummary
-    }).then(() => {
-      wx.showToast({ title: '服务记录已提交', icon: 'success' });
-      this.closeRecordModal();
-      this.loadStaffData();
-    });
+    }, '服务记录已提交');
   },
 
   dialPhone(e) {

@@ -1,0 +1,46 @@
+// Only presentation fields cross the logic/view bridge.
+function serviceCard(item) {
+  const { id, name, category, description, durationMinutes, serviceArea, price } = item;
+  return { id, name, category, description, durationMinutes, serviceArea, price };
+}
+function orderCard(item) {
+  const order = item.order;
+  return {
+    viewId: String(order.id),
+    order: {
+      id: order.id, orderNo: order.orderNo, status: order.status,
+      serviceNameSnapshot: order.serviceNameSnapshot,
+      priceSnapshot: order.priceSnapshot, plannedStartAt: order.plannedStartAt
+    },
+    elder: item.elder ? { name: item.elder.name } : null,
+    currentStaff: item.currentStaff ? { user: {
+      realName: item.currentStaff.user.realName, phone: item.currentStaff.user.phone
+    } } : null
+  };
+}
+function taskCard(item) {
+  const card = orderCard(item);
+  const order = item.order;
+  Object.assign(card.order, {
+    addressSnapshot: order.addressSnapshot, plannedEndAt: order.plannedEndAt,
+    contactPhoneSnapshot: order.contactPhoneSnapshot,
+    durationMinutesSnapshot: order.durationMinutesSnapshot
+  });
+  if (item.elder) card.elder.age = item.elder.age;
+  card.currentDispatch = item.currentDispatch ? {
+    id: item.currentDispatch.id, status: item.currentDispatch.status,
+    deadline: item.currentDispatch.deadline
+  } : null;
+  return card;
+}
+function visibleTabs(index, count, retain = []) {
+  return Array.from({ length: count }, (_, i) => Math.abs(i - index) <= 1 || Boolean(retain[i]));
+}
+function sessionKey(app) {
+  return `${app.globalData.baseUrl || ''}|${app.globalData.token || ''}`;
+}
+function markOrdersChanged() {
+  const app = getApp();
+  app.globalData.ordersVersion = (app.globalData.ordersVersion || 0) + 1;
+}
+module.exports = { serviceCard, orderCard, taskCard, visibleTabs, sessionKey, markOrdersChanged };

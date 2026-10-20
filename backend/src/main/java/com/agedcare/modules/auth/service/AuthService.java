@@ -38,6 +38,9 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final ObjectMapper objectMapper;
 
+    @Value("${app.dev-mode:false}")
+    private boolean devMode;
+
     @Value("${wechat.miniapp.appid:}")
     private String wechatAppId;
 
@@ -81,7 +84,8 @@ public class AuthService {
             throw new BusinessException("手机号已被注册");
         }
 
-        String role = StringUtils.hasText(req.getRole()) ? req.getRole().toUpperCase() : UserRole.RESIDENT.getCode();
+        // 强制限定公开注册用户只能是社区居民身份(RESIDENT)，防提权越权
+        String role = UserRole.RESIDENT.getCode();
 
         SysUser newUser = SysUser.builder()
                 .username(req.getUsername())
@@ -99,13 +103,19 @@ public class AuthService {
     }
 
     public AuthResponse mockLogin(String role, String username) {
-        LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<SysUser>();
+        if (!devMode) {
+            throw new BusinessException(403, "当前运行环境已禁用模拟演示切换登录");
+        }
+
+        if (!StringUtils.hasText(username) && !StringUtils.hasText(role)) {
+            throw new BusinessException(400, "必须指定具体的演示用户名或角色");
+        }
+
+        LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<>();
         if (StringUtils.hasText(username)) {
             wrapper.eq(SysUser::getUsername, username);
-        } else if (StringUtils.hasText(role)) {
-            wrapper.eq(SysUser::getRole, role.toUpperCase()).last("LIMIT 1");
         } else {
-            wrapper.eq(SysUser::getUsername, "admin");
+            wrapper.eq(SysUser::getRole, role.toUpperCase()).last("LIMIT 1");
         }
 
         SysUser user = userMapper.selectOne(wrapper);
@@ -126,17 +136,21 @@ public class AuthService {
         SysUser user = userMapper.selectOne(new LambdaQueryWrapper<SysUser>()
                 .eq(SysUser::getOpenid, openid));
 
-        if (user == null) {
-            // 首次微信进入，自动注册为居民账号
-            String role = StringUtils.hasText(req.getRole()) ? req.getRole().toUpperCase() : UserRole.RESIDENT.getCode();
+        if (user != null) {
+            if (user.getStatus() != null && user.getStatus() == 0) {
+                throw new BusinessException("该微信关联账号已被管理员停用，请联系社区处理");
+            }
+        } else {
+            // 首次微信进入，自动注册为居民账号，生成不可逆随机口令，phone 设为 null 防止 MySQL 唯一键冲突
+            String role = UserRole.RESIDENT.getCode();
             String generatedUsername = "wx_" + openid.substring(Math.max(0, openid.length() - 8));
             String nickName = StringUtils.hasText(req.getNickName()) ? req.getNickName() : "微信居民用户";
 
             user = SysUser.builder()
                     .username(generatedUsername)
-                    .password(passwordEncoder.encode("123456"))
+                    .password(passwordEncoder.encode(java.util.UUID.randomUUID().toString()))
                     .realName(nickName)
-                    .phone("")
+                    .phone(null)
                     .avatar(req.getAvatarUrl() != null ? req.getAvatarUrl() : "")
                     .role(role)
                     .openid(openid)
@@ -152,8 +166,12 @@ public class AuthService {
 
     private String fetchWechatOpenid(String code) {
         if (!StringUtils.hasText(wechatAppId) || !StringUtils.hasText(wechatSecret)) {
-            log.warn("微信 AppID 或 Secret 未配置，生成模拟 openid 用于联调");
-            return "mock_openid_" + code;
+            if (devMode) {
+                log.warn("开发演示模式且微信配置未就绪，使用模拟 openid 用于联调");
+                return "mock_openid_" + code;
+            }
+            log.error("系统微信配置缺失，且未开启开发演示模式，拒绝登录");
+            throw new BusinessException("系统微信登录未就绪，请使用账号密码登录或联系管理员");
         }
 
         String url = String.format(

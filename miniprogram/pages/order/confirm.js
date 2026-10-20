@@ -1,11 +1,35 @@
+const navigation = require('../../utils/navigation.js');
 const request = require('../../utils/request.js');
-const app = getApp();
+const { markOrdersChanged } = require('../../utils/list-state.js');
+
+function getAppSafe() {
+  try {
+    return getApp() || { globalData: {} };
+  } catch (_) {
+    return { globalData: {} };
+  }
+}
+
+const app = new Proxy({}, {
+  get(_, prop) {
+    const instance = getAppSafe();
+    const val = instance[prop];
+    if (typeof val === 'function') return val.bind(instance);
+    return val;
+  },
+  set(_, prop, val) {
+    const instance = getAppSafe();
+    instance[prop] = val;
+    return true;
+  }
+});
 
 Page({
   data: {
     orderId: null,
     rating: 5,
     content: '',
+    submitting: false,
     isElderMode: false,
     scoreDescMap: {
       1: '非常不满意，亟需改进',
@@ -23,8 +47,12 @@ Page({
   },
 
   onShow() {
-    this.setData({ isElderMode: app.globalData.isElderMode });
+    const app = getAppSafe();
+    const isElder = Boolean(app.globalData?.isElderMode);
+    if (this.data.isElderMode !== isElder) this.setData({ isElderMode: isElder });
+    navigation.requireLogin(`/pages/order/confirm?orderId=${this.data.orderId || ''}`);
   },
+  onUnload() { this._disposed = true; },
 
   setRating(e) {
     const rating = e.currentTarget.dataset.rating;
@@ -36,16 +64,23 @@ Page({
   },
 
   submitReview() {
+    if (this.data.submitting) return;
+    if (this._submitted) { this.returnToOrder(); return; }
     const { orderId, rating, content } = this.data;
-    request.post('/fulfillment/review', {
+    this.setData({ submitting: true });
+    return request.post('/fulfillment/review', {
       orderId,
       rating,
       content
     }).then(() => {
+      markOrdersChanged();
+      this._submitted = true;
+      if (this._disposed) return;
       wx.showToast({ title: '评价成功，感谢反馈', icon: 'success' });
-      setTimeout(() => {
-        wx.navigateBack();
-      }, 1000);
-    });
+      this.returnToOrder();
+    }).catch(() => { if (!this._disposed) this.setData({ submitting: false }); });
+  },
+  returnToOrder() {
+    navigation.navigateBack({ fail: () => { if (!this._disposed) this.setData({ submitting: false }); } });
   }
 });

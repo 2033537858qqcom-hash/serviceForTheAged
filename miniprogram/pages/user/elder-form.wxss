@@ -1,44 +1,6 @@
-.container {
-  padding: 24rpx;
-}
-
-.form-card {
-  padding: 28rpx;
-}
-
-.card-title {
-  font-size: 32rpx;
-  font-weight: bold;
-  border-left: 8rpx solid #1890ff;
-  padding-left: 14rpx;
-  margin-bottom: 24rpx;
-}
-
-.form-item {
-  padding: 20rpx 0;
-  border-bottom: 1rpx solid #f0f0f0;
-}
-
-.label {
-  width: 180rpx;
-  font-size: 28rpx;
-  color: #595959;
-}
-
-.input {
-  flex: 1;
-  font-size: 28rpx;
-}
-
-.picker-val {
-  font-size: 28rpx;
-  color: #262626;
-}
-
-.btn-save {
-  margin-top: 48rpx;
-  height: 88rpx;
-  line-height: 88rpx;
-  font-size: 32rpx;
-  border-radius: 44rpx;
-}
+.card-title { font-size: var(--font-section); font-weight: 600; margin-bottom: 12rpx; }
+.form-item { display: flex; flex-direction: column; align-items: stretch; gap: 14rpx; padding: 24rpx 0; }
+.label { font-size: var(--font-caption); color: var(--text-regular); }
+.input, .picker-val { width: 100%; min-height: var(--control-height); height: var(--control-height); border: 1rpx solid var(--border-color); border-radius: 14rpx; background: #f7f9f5; font-size: var(--font-body); padding: 22rpx; }
+.picker-val { display: flex; align-items: center; justify-content: space-between; }
+.btn-save { margin-top: 30rpx; }

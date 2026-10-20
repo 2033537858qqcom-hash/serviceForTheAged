@@ -22,6 +22,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/auth/register",
                         "/auth/wechat-login",
                         "/auth/mock-login",
+                        "/service-items/list-available",
                         "/swagger-ui/**",
                         "/swagger-ui.html",
                         "/v3/api-docs/**",

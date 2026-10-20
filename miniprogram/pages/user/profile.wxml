@@ -1,63 +1,130 @@
-<view class="container {{isElderMode ? 'elder-mode' : ''}}">
-  <!-- 用户卡片 -->
-  <view class="card user-card flex-between">
-    <view class="flex-row">
-      <view class="avatar">👤</view>
-      <view wx:if="{{userInfo}}">
-        <view class="user-name">{{userInfo.realName || userInfo.username}}</view>
-        <view class="role-tag tag tag-info">{{roleTextMap[userInfo.role] || userInfo.role}}</view>
-      </view>
-      <view wx:else>
-        <view class="user-name">尚未登录</view>
-        <view class="user-sub">请选择演示身份快速切换登录</view>
+<view class="container profile-page {{isElderMode ? 'elder-mode' : ''}}">
+  <view class="profile-intro">我的照护与社区生活</view>
+
+  <!-- 用户头部身份卡片 -->
+  <view class="profile-hero">
+    <view class="profile-avatar">
+      <image src="/assets/icons/user.png" />
+    </view>
+    <view class="profile-identity">
+      <view class="user-name">{{userInfo ? (userInfo.realName || userInfo.username) : '欢迎来到颐邻社区养老'}}</view>
+      <view class="user-sub">
+        <text class="role-badge" wx:if="{{userInfo}}">{{roleTextMap[userInfo.role] || userInfo.role}}</text>
+        <text wx:else>登录后，为自己和家人安排养老照料</text>
       </view>
     </view>
-    <button class="btn-logout" size="mini" wx:if="{{userInfo}}" bindtap="logout">退出</button>
+    <button wx:if="{{userInfo}}" class="btn-logout spring" hover-class="spring-in" hover-stay-time="80" size="mini" bindtap="confirmLogout">退出</button>
   </view>
 
-  <!-- 演示环境专属：一键快速切换角色登录面板 (答辩与测试利器) -->
-  <view class="card mock-login-card">
-    <view class="mock-title">⚡ 演示测试账号一键切换</view>
-    <view class="mock-buttons">
-      <button class="btn-mock" bindtap="quickLogin" data-user="resident01">赵大爷 (老人本人)</button>
-      <button class="btn-mock" bindtap="quickLogin" data-user="family01">赵志强 (家属代约)</button>
-      <button class="btn-mock" bindtap="quickLogin" data-user="staff01">张玉兰 (服务人员)</button>
-      <button class="btn-mock" bindtap="quickLogin" data-user="admin">管理员账号</button>
+  <!-- 未登录状态进入登录页面 -->
+  <button wx:if="{{!userInfo}}" class="btn-primary profile-login" hover-class="spring-in" hover-stay-time="80" bindtap="goToLogin">立即登录 / 注册</button>
+
+  <!-- 我的服务订单快捷看板 -->
+  <view class="card order-hub-card" wx:if="{{userInfo}}">
+    <view class="hub-header flex-between" bindtap="goToOrderList" data-status="">
+      <text class="hub-title">我的服务订单</text>
+      <view class="hub-all flex-row">
+        <text>全部服务</text>
+        <image class="menu-arrow" src="/assets/icons/arrow.png" />
+      </view>
+    </view>
+    <view class="hub-grid">
+      <view class="hub-item" bindtap="goToOrderList" data-status="WAIT_DISPATCH">
+        <view class="hub-icon-wrap"><image src="/assets/icons/time.png" /></view>
+        <text class="hub-label">待调度</text>
+      </view>
+      <view class="hub-item" bindtap="goToOrderList" data-status="WAIT_VISIT">
+        <view class="hub-icon-wrap"><image src="/assets/icons/calendar.png" /></view>
+        <text class="hub-label">待上门</text>
+      </view>
+      <view class="hub-item" bindtap="goToOrderList" data-status="IN_SERVICE">
+        <view class="hub-icon-wrap"><image src="/assets/icons/staff.png" /></view>
+        <text class="hub-label">服务中</text>
+      </view>
+      <view class="hub-item" bindtap="goToOrderList" data-status="WAIT_CONFIRM">
+        <view class="hub-icon-wrap"><image src="/assets/icons/check.png" /></view>
+        <text class="hub-label">待确认</text>
+      </view>
     </view>
   </view>
 
-  <!-- 功能入口列表 -->
+  <!-- 核心照护服务菜单 -->
   <view class="card menu-card">
-    <view class="menu-item flex-between" bindtap="goToElderList">
-      <view class="flex-row">
-        <text class="menu-icon">👵</text>
-        <text class="menu-label">我绑定的老人档案</text>
+    <view class="menu-item" hover-class="spring-in" hover-stay-time="80" bindtap="goToElderList">
+      <view class="menu-icon-wrap"><image src="/assets/icons/user.png" /></view>
+      <view class="menu-copy">
+        <view class="menu-label">老人档案管理</view>
+        <view class="menu-description">登记长辈健康状况、自理评级与住址</view>
       </view>
-      <text class="arrow">›</text>
+      <image class="menu-arrow" src="/assets/icons/arrow.png" />
     </view>
 
-    <view class="menu-item flex-between" bindtap="goToFamily">
-      <view class="flex-row">
-        <text class="menu-icon">👨‍👩‍👧</text>
-        <text class="menu-label">家属代约绑定申请</text>
+    <view class="menu-item" hover-class="spring-in" hover-stay-time="80" bindtap="goToFamily">
+      <view class="menu-icon-wrap"><image src="/assets/icons/family.png" /></view>
+      <view class="menu-copy">
+        <view class="menu-label">家属代约绑定</view>
+        <view class="menu-description">绑定父母长辈，远程代办与进度查看</view>
       </view>
-      <text class="arrow">›</text>
+      <image class="menu-arrow" src="/assets/icons/arrow.png" />
     </view>
 
-    <view class="menu-item flex-between" wx:if="{{userInfo && userInfo.role === 'STAFF'}}" bindtap="goToWorkbench">
-      <view class="flex-row">
-        <text class="menu-icon">🛠️</text>
-        <text class="menu-label">服务人员工作台</text>
+    <view wx:if="{{userInfo && userInfo.role === 'STAFF'}}" class="menu-item" hover-class="spring-in" hover-stay-time="80" bindtap="goToWorkbench">
+      <view class="menu-icon-wrap"><image src="/assets/icons/staff.png" /></view>
+      <view class="menu-copy">
+        <view class="menu-label">服务人员工作台</view>
+        <view class="menu-description">接单响应、现场签到与履约总结提交</view>
       </view>
-      <text class="arrow">›</text>
+      <image class="menu-arrow" src="/assets/icons/arrow.png" />
     </view>
 
-    <view class="menu-item flex-between">
-      <view class="flex-row">
-        <text class="menu-icon">👓</text>
-        <text class="menu-label">关爱适老模式</text>
+    <!-- 便民服务 ActionSheet 唤起 -->
+    <view class="menu-item" hover-class="spring-in" hover-stay-time="80" bindtap="contactSupportSheet">
+      <view class="menu-icon-wrap"><image src="/assets/icons/phone.png" /></view>
+      <view class="menu-copy">
+        <view class="menu-label">社区便民与应急服务</view>
+        <view class="menu-description">24小时养老热线、家庭医生直通车与责任网格员</view>
       </view>
-      <switch checked="{{isElderMode}}" color="#1890ff" bindchange="onModeChange"/>
+      <image class="menu-arrow" src="/assets/icons/arrow.png" />
     </view>
   </view>
+
+  <!-- 系统与体验设置卡片 -->
+  <view class="card menu-card">
+    <view class="menu-item">
+      <view class="menu-icon-wrap"><image src="/assets/icons/care.png" /></view>
+      <view class="menu-copy">
+        <view class="menu-label">关爱适老模式</view>
+        <view class="menu-description">超大字体、温和对比度与易读排版</view>
+      </view>
+      <switch checked="{{isElderMode}}" color="#176b5d" bindchange="onModeChange" />
+    </view>
+
+    <!-- 演示账号 ActionSheet 切换 (取代原先平铺的简陋按钮) -->
+    <view class="menu-item" hover-class="spring-in" hover-stay-time="80" bindtap="openRoleSwitchSheet">
+      <view class="menu-icon-wrap"><image src="/assets/icons/settings.png" /></view>
+      <view class="menu-copy">
+        <view class="menu-label">切换演示身份</view>
+        <view class="menu-description">老人本人、家属代约、服务人员、管理员一键流转</view>
+      </view>
+      <image class="menu-arrow" src="/assets/icons/arrow.png" />
+    </view>
+
+    <!-- 后端地址 ActionSheet 切换 -->
+    <view class="menu-item" hover-class="spring-in" hover-stay-time="80" bindtap="changeServerUrl">
+      <view class="menu-icon-wrap"><image src="/assets/icons/network.png" /></view>
+      <view class="menu-copy">
+        <view class="menu-label">服务接口地址</view>
+        <view class="menu-description">{{currentBaseUrl}}</view>
+      </view>
+      <image class="menu-arrow" src="/assets/icons/arrow.png" />
+    </view>
+  </view>
+
+  <!-- 页脚信息 -->
+  <view class="profile-footer">
+    <view class="profile-footer-name">颐邻 · 社区居家养老服务系统</view>
+    <view>熟悉的邻里，用心的照料。</view>
+  </view>
+
+  <bottom-sheet show="{{logoutSheet}}" title="退出当前账号" content="退出后需要重新登录才能预约和查看订单。" confirm-text="退出登录" tone="danger" dismiss-text="再想想" bind:close="closeLogoutSheet" bind:confirm="logout"></bottom-sheet>
 </view>
