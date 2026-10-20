@@ -1,0 +1,117 @@
+.container {
+  padding: 24rpx;
+  padding-bottom: 80rpx;
+}
+
+.item-summary {
+  background: #f0f7ff;
+  border-left: 8rpx solid #1890ff;
+  padding: 24rpx 28rpx;
+}
+
+.item-title {
+  font-size: 34rpx;
+  font-weight: bold;
+}
+
+.item-time {
+  font-size: 24rpx;
+  color: #8c8c8c;
+  margin-top: 6rpx;
+}
+
+.item-price {
+  font-size: 44rpx;
+  font-weight: bold;
+  color: #ff4d4f;
+}
+
+.form-card {
+  padding: 28rpx;
+  margin-top: 20rpx;
+}
+
+.form-title {
+  font-size: 30rpx;
+  font-weight: bold;
+  color: #262626;
+  margin-bottom: 20rpx;
+}
+
+.picker-box {
+  background: #fafafa;
+  border: 1rpx solid #e8e8e8;
+  padding: 22rpx 24rpx;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+}
+
+.placeholder {
+  color: #bfbfbf;
+}
+
+.arrow {
+  color: #8c8c8c;
+  font-size: 24rpx;
+}
+
+.add-elder-link {
+  font-size: 26rpx;
+  color: #1890ff;
+  text-align: right;
+  margin-top: 16rpx;
+}
+
+.time-pickers {
+  gap: 20rpx;
+}
+
+.picker-item {
+  flex: 1;
+  background: #fafafa;
+  border: 1rpx solid #e8e8e8;
+  padding: 20rpx 24rpx;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+}
+
+.picker-icon {
+  font-size: 30rpx;
+}
+
+.time-tip {
+  font-size: 22rpx;
+  color: #faad14;
+  margin-top: 14rpx;
+}
+
+.form-item {
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.form-item:last-child {
+  border-bottom: none;
+}
+
+.form-label {
+  width: 160rpx;
+  font-size: 28rpx;
+  color: #595959;
+}
+
+.form-input {
+  flex: 1;
+  font-size: 28rpx;
+}
+
+.submit-box {
+  margin-top: 48rpx;
+}
+
+.btn-submit-order {
+  height: 90rpx;
+  line-height: 90rpx;
+  font-size: 34rpx;
+  border-radius: 45rpx;
+}

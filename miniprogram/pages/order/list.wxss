@@ -1,0 +1,97 @@
+.container {
+  padding: 20rpx;
+}
+
+.tabs {
+  background: #ffffff;
+  border-radius: 16rpx;
+  padding: 16rpx 10rpx;
+  margin-bottom: 24rpx;
+}
+
+.tab-item {
+  flex: 1;
+  text-align: center;
+  font-size: 28rpx;
+  color: #595959;
+  padding: 10rpx 0;
+  border-radius: 8rpx;
+}
+
+.tab-item.active {
+  color: #1890ff;
+  font-weight: bold;
+  border-bottom: 4rpx solid #1890ff;
+}
+
+.order-card {
+  margin-bottom: 24rpx;
+  padding: 26rpx;
+}
+
+.card-top {
+  border-bottom: 1rpx solid #f0f0f0;
+  padding-bottom: 14rpx;
+  margin-bottom: 16rpx;
+}
+
+.order-no {
+  font-size: 24rpx;
+  color: #8c8c8c;
+}
+
+.service-name-row {
+  margin-bottom: 12rpx;
+}
+
+.service-title {
+  font-size: 34rpx;
+  font-weight: bold;
+  color: #262626;
+}
+
+.service-price {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #ff4d4f;
+}
+
+.order-row {
+  font-size: 26rpx;
+  color: #595959;
+  margin-bottom: 8rpx;
+}
+
+.card-bottom {
+  margin-top: 16rpx;
+  padding-top: 14rpx;
+  border-top: 1rpx solid #f0f0f0;
+}
+
+.staff-hint {
+  font-size: 24rpx;
+  color: #1890ff;
+}
+
+.btn-action {
+  margin: 0;
+  padding: 0 28rpx !important;
+  height: 60rpx;
+  line-height: 60rpx;
+  font-size: 26rpx;
+}
+
+.empty-tip {
+  text-align: center;
+  margin-top: 120rpx;
+}
+
+.empty-icon {
+  font-size: 80rpx;
+}
+
+.empty-text {
+  font-size: 28rpx;
+  color: #bfbfbf;
+  margin-top: 16rpx;
+}

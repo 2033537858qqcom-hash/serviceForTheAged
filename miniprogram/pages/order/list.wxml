@@ -1,0 +1,41 @@
+<view class="container {{isElderMode ? 'elder-mode' : ''}}">
+  <!-- 订单状态选项卡 -->
+  <view class="tabs flex-between">
+    <view class="tab-item {{statusTab === '' ? 'active' : ''}}" bindtap="changeTab" data-status="">全部</view>
+    <view class="tab-item {{statusTab === 'WAIT_ACCEPT' ? 'active' : ''}}" bindtap="changeTab" data-status="WAIT_ACCEPT">待接单</view>
+    <view class="tab-item {{statusTab === 'WAIT_VISIT' ? 'active' : ''}}" bindtap="changeTab" data-status="WAIT_VISIT">待上门</view>
+    <view class="tab-item {{statusTab === 'WAIT_CONFIRM' ? 'active' : ''}}" bindtap="changeTab" data-status="WAIT_CONFIRM">待确认</view>
+    <view class="tab-item {{statusTab === 'COMPLETED' ? 'active' : ''}}" bindtap="changeTab" data-status="COMPLETED">已完成</view>
+  </view>
+
+  <!-- 订单列表 -->
+  <view class="order-list">
+    <view class="card order-card" wx:for="{{orders}}" wx:key="id" bindtap="goToDetail" data-id="{{item.order.id}}">
+      <view class="flex-between card-top">
+        <text class="order-no">订单号：{{item.order.orderNo}}</text>
+        <text class="tag {{statusTagMap[item.order.status] || 'tag-info'}}">{{statusTextMap[item.order.status] || item.order.status}}</text>
+      </view>
+      <view class="service-name-row flex-between">
+        <text class="service-title">{{item.order.serviceNameSnapshot}}</text>
+        <text class="service-price">¥{{item.order.priceSnapshot}}</text>
+      </view>
+      <view class="order-row">服务对象：{{item.elder ? item.elder.name : '老人'}} ({{item.elder.address}})</view>
+      <view class="order-row">预约时间：{{item.order.plannedStartAt}}</view>
+      
+      <view class="card-bottom flex-between" catchtap="noAction">
+        <view class="staff-hint" wx:if="{{item.currentStaff}}">
+          师傅：{{item.currentStaff.user.realName}} ({{item.currentStaff.user.phone}})
+        </view>
+        <view class="staff-hint" wx:else>
+          系统正在智能分配派单...
+        </view>
+        <button class="btn-primary btn-action" size="mini" catchtap="goToDetail" data-id="{{item.order.id}}">详情</button>
+      </view>
+    </view>
+    
+    <view class="empty-tip" wx:if="{{orders.length === 0}}">
+      <view class="empty-icon">📋</view>
+      <view class="empty-text">暂无相关订单记录</view>
+    </view>
+  </view>
+</view>

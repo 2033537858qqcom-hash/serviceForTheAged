@@ -1,0 +1,63 @@
+<view class="container {{isElderMode ? 'elder-mode' : ''}}">
+  <!-- 用户卡片 -->
+  <view class="card user-card flex-between">
+    <view class="flex-row">
+      <view class="avatar">👤</view>
+      <view wx:if="{{userInfo}}">
+        <view class="user-name">{{userInfo.realName || userInfo.username}}</view>
+        <view class="role-tag tag tag-info">{{roleTextMap[userInfo.role] || userInfo.role}}</view>
+      </view>
+      <view wx:else>
+        <view class="user-name">尚未登录</view>
+        <view class="user-sub">请选择演示身份快速切换登录</view>
+      </view>
+    </view>
+    <button class="btn-logout" size="mini" wx:if="{{userInfo}}" bindtap="logout">退出</button>
+  </view>
+
+  <!-- 演示环境专属：一键快速切换角色登录面板 (答辩与测试利器) -->
+  <view class="card mock-login-card">
+    <view class="mock-title">⚡ 演示测试账号一键切换</view>
+    <view class="mock-buttons">
+      <button class="btn-mock" bindtap="quickLogin" data-user="resident01">赵大爷 (老人本人)</button>
+      <button class="btn-mock" bindtap="quickLogin" data-user="family01">赵志强 (家属代约)</button>
+      <button class="btn-mock" bindtap="quickLogin" data-user="staff01">张玉兰 (服务人员)</button>
+      <button class="btn-mock" bindtap="quickLogin" data-user="admin">管理员账号</button>
+    </view>
+  </view>
+
+  <!-- 功能入口列表 -->
+  <view class="card menu-card">
+    <view class="menu-item flex-between" bindtap="goToElderList">
+      <view class="flex-row">
+        <text class="menu-icon">👵</text>
+        <text class="menu-label">我绑定的老人档案</text>
+      </view>
+      <text class="arrow">›</text>
+    </view>
+
+    <view class="menu-item flex-between" bindtap="goToFamily">
+      <view class="flex-row">
+        <text class="menu-icon">👨‍👩‍👧</text>
+        <text class="menu-label">家属代约绑定申请</text>
+      </view>
+      <text class="arrow">›</text>
+    </view>
+
+    <view class="menu-item flex-between" wx:if="{{userInfo && userInfo.role === 'STAFF'}}" bindtap="goToWorkbench">
+      <view class="flex-row">
+        <text class="menu-icon">🛠️</text>
+        <text class="menu-label">服务人员工作台</text>
+      </view>
+      <text class="arrow">›</text>
+    </view>
+
+    <view class="menu-item flex-between">
+      <view class="flex-row">
+        <text class="menu-icon">👓</text>
+        <text class="menu-label">关爱适老模式</text>
+      </view>
+      <switch checked="{{isElderMode}}" color="#1890ff" bindchange="onModeChange"/>
+    </view>
+  </view>
+</view>

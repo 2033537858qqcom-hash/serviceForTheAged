@@ -1,0 +1,97 @@
+<view class="container {{isElderMode ? 'elder-mode' : ''}}" wx:if="{{orderVO}}">
+  <!-- 状态条幅 -->
+  <view class="status-banner bg-{{orderVO.order.status}}">
+    <view class="status-title">{{statusTextMap[orderVO.order.status] || orderVO.order.status}}</view>
+    <view class="status-sub">{{statusSubMap[orderVO.order.status] || ''}}</view>
+  </view>
+
+  <!-- 派单师傅信息卡片 (已接单后展示) -->
+  <view class="card staff-card flex-between" wx:if="{{orderVO.currentStaff}}">
+    <view class="flex-row">
+      <view class="staff-avatar">👨‍🔧</view>
+      <view>
+        <view class="staff-name">{{orderVO.currentStaff.user.realName}} <text class="tag tag-success">社区服务人员</text></view>
+        <view class="staff-sub">服务均分: {{orderVO.currentStaff.profile.priorRating}}分 | 累计完成: {{orderVO.currentStaff.profile.totalOrders}}单</view>
+      </view>
+    </view>
+    <button class="btn-dial" size="mini" bindtap="callStaff">拨打电话</button>
+  </view>
+
+  <!-- 服务基本信息 -->
+  <view class="card info-card">
+    <view class="card-title">服务基本信息</view>
+    <view class="info-item flex-between">
+      <text class="label">服务项目</text>
+      <text class="value bold">{{orderVO.order.serviceNameSnapshot}}</text>
+    </view>
+    <view class="info-item flex-between">
+      <text class="label">服务费用</text>
+      <text class="value price">¥{{orderVO.order.priceSnapshot}}</text>
+    </view>
+    <view class="info-item flex-between">
+      <text class="label">预计时长</text>
+      <text class="value">{{orderVO.order.durationMinutesSnapshot}} 分钟</text>
+    </view>
+    <view class="info-item flex-between">
+      <text class="label">预约开始</text>
+      <text class="value">{{orderVO.order.plannedStartAt}}</text>
+    </view>
+    <view class="info-item flex-between">
+      <text class="label">服务对象</text>
+      <text class="value">{{orderVO.elder ? orderVO.elder.name : '老人'}}</text>
+    </view>
+    <view class="info-item flex-between">
+      <text class="label">服务地址</text>
+      <text class="value">{{orderVO.order.addressSnapshot}}</text>
+    </view>
+    <view class="info-item flex-between">
+      <text class="label">联系人</text>
+      <text class="value">{{orderVO.order.contactNameSnapshot}} ({{orderVO.order.contactPhoneSnapshot}})</text>
+    </view>
+    <view class="info-item flex-between" wx:if="{{orderVO.order.remark}}">
+      <text class="label">备注说明</text>
+      <text class="value">{{orderVO.order.remark}}</text>
+    </view>
+    <view class="info-item flex-between">
+      <text class="label">订单编号</text>
+      <text class="value code">{{orderVO.order.orderNo}}</text>
+    </view>
+  </view>
+
+  <!-- 履约上门记录 (服务人员提交后展示) -->
+  <view class="card record-card" wx:if="{{orderVO.serviceRecord}}">
+    <view class="card-title">现场服务履约记录</view>
+    <view class="record-line">实际服务时间：{{orderVO.serviceRecord.actualStartAt}} ~ {{orderVO.serviceRecord.actualEndAt}}</view>
+    <view class="record-summary">工作总结：{{orderVO.serviceRecord.serviceSummary}}</view>
+  </view>
+
+  <!-- 服务评价展示 (评价后展示) -->
+  <view class="card review-card" wx:if="{{orderVO.serviceReview}}">
+    <view class="card-title flex-between">
+      <text>服务评价反馈</text>
+      <text class="rating-stars">⭐ {{orderVO.serviceReview.rating}} 星</text>
+    </view>
+    <view class="review-content">{{orderVO.serviceReview.content || '客户未填写文字评价'}}</view>
+  </view>
+
+  <!-- 订单流转时间线 -->
+  <view class="card timeline-card">
+    <view class="card-title">状态流转记录</view>
+    <view class="timeline">
+      <view class="timeline-node" wx:for="{{orderVO.logs}}" wx:key="id">
+        <view class="dot"></view>
+        <view class="node-content">
+          <view class="node-time">{{item.createdAt}}</view>
+          <view class="node-text">{{statusTextMap[item.toStatus] || item.toStatus}}：{{item.reason}}</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部操作按钮栏 -->
+  <view class="bottom-actions flex-row">
+    <button class="btn-cancel" wx:if="{{canCancel}}" bindtap="cancelOrder">取消订单</button>
+    <button class="btn-primary btn-confirm {{isElderMode ? 'btn-large' : ''}}" wx:if="{{orderVO.order.status === 'WAIT_CONFIRM'}}" bindtap="confirmOrder">确认完成</button>
+    <button class="btn-primary btn-review {{isElderMode ? 'btn-large' : ''}}" wx:if="{{orderVO.order.status === 'COMPLETED' && !orderVO.serviceReview}}" bindtap="goToReview">评价服务</button>
+  </view>
+</view>

@@ -1,0 +1,18 @@
+<view class="container {{isElderMode ? 'elder-mode' : ''}}">
+  <view class="card rating-card">
+    <view class="rating-title">服务满意度评分</view>
+    <view class="stars-box flex-row">
+      <view class="star-item {{rating >= item ? 'active' : ''}}" wx:for="{{[1, 2, 3, 4, 5]}}" wx:key="*this" bindtap="setRating" data-rating="{{item}}">
+        ★
+      </view>
+    </view>
+    <view class="score-desc">{{scoreDescMap[rating] || '请点击星星打分'}}</view>
+  </view>
+
+  <view class="card comment-card">
+    <view class="rating-title">评语或建议</view>
+    <textarea class="comment-input" placeholder="请记录您对服务态度、准时程度、操作规范等方面的意见..." value="{{content}}" bindinput="onInputContent" maxlength="200" />
+  </view>
+
+  <button class="btn-primary btn-submit {{isElderMode ? 'btn-large' : ''}}" bindtap="submitReview">提交评价</button>
+</view>

@@ -1,0 +1,44 @@
+<view class="container {{isElderMode ? 'elder-mode' : ''}}">
+  <view class="card form-card">
+    <view class="card-title">老人基本档案登记</view>
+    
+    <view class="form-item flex-row">
+      <text class="label">老人姓名</text>
+      <input class="input" placeholder="姓名" value="{{name}}" bindinput="onInputName" />
+    </view>
+
+    <view class="form-item flex-row">
+      <text class="label">性别</text>
+      <picker range="{{['男 (MALE)', '女 (FEMALE)']}}" value="{{gender === 'FEMALE' ? 1 : 0}}" bindchange="onGenderChange">
+        <view class="picker-val">{{gender === 'FEMALE' ? '女' : '男'}} ▼</view>
+      </picker>
+    </view>
+
+    <view class="form-item flex-row">
+      <text class="label">年龄</text>
+      <input class="input" type="number" placeholder="年龄(如80)" value="{{age}}" bindinput="onInputAge" />
+    </view>
+
+    <view class="form-item flex-row">
+      <text class="label">居住地址</text>
+      <input class="input" placeholder="阳光花园社区X号楼X单元" value="{{address}}" bindinput="onInputAddress" />
+    </view>
+
+    <view class="form-item flex-row">
+      <text class="label">紧急联系人</text>
+      <input class="input" placeholder="联系人姓名" value="{{emergencyContact}}" bindinput="onInputContact" />
+    </view>
+
+    <view class="form-item flex-row">
+      <text class="label">联系电话</text>
+      <input class="input" type="number" placeholder="联系人电话" value="{{emergencyPhone}}" bindinput="onInputPhone" />
+    </view>
+
+    <view class="form-item flex-row">
+      <text class="label">照护需求</text>
+      <input class="input" placeholder="如高血压、行动迟缓、需助餐等" value="{{healthNote}}" bindinput="onInputHealth" />
+    </view>
+
+    <button class="btn-primary btn-save {{isElderMode ? 'btn-large' : ''}}" bindtap="saveElder">保存老人档案</button>
+  </view>
+</view>

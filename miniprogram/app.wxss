@@ -1,0 +1,89 @@
+/** 全局公共样式 **/
+page {
+  --primary-color: #1890ff;
+  --primary-dark: #096dd9;
+  --secondary-color: #52c41a;
+  --warning-color: #faad14;
+  --danger-color: #ff4d4f;
+  --text-main: #262626;
+  --text-regular: #595959;
+  --text-secondary: #8c8c8c;
+  --border-color: #f0f0f0;
+  --bg-color: #f5f7fa;
+
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  box-sizing: border-box;
+}
+
+/* 适老化大字模式全局样式增强 */
+.elder-mode {
+  --primary-color: #0b6bc7;
+  font-size: 36rpx !important;
+  line-height: 1.6;
+}
+
+.elder-mode text, 
+.elder-mode view,
+.elder-mode input,
+.elder-mode button {
+  font-size: 36rpx;
+  letter-spacing: 1rpx;
+}
+
+.elder-mode .btn-large {
+  height: 110rpx !important;
+  line-height: 110rpx !important;
+  font-size: 40rpx !important;
+  font-weight: bold;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+}
+
+.flex-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.flex-between {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.flex-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  color: #ffffff;
+  border-radius: 12rpx;
+  font-weight: 500;
+}
+
+.btn-primary:active {
+  background-color: var(--primary-dark);
+}
+
+.tag {
+  display: inline-block;
+  padding: 4rpx 14rpx;
+  border-radius: 8rpx;
+  font-size: 24rpx;
+}
+
+.tag-success { background: #f6ffed; color: #52c41a; border: 1rpx solid #b7eb8f; }
+.tag-warning { background: #fffbe6; color: #faad14; border: 1rpx solid #ffe58f; }
+.tag-danger { background: #fff1f0; color: #ff4d4f; border: 1rpx solid #ffa39e; }
+.tag-info { background: #e6f7ff; color: #1890ff; border: 1rpx solid #91d5ff; }

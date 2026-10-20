@@ -1,0 +1,69 @@
+<view class="container {{isElderMode ? 'elder-mode' : ''}}">
+  <!-- 服务项目概要 -->
+  <view class="card item-summary flex-between" wx:if="{{service}}">
+    <view>
+      <view class="item-title">{{service.name}}</view>
+      <view class="item-time">服务时长：约 {{service.durationMinutes}} 分钟</view>
+    </view>
+    <view class="item-price">¥{{service.price}}</view>
+  </view>
+
+  <!-- 服务对象选择 -->
+  <view class="card form-card">
+    <view class="form-title">服务对象 (老人)</view>
+    <picker range="{{elders}}" range-key="name" value="{{elderIndex}}" bindchange="onElderChange">
+      <view class="picker-box flex-between">
+        <text wx:if="{{selectedElder}}">{{selectedElder.name}} ({{selectedElder.age}}岁 - {{selectedElder.community}})</text>
+        <text wx:else class="placeholder">请选择接受服务的老人 ›</text>
+        <text class="arrow">▼</text>
+      </view>
+    </picker>
+    <view class="add-elder-link" bindtap="goToAddElder">+ 新增老人档案</view>
+  </view>
+
+  <!-- 预约时间选择 -->
+  <view class="card form-card">
+    <view class="form-title">预约上门时间</view>
+    <view class="flex-between time-pickers">
+      <picker mode="date" value="{{selectedDate}}" start="{{startDate}}" end="{{endDate}}" bindchange="onDateChange">
+        <view class="picker-item flex-between">
+          <text>{{selectedDate || '选择服务日期'}}</text>
+          <text class="picker-icon">📅</text>
+        </view>
+      </picker>
+      <picker mode="time" value="{{selectedTime}}" start="08:00" end="18:00" bindchange="onTimeChange">
+        <view class="picker-item flex-between">
+          <text>{{selectedTime || '选择到达时间'}}</text>
+          <text class="picker-icon">⏰</text>
+        </view>
+      </picker>
+    </view>
+    <view class="time-tip">• 请选择至少提前30分钟的时间(工作时间 08:00 - 18:00)</view>
+  </view>
+
+  <!-- 上门地址与联系方式 -->
+  <view class="card form-card">
+    <view class="form-title">上门地址与联系人</view>
+    <view class="form-item flex-row">
+      <text class="form-label">服务地址</text>
+      <input class="form-input" placeholder="详细居住地址" value="{{address}}" bindinput="onInputAddress" />
+    </view>
+    <view class="form-item flex-row">
+      <text class="form-label">联系人</text>
+      <input class="form-input" placeholder="姓名" value="{{contactName}}" bindinput="onInputContactName" />
+    </view>
+    <view class="form-item flex-row">
+      <text class="form-label">联系电话</text>
+      <input class="form-input" type="number" placeholder="手机号" value="{{contactPhone}}" bindinput="onInputContactPhone" />
+    </view>
+    <view class="form-item flex-row">
+      <text class="form-label">特殊备注</text>
+      <input class="form-input" placeholder="如钥匙位置、注意事项等(选填)" value="{{remark}}" bindinput="onInputRemark" />
+    </view>
+  </view>
+
+  <!-- 提交下单按钮 -->
+  <view class="submit-box">
+    <button class="btn-primary btn-submit-order {{isElderMode ? 'btn-large' : ''}}" loading="{{submitting}}" bindtap="submitOrder">确认提交预约</button>
+  </view>
+</view>

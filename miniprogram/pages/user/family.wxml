@@ -1,0 +1,45 @@
+<view class="container {{isElderMode ? 'elder-mode' : ''}}">
+  <view class="card apply-card">
+    <view class="card-title">申请绑定/代约老人</view>
+    <view class="form-tip">提交亲属关系证明，由社区管理员核验通过后，即可代老人预约各项居家养老服务。</view>
+    
+    <view class="form-item">
+      <text class="label">选择老人</text>
+      <picker range="{{allElders}}" range-key="name" value="{{selectedElderIndex}}" bindchange="onElderChange">
+        <view class="picker-box flex-between">
+          <text wx:if="{{targetElder}}">{{targetElder.name}} ({{targetElder.address}})</text>
+          <text wx:else class="placeholder">请选择要绑定的老人 ›</text>
+          <text class="arrow">▼</text>
+        </view>
+      </picker>
+    </view>
+
+    <view class="form-item">
+      <text class="label">亲属关系</text>
+      <input class="input-box" placeholder="如：父子、母女、配偶、叔侄等" value="{{relation}}" bindinput="onInputRelation" />
+    </view>
+
+    <view class="form-item">
+      <text class="label">关系说明凭证</text>
+      <input class="input-box" placeholder="简述亲属证明或户籍关系" value="{{proofMaterials}}" bindinput="onInputProof" />
+    </view>
+
+    <button class="btn-primary btn-apply {{isElderMode ? 'btn-large' : ''}}" bindtap="submitApply">提交绑定申请</button>
+  </view>
+
+  <view class="section-title">我的家属绑定记录</view>
+  <view class="bindings-list">
+    <view class="card binding-item flex-between" wx:for="{{bindings}}" wx:key="id">
+      <view>
+        <view class="elder-title">{{item.elder ? item.elder.name : '老人'}} <text class="tag tag-info">{{item.relation}}</text></view>
+        <view class="bind-meta">申请时间：{{item.createdAt}}</view>
+        <view class="bind-meta" wx:if="{{item.reviewReason}}">审核备注：{{item.reviewReason}}</view>
+      </view>
+      <view>
+        <text class="tag {{statusTagMap[item.status] || 'tag-info'}}">{{statusTextMap[item.status] || item.status}}</text>
+        <view class="revoke-btn" wx:if="{{item.status === 'APPROVED'}}" bindtap="revokeBinding" data-id="{{item.id}}">撤销</view>
+      </view>
+    </view>
+    <view class="empty-tip" wx:if="{{bindings.length === 0}}">暂无家属绑定记录</view>
+  </view>
+</view>

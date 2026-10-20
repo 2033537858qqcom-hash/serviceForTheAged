@@ -1,0 +1,146 @@
+package com.agedcare.modules.family.service;
+
+import com.agedcare.common.enums.FamilyBindingStatus;
+import com.agedcare.common.enums.UserRole;
+import com.agedcare.common.exception.BusinessException;
+import com.agedcare.common.security.LoginUser;
+import com.agedcare.common.security.UserContext;
+import com.agedcare.modules.elder.entity.ElderProfile;
+import com.agedcare.modules.elder.mapper.ElderProfileMapper;
+import com.agedcare.modules.family.dto.FamilyBindingVO;
+import com.agedcare.modules.family.entity.FamilyBinding;
+import com.agedcare.modules.family.mapper.FamilyBindingMapper;
+import com.agedcare.modules.user.entity.SysUser;
+import com.agedcare.modules.user.mapper.SysUserMapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class FamilyBindingService {
+
+    private final FamilyBindingMapper familyBindingMapper;
+    private final ElderProfileMapper elderProfileMapper;
+    private final SysUserMapper sysUserMapper;
+
+    @Transactional(rollbackFor = Exception.class)
+    public FamilyBinding applyBinding(Long elderId, String relation, String proofMaterials) {
+        LoginUser currentUser = UserContext.getUser();
+        if (currentUser == null) {
+            throw new BusinessException("请先登录");
+        }
+
+        ElderProfile elder = elderProfileMapper.selectById(elderId);
+        if (elder == null) {
+            throw new BusinessException("目标老人档案不存在");
+        }
+
+        Long existingCount = familyBindingMapper.selectCount(new LambdaQueryWrapper<FamilyBinding>()
+                .eq(FamilyBinding::getFamilyUserId, currentUser.getId())
+                .eq(FamilyBinding::getElderId, elderId)
+                .in(FamilyBinding::getStatus, FamilyBindingStatus.PENDING.getCode(), FamilyBindingStatus.APPROVED.getCode()));
+        if (existingCount > 0) {
+            throw new BusinessException("已存在审核中或已通过的绑定关系，请勿重复申请");
+        }
+
+        FamilyBinding binding = FamilyBinding.builder()
+                .familyUserId(currentUser.getId())
+                .elderId(elderId)
+                .relation(relation)
+                .proofMaterials(proofMaterials != null ? proofMaterials : "")
+                .status(FamilyBindingStatus.PENDING.getCode())
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        familyBindingMapper.insert(binding);
+        return binding;
+    }
+
+    public List<FamilyBindingVO> getMyBindings() {
+        LoginUser currentUser = UserContext.getUser();
+        if (currentUser == null) {
+            throw new BusinessException("请先登录");
+        }
+
+        List<FamilyBinding> list = familyBindingMapper.selectList(new LambdaQueryWrapper<FamilyBinding>()
+                .eq(FamilyBinding::getFamilyUserId, currentUser.getId())
+                .orderByDesc(FamilyBinding::getCreatedAt));
+
+        return list.stream().map(this::convertToVO).collect(Collectors.toList());
+    }
+
+    public Page<FamilyBindingVO> pageBindings(int pageNum, int pageSize, String status) {
+        Page<FamilyBinding> page = new Page<>(pageNum, pageSize);
+        LambdaQueryWrapper<FamilyBinding> wrapper = new LambdaQueryWrapper<>();
+        if (StringUtils.hasText(status)) {
+            wrapper.eq(FamilyBinding::getStatus, status);
+        }
+        wrapper.orderByDesc(FamilyBinding::getCreatedAt);
+
+        Page<FamilyBinding> bindingPage = familyBindingMapper.selectPage(page, wrapper);
+        List<FamilyBindingVO> voList = bindingPage.getRecords().stream()
+                .map(this::convertToVO)
+                .collect(Collectors.toList());
+
+        Page<FamilyBindingVO> resultPage = new Page<>(bindingPage.getCurrent(), bindingPage.getSize(), bindingPage.getTotal());
+        resultPage.setRecords(voList);
+        return resultPage;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void auditBinding(Long bindingId, boolean approve, String reason) {
+        LoginUser currentUser = UserContext.getUser();
+        FamilyBinding binding = familyBindingMapper.selectById(bindingId);
+        if (binding == null) {
+            throw new BusinessException("绑定记录不存在");
+        }
+
+        if (!FamilyBindingStatus.PENDING.getCode().equals(binding.getStatus())) {
+            throw new BusinessException("该申请已处理，无法重复审核");
+        }
+
+        binding.setStatus(approve ? FamilyBindingStatus.APPROVED.getCode() : FamilyBindingStatus.REJECTED.getCode());
+        binding.setReviewerId(currentUser.getId());
+        binding.setReviewTime(LocalDateTime.now());
+        binding.setReviewReason(reason != null ? reason : (approve ? "审核通过" : "资料不满足要求"));
+        binding.setUpdatedAt(LocalDateTime.now());
+        familyBindingMapper.updateById(binding);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void revokeBinding(Long bindingId) {
+        LoginUser currentUser = UserContext.getUser();
+        FamilyBinding binding = familyBindingMapper.selectById(bindingId);
+        if (binding == null) {
+            throw new BusinessException("绑定记录不存在");
+        }
+
+        if (!UserRole.ADMIN.getCode().equalsIgnoreCase(currentUser.getRole())
+                && !binding.getFamilyUserId().equals(currentUser.getId())) {
+            throw new BusinessException(403, "无权撤销该绑定");
+        }
+
+        binding.setStatus(FamilyBindingStatus.REVOKED.getCode());
+        binding.setReviewReason("用户或管理员主动撤销绑定");
+        binding.setUpdatedAt(LocalDateTime.now());
+        familyBindingMapper.updateById(binding);
+    }
+
+    private FamilyBindingVO convertToVO(FamilyBinding binding) {
+        FamilyBindingVO vo = new FamilyBindingVO();
+        BeanUtils.copyProperties(binding, vo);
+        vo.setElder(elderProfileMapper.selectById(binding.getElderId()));
+        vo.setFamilyUser(sysUserMapper.selectById(binding.getFamilyUserId()));
+        return vo;
+    }
+}

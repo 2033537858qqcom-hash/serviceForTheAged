@@ -1,0 +1,29 @@
+<view class="container {{isElderMode ? 'elder-mode' : ''}}">
+  <!-- 分类选项卡 -->
+  <scroll-view class="category-scroll" scroll-x="true">
+    <view class="cat-item {{selectedCat === '' ? 'active' : ''}}" bindtap="changeCat" data-cat="">全部服务</view>
+    <view class="cat-item {{selectedCat === 'MEAL' ? 'active' : ''}}" bindtap="changeCat" data-cat="MEAL">助餐送餐</view>
+    <view class="cat-item {{selectedCat === 'CLEANING' ? 'active' : ''}}" bindtap="changeCat" data-cat="CLEANING">居家保洁</view>
+    <view class="cat-item {{selectedCat === 'ERRAND' ? 'active' : ''}}" bindtap="changeCat" data-cat="ERRAND">代买代办</view>
+    <view class="cat-item {{selectedCat === 'ESCORT' ? 'active' : ''}}" bindtap="changeCat" data-cat="ESCORT">陪同办事</view>
+  </scroll-view>
+
+  <!-- 服务列表 -->
+  <view class="service-list">
+    <view class="card service-card" wx:for="{{services}}" wx:key="id" bindtap="goToDetail" data-id="{{item.id}}">
+      <view class="flex-between">
+        <text class="item-name">{{item.name}}</text>
+        <text class="item-price">¥{{item.price}}</text>
+      </view>
+      <view class="item-desc">{{item.description}}</view>
+      <view class="flex-between item-footer">
+        <view class="flex-row">
+          <text class="tag tag-info">时长: {{item.durationMinutes}}分钟</text>
+          <text class="tag tag-success" style="margin-left: 12rpx;">{{item.serviceArea}}</text>
+        </view>
+        <button class="btn-primary" size="mini" catchtap="quickBook" data-id="{{item.id}}">立即预约</button>
+      </view>
+    </view>
+    <view class="empty-tip" wx:if="{{services.length === 0}}">暂无相关服务项目</view>
+  </view>
+</view>

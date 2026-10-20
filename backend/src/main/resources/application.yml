@@ -1,0 +1,50 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: aged-care-backend
+  profiles:
+    active: dev
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+    default-property-inclusion: non_null
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: assign_id
+      table-underline: true
+
+# 微信小程序开发接入配置
+wechat:
+  miniapp:
+    appid: wxc3039ae6e2412b11
+    secret: 38c9b661e8e9286bc8ab4729e9b6ff0e
+
+# 智能派单核心参数配置 (支持动态注入与实验调节)
+dispatch:
+  timeout-seconds: 120
+  scan-interval-seconds: 10
+  max-attempts: 3
+  speed-km-per-hour: 15.0
+  buffer-minutes: 10
+  weights:
+    distance: 0.35
+    quality: 0.30
+    workload: 0.25
+    familiarity: 0.10
+  prior:
+    rating: 4.0
+    samples: 5
+
+# JWT 鉴权配置
+jwt:
+  secret: AgedCareSuperSecretKey2026SecureSecurityTokenCommunity987654321
+  expiration: 604800000 # 7天 (毫秒)

@@ -1,0 +1,44 @@
+.container {
+  padding: 24rpx;
+}
+
+.form-card {
+  padding: 28rpx;
+}
+
+.card-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  border-left: 8rpx solid #1890ff;
+  padding-left: 14rpx;
+  margin-bottom: 24rpx;
+}
+
+.form-item {
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.label {
+  width: 180rpx;
+  font-size: 28rpx;
+  color: #595959;
+}
+
+.input {
+  flex: 1;
+  font-size: 28rpx;
+}
+
+.picker-val {
+  font-size: 28rpx;
+  color: #262626;
+}
+
+.btn-save {
+  margin-top: 48rpx;
+  height: 88rpx;
+  line-height: 88rpx;
+  font-size: 32rpx;
+  border-radius: 44rpx;
+}

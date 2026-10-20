@@ -1,0 +1,47 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/service/list",
+    "pages/service/detail",
+    "pages/order/create",
+    "pages/order/list",
+    "pages/order/detail",
+    "pages/order/confirm",
+    "pages/staff/workbench",
+    "pages/user/profile",
+    "pages/user/family",
+    "pages/user/elder-form"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#1890ff",
+    "navigationBarTitleText": "阳光社区居家养老服务",
+    "navigationBarTextStyle": "white"
+  },
+  "tabBar": {
+    "color": "#666666",
+    "selectedColor": "#1890ff",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/service/list",
+        "text": "服务预约"
+      },
+      {
+        "pagePath": "pages/order/list",
+        "text": "订单中心"
+      },
+      {
+        "pagePath": "pages/user/profile",
+        "text": "我的"
+      }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}
