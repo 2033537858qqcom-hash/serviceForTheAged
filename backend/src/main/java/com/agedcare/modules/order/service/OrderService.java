@@ -331,6 +331,38 @@ public class OrderService {
         return resultPage;
     }
 
+    /**
+     * 支付订单：老人本人或已审核绑定的家属均可支付，其他人 403；每笔订单只能支付一次。
+     * 行锁 + 条件更新(paid_at IS NULL)双重保证并发下只有一次成功。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public OrderVO payOrder(Long orderId) {
+        LoginUser currentUser = OrderAccessPolicy.user();
+        ServiceOrder order = serviceOrderMapper.selectByIdForUpdate(orderId);
+        if (order == null) throw new BusinessException("订单不存在");
+        if (!canPay(order, currentUser, true)) {
+            throw new BusinessException(403, "只有老人本人或已通过审核的绑定家属可以支付该订单");
+        }
+        if (order.getPaidAt() != null) throw new BusinessException(409, "该订单已支付，请勿重复支付");
+        if (OrderStatus.CANCELLED.getCode().equals(order.getStatus())) throw new BusinessException(409, "订单已取消，无需支付");
+        LocalDateTime now = LocalDateTime.now();
+        if (serviceOrderMapper.markPaid(order.getId(), currentUser.getId(), now) != 1) {
+            throw new BusinessException(409, "该订单已支付，请勿重复支付");
+        }
+        order.setPaidByUserId(currentUser.getId());
+        order.setPaidAt(now);
+        OrderVO vo = assembleOrderVO(order);
+        vo.setCanPay(false);
+        return vo;
+    }
+
+    /** ignoreState=true 时只判断身份；false 时还要求未支付、未取消(用于详情页按钮)。 */
+    private boolean canPay(ServiceOrder order, LoginUser user, boolean ignoreState) {
+        if (user == null || !UserRole.RESIDENT.getCode().equals(user.getRole())) return false;
+        if (!ignoreState && (order.getPaidAt() != null || OrderStatus.CANCELLED.getCode().equals(order.getStatus()))) return false;
+        return elderProfileService.isSelfOrApprovedFamily(elderProfileMapper.selectById(order.getElderId()), user.getId());
+    }
+
     public OrderVO getOrderDetail(Long orderId) {
         LoginUser currentUser = UserContext.getUser();
         if (currentUser == null) {
@@ -343,14 +375,20 @@ public class OrderService {
 
         OrderAccessPolicy.view(order, elderProfileMapper, elderProfileService, staffProfileMapper, dispatchAttemptMapper);
 
-        return assembleOrderVO(order);
+        OrderVO vo = assembleOrderVO(order);
+        vo.setCanPay(canPay(order, currentUser, false));
+        return vo;
     }
 
     private OrderVO assembleOrderVO(ServiceOrder order) {
         OrderVO vo = new OrderVO();
         vo.setOrder(order);
-        vo.setPayerUserId(order.getRequesterUserId());
-        vo.setSettlementNote("由下单人协调线下结算；页面金额为预约时的预计费用，本系统不发起支付或扣款");
+        boolean paid = order.getPaidAt() != null;
+        vo.setPaid(paid);
+        vo.setPayerUserId(paid ? order.getPaidByUserId() : order.getRequesterUserId());
+        vo.setSettlementNote(paid
+                ? "该订单已支付，每笔订单只需支付一次"
+                : "老人本人或已绑定的家属均可支付，每笔订单只需支付一次；金额为预约时的费用");
         vo.setElder(elderProfileMapper.selectById(order.getElderId()));
 
         String type = order.getRequesterType() != null ? order.getRequesterType() : "SELF";
@@ -360,8 +398,12 @@ public class OrderService {
             SysUser requester = sysUserMapper.selectById(order.getRequesterUserId());
             if (requester != null) {
                 vo.setRequesterName(StringUtils.hasText(requester.getRealName()) ? requester.getRealName() : requester.getUsername());
-                vo.setPayerName(vo.getRequesterName());
+                if (!paid) vo.setPayerName(vo.getRequesterName());
             }
+        }
+        if (paid && order.getPaidByUserId() != null) {
+            SysUser payer = sysUserMapper.selectById(order.getPaidByUserId());
+            if (payer != null) vo.setPayerName(StringUtils.hasText(payer.getRealName()) ? payer.getRealName() : payer.getUsername());
         }
 
         if (order.getCurrentDispatchId() != null) {

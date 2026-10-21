@@ -86,8 +86,8 @@
                 <text class="item-price">¥{{item.price}}</text>
                 <text class="price-unit"> / 次</text>
               </view>
-              <button class="btn-primary book-button" hover-class="button-pressed" catchtap="quickBook" data-id="{{item.id}}">
-                预约服务
+              <button class="btn-primary book-button" hover-class="button-pressed" catchtap="goToDetail" data-id="{{item.id}}">
+                查看并预约
                 <image src="/assets/icons/arrow.png" />
               </button>
             </view>

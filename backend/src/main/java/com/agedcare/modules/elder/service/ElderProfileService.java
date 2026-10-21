@@ -165,6 +165,17 @@ public class ElderProfileService {
         return profile;
     }
 
+    /** 支付资格：老人本人账号，或对该老人有已审核(APPROVED)绑定的家属。 */
+    public boolean isSelfOrApprovedFamily(ElderProfile profile, Long userId) {
+        if (profile == null || userId == null) return false;
+        if (userId.equals(profile.getUserId())) return true;
+        Long count = familyBindingMapper.selectCount(new LambdaQueryWrapper<FamilyBinding>()
+                .eq(FamilyBinding::getFamilyUserId, userId)
+                .eq(FamilyBinding::getElderId, profile.getId())
+                .eq(FamilyBinding::getStatus, FamilyBindingStatus.APPROVED.getCode()));
+        return count != null && count > 0;
+    }
+
     public void checkAccessPermission(ElderProfile profile) {
         if (profile == null) throw new BusinessException(403, "无权访问该老人档案");
         LoginUser currentUser = UserContext.getUser();

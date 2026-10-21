@@ -51,6 +51,8 @@ public class ServiceOrder implements Serializable {
     private LocalDateTime cancelledAt;
     private Long confirmedByUserId;
     private LocalDateTime confirmedAt;
+    private Long paidByUserId; // 实际支付人(老人本人或已审核绑定的家属)
+    private LocalDateTime paidAt; // 支付时间；非空即已支付，每笔订单只能支付一次
 
     @Version
     private Integer version;

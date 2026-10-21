@@ -53,6 +53,8 @@ Page({
     isElderMode: false,
     cancelSheet: false,
     confirmSheet: false,
+    paySheet: false,
+    paying: false,
     tracking: null,
     hasTrackingLocation: false,
     trackingDistanceText: '',
@@ -383,6 +385,32 @@ Page({
       wx.showToast({ title: '订单已取消', icon: 'success' });
       return this.loadDetail(this.data.orderId, true);
     }).catch(() => {}).finally(() => { this._cancelling = false; });
+  },
+
+  openPaySheet() {
+    if (!this.data.orderVO?.canPay) return;
+    this.setData({ paySheet: true });
+  },
+
+  closePaySheet() {
+    if (!this.data.paying) this.setData({ paySheet: false });
+  },
+
+  // 老人本人或已审核绑定的家属支付；后端保证每单只付一次（重复返回 409）
+  submitPay() {
+    if (this.data.paying) return Promise.resolve();
+    const orderId = this.data.orderId;
+    this.setData({ paying: true });
+    return request.post(`/orders/${orderId}/pay`).then(() => {
+      if (this._disposed) return;
+      markOrdersChanged();
+      this.setData({ paySheet: false });
+      wx.showToast({ title: '支付成功', icon: 'success' });
+      return this.loadDetail(orderId, true);
+    }).catch(() => {
+      if (!this._disposed) this.setData({ paySheet: false });
+      return this._disposed ? null : this.loadDetail(orderId, true);
+    }).finally(() => { if (!this._disposed) this.setData({ paying: false }); });
   },
 
   confirmOrder() {

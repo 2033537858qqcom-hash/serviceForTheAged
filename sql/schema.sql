@@ -181,6 +181,8 @@ CREATE TABLE `service_order` (
     `cancelled_at` DATETIME DEFAULT NULL COMMENT '取消时间',
     `confirmed_by_user_id` BIGINT DEFAULT NULL COMMENT '服务完成确认人ID',
     `confirmed_at` DATETIME DEFAULT NULL COMMENT '服务完成确认时间',
+    `paid_by_user_id` BIGINT DEFAULT NULL COMMENT '实际支付人ID(老人本人或已审核绑定家属)',
+    `paid_at` DATETIME DEFAULT NULL COMMENT '支付时间，非空即已支付',
     `version` INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '下单时间',
     `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',

@@ -253,3 +253,5 @@
 .status-banner .next-step-text { color: #466553; }
 /* 只有“取消订单”一个操作时做成整宽浅红按钮，便于发现 */
 .bottom-actions .btn-cancel.is-solo { flex: 1; min-height: var(--control-height); font-size: var(--font-body); background: #fdf0ef; border: 2rpx solid var(--danger-color); border-radius: 24rpx; }
+.bottom-actions .btn-pay { flex: 1; }
+.paid-text { color: var(--success-color, #2f7d4f); font-weight: 600; }
