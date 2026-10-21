@@ -3,6 +3,7 @@
   "enablePullDownRefresh": true,
   "usingComponents": {
     "dispatch-countdown": "/components/dispatch-countdown/index",
-    "bottom-sheet": "/components/bottom-sheet/index"
+    "bottom-sheet": "/components/bottom-sheet/index",
+    "state-view": "/components/state-view/index"
   }
 }

@@ -1,5 +1,5 @@
 <view class="container workbench-page {{isElderMode ? 'elder-mode' : ''}}">
-  <view wx:if="{{loadError}}" class="empty-tip">工作台暂时未能完整加载<button class="retry-button" bindtap="loadStaffData">重新加载</button></view>
+  <state-view wx:if="{{loadError}}" type="error" title="工作台暂时未能完整加载" description="请检查网络后重试" bindaction="loadStaffData" />
 
   <!-- 待接单新任务强提醒 (倒计时置顶优先暴露) -->
   <view class="section-title flex-between alert-heading" wx:if="{{pendingAttempt}}">
@@ -114,9 +114,7 @@
         <view class="task-status-pill status-pill-completed" wx:if="{{item.order.status === 'COMPLETED'}}">✓ 服务已完成</view>
       </view>
     </view>
-    <view class="empty-tip" wx:if="{{filteredTasks.length === 0 && !tasksLoading && !tasksHasMore && !loadError}}">
-      暂无此类服务安排，可通过上方切换接单状态。
-    </view>
+    <state-view wx:if="{{filteredTasks.length === 0 && !tasksLoading && !tasksHasMore && !loadError}}" title="暂无此类服务安排" description="可通过上方切换接单状态" />
     <button wx:if="{{tasksHasMore}}" class="retry-button" loading="{{tasksLoading}}" disabled="{{tasksLoading}}" bindtap="loadMoreTasks">加载更多服务安排</button>
   </view>
 

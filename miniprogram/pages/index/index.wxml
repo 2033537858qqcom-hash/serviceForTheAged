@@ -155,11 +155,8 @@
       </view>
     </view>
   </view>
-  <view wx:elif="{{serviceError}}" class="card service-empty">
-    <view>服务信息暂时未能加载</view>
-    <button class="retry-button" bindtap="loadServiceItems">重新加载</button>
-  </view>
-  <view wx:elif="{{!serviceItems.length}}" class="card service-empty">新的社区服务正在准备中</view>
+  <view wx:elif="{{serviceError}}" class="card"><state-view type="error" title="服务信息暂时未能加载" description="请检查网络后重试" bindaction="loadServiceItems" /></view>
+  <view wx:elif="{{!serviceItems.length}}" class="card"><state-view title="新的社区服务正在准备中" description="可先拨打社区热线咨询" /></view>
   <view wx:else class="service-list">
     <view class="card home-service-card spring" hover-class="spring-in" hover-stay-time="80" wx:for="{{serviceItems}}" wx:key="id" bindtap="goToServiceDetail" data-id="{{item.id}}">
       <view class="service-list-icon"><service-photo src="{{item.imageUrl}}" fallback="{{item.imageFallback}}" /></view>

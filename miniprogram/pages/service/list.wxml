@@ -41,10 +41,7 @@
       </view>
     </view>
   </view>
-  <view wx:elif="{{loadError && !loaded}}" class="empty-tip">
-    服务暂时未能加载
-    <button class="retry-button" bindtap="loadServices">重新加载</button>
-  </view>
+  <state-view wx:elif="{{loadError && !loaded}}" type="error" title="服务暂时未能加载" description="请检查网络后重试" bindaction="loadServices" />
 
   <!-- 滑动内容区域 (Swiper 支持平滑左右手势滑动) -->
   <swiper
@@ -97,9 +94,7 @@
           </view>
 
           <!-- 分类为空的提示 -->
-          <view class="empty-tip" wx:if="{{catServices[index].length === 0}}">
-            <view class="empty-text">暂无该分类的服务，可左右滑动看看其他项目。</view>
-          </view>
+          <state-view wx:if="{{catServices[index].length === 0}}" title="暂无该分类的服务" description="可左右滑动看看其他项目" />
         </view>
       </scroll-view>
     </swiper-item>
