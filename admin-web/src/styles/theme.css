@@ -55,8 +55,8 @@ h1, h2, h3, p { margin: 0; }
 #app .el-card { border-radius: 14px; border-color: var(--line); box-shadow: none; }
 .el-card__header { padding: 20px 24px; border-bottom-color: #edf0e9; }
 .el-card__body { padding: 24px; }
-.el-button { font-weight: 500; min-height: 36px; }
-.el-button.is-link { min-height: 32px; }
+.el-button { font-weight: 500; min-height: 40px; }
+.el-button.is-link { min-height: 36px; padding: 8px 10px; }
 .el-button--primary:not(.is-link):not(.is-plain) { box-shadow: 0 3px 8px #176b5d12; }
 .el-input__wrapper, .el-select__wrapper { min-height: 38px; }
 .el-form-item__label { font-weight: 500; }

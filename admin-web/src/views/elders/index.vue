@@ -40,7 +40,7 @@
             <el-table-column prop="healthNote" label="健康及照护需求" min-width="160" show-overflow-tooltip />
             <el-table-column label="操作" width="120" fixed="right">
               <template #default="{ row }">
-                <el-button type="primary" link size="small" @click="openElderModal(row)">编辑</el-button>
+                <el-button type="primary" link @click="openElderModal(row)">编辑</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -77,11 +77,11 @@
             <el-table-column label="操作" width="180" fixed="right">
               <template #default="{ row }">
                 <template v-if="row.status === 'PENDING'">
-                  <el-button type="success" link size="small" @click="auditBinding(row.id, true)">通过</el-button>
-                  <el-button type="danger" link size="small" @click="auditBinding(row.id, false)">驳回</el-button>
+                  <el-button type="success" link @click="auditBinding(row.id, true)">通过</el-button>
+                  <el-button type="danger" link @click="auditBinding(row.id, false)">驳回</el-button>
                 </template>
                 <template v-else-if="row.status === 'APPROVED'">
-                  <el-button type="danger" link size="small" @click="revokeBinding(row.id)">撤销授权</el-button>
+                  <el-button type="danger" link @click="revokeBinding(row.id)">撤销授权</el-button>
                 </template>
               </template>
             </el-table-column>

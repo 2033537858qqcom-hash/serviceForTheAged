@@ -42,14 +42,14 @@ const route = useRoute()
 const router = useRouter()
 const sidebarOpen = ref(false)
 const navigation = [
-  { path: '/operation-logs', label: '操作日志', icon: 'Document' },
   { path: '/dashboard', label: '工作台', icon: 'Odometer' },
   { path: '/orders', label: '服务订单', icon: 'Document' },
   { path: '/dispatch', label: '智能派单', icon: 'Connection' },
   { path: '/elders', label: '老人档案', icon: 'User' },
   { path: '/services', label: '服务项目', icon: 'ShoppingBag' },
   { path: '/staff', label: '服务人员', icon: 'UserFilled' },
-  { path: '/complaints', label: '反馈处理', icon: 'ChatLineRound' }
+  { path: '/complaints', label: '反馈处理', icon: 'ChatLineRound' },
+  { path: '/operation-logs', label: '操作日志', icon: 'Document' }
 ]
 const currentTitle = computed(() => navigation.find(item => item.path === route.path)?.label || '社区服务')
 const dateLabel = new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', month: 'long', day: 'numeric', weekday: 'long' }).format(new Date())
@@ -96,7 +96,7 @@ nav { display: flex; flex-direction: column; gap: 6px; }
 .account-divider { height: 20px; border-left: 1px solid var(--line); margin: 0 5px; }
 .account-avatar { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; background: #eeeede; color: #6e7045; font-size: 12px; }
 .account-name { font-size: 12px; }
-.logout-button { min-width: 30px; padding: 6px; color: var(--muted); }
+.logout-button { min-width: 40px; min-height: 40px; padding: 8px; color: var(--muted); border-radius: 10px; }
 .app-main { padding: 32px 36px 0; }
 .page-container { max-width: 1560px; margin: 0 auto; min-height: calc(100vh - 170px); }
 /* 页面平滑滑动切换动画 */

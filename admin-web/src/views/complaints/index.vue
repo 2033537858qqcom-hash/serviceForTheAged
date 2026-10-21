@@ -30,7 +30,6 @@
             <el-button
               type="primary"
               link
-              size="small"
               v-if="row.status !== 'RESOLVED'"
               @click="openHandleModal(row)"
             >

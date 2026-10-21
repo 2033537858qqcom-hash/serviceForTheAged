@@ -21,17 +21,17 @@
     <view class="skeleton-block skeleton-body" style="margin-top: 16rpx;"></view>
   </view>
 
-  <!-- 优先级1：有进行中服务时，在顶部突出置顶展示“今天的服务”卡片 -->
+  <!-- 有进行中服务：首屏主卡片 + 大按钮；宫格降级为一行快捷入口 -->
   <block wx:if="{{activeOrder}}">
     <view class="section-title home-section-heading">
       <text>今天的服务</text>
-      <text class="section-note">上门照护实时跟进</text>
+      <text class="section-note">请优先查看进度</text>
     </view>
-    <view class="card active-order-card spring" hover-class="spring-in" hover-stay-time="80" bindtap="goToOrderDetail" data-id="{{activeOrder.order.id}}">
+    <view class="card active-order-card active-order-hero">
       <view class="flex-between">
-        <view class="flex-row items-center">
+        <view class="flex-row items-center" style="min-width:0; flex:1;">
           <view class="service-name">{{activeOrder.order.serviceNameSnapshot}}</view>
-          <text class="tag tag-sm {{activeOrder.order.requesterType === 'FAMILY' ? 'tag-info' : 'tag-neutral'}}" style="margin-left: 12rpx;">{{activeOrder.order.requesterType === 'FAMILY' ? '家属代约' : '老人自约'}}</text>
+          <text class="tag tag-sm {{activeOrder.order.requesterType === 'FAMILY' ? 'tag-info' : 'tag-neutral'}}" style="margin-left: 12rpx; flex-shrink:0;">{{activeOrder.order.requesterType === 'FAMILY' ? '家属代约' : '老人自约'}}</text>
         </view>
         <view class="active-order-badge">{{statusTextMap[activeOrder.order.status]}}</view>
       </view>
@@ -43,64 +43,85 @@
         <image src="/assets/icons/user.png"/>
         <text>{{activeOrder.elder ? activeOrder.elder.name : '服务对象'}}<text wx:if="{{activeOrder.order.requesterType === 'FAMILY' && activeOrder.requesterName}}">（由 {{activeOrder.requesterName}} 代约）</text><text wx:if="{{activeOrder.currentStaff}}"> · 服务人员 {{activeOrder.currentStaff.user.realName}}</text></text>
       </view>
-      <view class="order-footer flex-between">
-        <text class="order-footer-text">查看服务进度与实时路线</text>
-        <image class="ui-icon-small" src="/assets/icons/arrow.png"/>
+      <button class="btn-primary active-order-cta {{isElderMode ? 'btn-large' : ''}}" hover-class="spring-in" hover-stay-time="80" bindtap="goToOrderDetail" data-id="{{activeOrder.order.id}}">查看服务进度</button>
+    </view>
+
+    <view class="section-title home-section-heading compact-heading">
+      <text>还需要其他帮助？</text>
+      <view class="more-link" bindtap="goToServiceList">全部服务<image src="/assets/icons/arrow.png" /></view>
+    </view>
+    <view class="service-strip">
+      <view class="service-strip-item spring" hover-class="spring-in" hover-stay-time="80" bindtap="goToService" data-category="MEAL">
+        <view class="service-strip-photo"><service-photo src="{{categoryPhotos.MEAL}}" fallback="{{photoFallbacks.MEAL}}" /></view>
+        <text class="service-strip-label">助餐</text>
+      </view>
+      <view class="service-strip-item spring" hover-class="spring-in" hover-stay-time="80" bindtap="goToService" data-category="CLEANING">
+        <view class="service-strip-photo"><service-photo src="{{categoryPhotos.CLEANING}}" fallback="{{photoFallbacks.CLEANING}}" /></view>
+        <text class="service-strip-label">保洁</text>
+      </view>
+      <view class="service-strip-item spring" hover-class="spring-in" hover-stay-time="80" bindtap="goToService" data-category="ERRAND">
+        <view class="service-strip-photo"><service-photo src="{{categoryPhotos.ERRAND}}" fallback="{{photoFallbacks.ERRAND}}" /></view>
+        <text class="service-strip-label">代办</text>
+      </view>
+      <view class="service-strip-item spring" hover-class="spring-in" hover-stay-time="80" bindtap="goToService" data-category="ESCORT">
+        <view class="service-strip-photo"><service-photo src="{{categoryPhotos.ESCORT}}" fallback="{{photoFallbacks.ESCORT}}" /></view>
+        <text class="service-strip-label">陪同</text>
       </view>
     </view>
   </block>
 
-  <!-- 无进行中服务时，展示温馨欢迎与热线面板 -->
-  <view wx:else class="welcome-panel">
-    <view class="welcome-kicker">家门口的服务，身边的关怀</view>
-    <view class="welcome-title">
-      <view>照护在身边，</view>
-      <view>安心每一天。</view>
+  <!-- 无进行中服务：欢迎区 + 完整四宫格作为主入口 -->
+  <block wx:else>
+    <view class="welcome-panel">
+      <view class="welcome-kicker">家门口的服务，身边的关怀</view>
+      <view class="welcome-title">
+        <view>照护在身边，</view>
+        <view>安心每一天。</view>
+      </view>
+      <view class="welcome-caption">日常生活的小事，我们一起照应。</view>
+      <view class="welcome-contact" bindtap="callHotline">
+        <image src="/assets/icons/phone.png"/>
+        <text>联系社区</text>
+        <text class="contact-hours">08:00—20:00</text>
+        <image class="contact-arrow" src="/assets/icons/arrow.png" />
+      </view>
     </view>
-    <view class="welcome-caption">日常生活的小事，我们一起照应。</view>
-    <view class="welcome-contact" bindtap="callHotline">
-      <image src="/assets/icons/phone.png"/>
-      <text>联系社区</text>
-      <text class="contact-hours">08:00—20:00</text>
-      <image class="contact-arrow" src="/assets/icons/arrow.png" />
-    </view>
-  </view>
 
-  <!-- 服务入口：2x2 平衡四宫格 -->
-  <view class="section-title home-section-heading">
-    <text>今天，需要什么帮助？</text>
-    <text class="section-note">社区便民服务</text>
-  </view>
-  <view class="service-grid-2x2">
-    <view class="service-entry-card spring" hover-class="spring-in" hover-stay-time="80" bindtap="goToService" data-category="MEAL">
-      <view class="service-entry-photo"><service-photo src="{{categoryPhotos.MEAL}}" fallback="{{photoFallbacks.MEAL}}" /></view>
-      <view class="service-card-info">
-        <view class="grid-name">助餐送餐</view>
-        <view class="grid-desc">热餐准时送到家</view>
+    <view class="section-title home-section-heading">
+      <text>今天，需要什么帮助？</text>
+      <text class="section-note">社区便民服务</text>
+    </view>
+    <view class="service-grid-2x2">
+      <view class="service-entry-card spring" hover-class="spring-in" hover-stay-time="80" bindtap="goToService" data-category="MEAL">
+        <view class="service-entry-photo"><service-photo src="{{categoryPhotos.MEAL}}" fallback="{{photoFallbacks.MEAL}}" /></view>
+        <view class="service-card-info">
+          <view class="grid-name">助餐送餐</view>
+          <view class="grid-desc">热餐准时送到家</view>
+        </view>
+      </view>
+      <view class="service-entry-card spring" hover-class="spring-in" hover-stay-time="80" bindtap="goToService" data-category="CLEANING">
+        <view class="service-entry-photo"><service-photo src="{{categoryPhotos.CLEANING}}" fallback="{{photoFallbacks.CLEANING}}" /></view>
+        <view class="service-card-info">
+          <view class="grid-name">居家保洁</view>
+          <view class="grid-desc">居室整理与清洁</view>
+        </view>
+      </view>
+      <view class="service-entry-card spring" hover-class="spring-in" hover-stay-time="80" bindtap="goToService" data-category="ERRAND">
+        <view class="service-entry-photo"><service-photo src="{{categoryPhotos.ERRAND}}" fallback="{{photoFallbacks.ERRAND}}" /></view>
+        <view class="service-card-info">
+          <view class="grid-name">代买代办</view>
+          <view class="grid-desc">买菜配药跑腿办</view>
+        </view>
+      </view>
+      <view class="service-entry-card spring" hover-class="spring-in" hover-stay-time="80" bindtap="goToService" data-category="ESCORT">
+        <view class="service-entry-photo"><service-photo src="{{categoryPhotos.ESCORT}}" fallback="{{photoFallbacks.ESCORT}}" /></view>
+        <view class="service-card-info">
+          <view class="grid-name">陪同办事</view>
+          <view class="grid-desc">就医陪诊出行看护</view>
+        </view>
       </view>
     </view>
-    <view class="service-entry-card spring" hover-class="spring-in" hover-stay-time="80" bindtap="goToService" data-category="CLEANING">
-      <view class="service-entry-photo"><service-photo src="{{categoryPhotos.CLEANING}}" fallback="{{photoFallbacks.CLEANING}}" /></view>
-      <view class="service-card-info">
-        <view class="grid-name">居家保洁</view>
-        <view class="grid-desc">居室整理与清洁</view>
-      </view>
-    </view>
-    <view class="service-entry-card spring" hover-class="spring-in" hover-stay-time="80" bindtap="goToService" data-category="ERRAND">
-      <view class="service-entry-photo"><service-photo src="{{categoryPhotos.ERRAND}}" fallback="{{photoFallbacks.ERRAND}}" /></view>
-      <view class="service-card-info">
-        <view class="grid-name">代买代办</view>
-        <view class="grid-desc">买菜配药跑腿办</view>
-      </view>
-    </view>
-    <view class="service-entry-card spring" hover-class="spring-in" hover-stay-time="80" bindtap="goToService" data-category="ESCORT">
-      <view class="service-entry-photo"><service-photo src="{{categoryPhotos.ESCORT}}" fallback="{{photoFallbacks.ESCORT}}" /></view>
-      <view class="service-card-info">
-        <view class="grid-name">陪同办事</view>
-        <view class="grid-desc">就医陪诊出行看护</view>
-      </view>
-    </view>
-  </view>
+  </block>
 
   <!-- 推荐服务列表 -->
   <view class="section-title home-section-heading">
