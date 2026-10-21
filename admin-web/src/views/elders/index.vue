@@ -1,6 +1,6 @@
 <template>
   <div class="elders-container">
-    <div class="page-intro"><div><div class="eyebrow">ELDER PROFILES</div><h1>把照护，落实到每一位老人</h1><p>管理老人档案与照护需求，核验家属代约关系。</p></div></div>
+    <PageHeader eyebrow="老人档案" title="把照护，落实到每一位老人" description="管理老人档案与照护需求，核验家属代约关系。" />
     <el-card shadow="never" class="main-card">
       <el-tabs v-model="activeTab">
         <!-- Tab 1: 老人档案管理 -->
@@ -17,7 +17,9 @@
             <el-button type="primary" icon="Plus" @click="openElderModal(null)">录入老人档案</el-button>
           </div>
 
-          <el-table :data="eldersData" v-loading="loadingElders" stripe style="width: 100%">
+          <el-skeleton :loading="loadingElders && !eldersData.length" animated :rows="6">
+          <template #default>
+          <el-table :data="eldersData" v-loading="loadingElders && eldersData.length > 0" stripe style="width: 100%">
             <el-table-column prop="name" label="姓名" width="120">
               <template #default="{ row }">
                 <span style="font-weight: bold;">{{ row.name }}</span>
@@ -44,11 +46,15 @@
               </template>
             </el-table-column>
           </el-table>
+          </template>
+          </el-skeleton>
         </el-tab-pane>
 
         <!-- Tab 2: 家属代约绑定审核 -->
         <el-tab-pane label="家属代约审核" name="bindings">
-          <el-table :data="bindingsData" v-loading="loadingBindings" stripe style="width: 100%">
+          <el-skeleton :loading="loadingBindings && !bindingsData.length" animated :rows="6">
+          <template #default>
+          <el-table :data="bindingsData" v-loading="loadingBindings && bindingsData.length > 0" stripe style="width: 100%">
             <el-table-column label="老人姓名" width="140">
               <template #default="{ row }">
                 <strong>{{ row.elder ? row.elder.name : '老人' }}</strong>
@@ -86,6 +92,8 @@
               </template>
             </el-table-column>
           </el-table>
+          </template>
+          </el-skeleton>
         </el-tab-pane>
       </el-tabs>
     </el-card>
@@ -130,6 +138,7 @@
 </template>
 
 <script setup>
+import PageHeader from '../../components/PageHeader.vue'
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '../../utils/request'

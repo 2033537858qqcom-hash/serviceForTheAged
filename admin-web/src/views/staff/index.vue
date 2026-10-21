@@ -1,12 +1,14 @@
 <template>
   <div class="staff-container">
-    <div class="page-intro"><div><div class="eyebrow">CARE TEAM</div><h1>让合适的人，做好每一项服务</h1><p>核验人员资质，管理技能、工作状态与服务排班。</p></div></div>
+    <PageHeader eyebrow="服务人员" title="让合适的人，做好每一项服务" description="核验人员资质，管理技能、工作状态与服务排班。" />
     <el-card shadow="never" class="main-card">
       <div class="header-bar flex-between">
         <span style="font-weight: bold; font-size: 16px;">社区养老服务队伍与排班调度</span>
       </div>
 
-      <el-table :data="tableData" v-loading="loading" stripe style="width: 100%">
+      <el-skeleton :loading="loading && !tableData.length" animated :rows="6">
+      <template #default>
+      <el-table :data="tableData" v-loading="loading && tableData.length > 0" stripe style="width: 100%">
         <el-table-column label="姓名" width="140">
           <template #default="{ row }">
             <span style="font-weight: bold;">{{ row.user ? row.user.realName : '' }}</span>
@@ -59,6 +61,8 @@
           </template>
         </el-table-column>
       </el-table>
+      </template>
+      </el-skeleton>
     </el-card>
 
     <!-- 技能资质与排班管理对话框 -->
@@ -156,6 +160,7 @@
 </template>
 
 <script setup>
+import PageHeader from '../../components/PageHeader.vue'
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import request from '../../utils/request'

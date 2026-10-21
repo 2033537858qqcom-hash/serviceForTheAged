@@ -2,7 +2,7 @@ page {
   height: 100vh;
   min-height: 100vh;
   overflow: hidden;
-  background: #F6F7F3;
+  background: var(--bg-color);
 }
 
 .service-page {
@@ -17,7 +17,7 @@ page {
 .listing-header-area {
   flex-shrink: 0;
   padding: 16rpx 32rpx 0;
-  background: #F6F7F3;
+  background: var(--bg-color);
   z-index: 10;
 }
 
@@ -172,7 +172,7 @@ page {
 .item-price {
   font-size: var(--font-display);
   font-weight: 600;
-  color: #ad652f;
+  color: var(--price-color);
 }
 
 .price-unit {

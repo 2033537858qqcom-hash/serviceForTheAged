@@ -1,13 +1,15 @@
 <template>
   <div class="complaints-container">
-    <div class="page-intro"><div><div class="eyebrow">COMMUNITY FEEDBACK</div><h1>听见反馈，及时回应</h1><p>跟进服务意见，记录处理结果，让每次反馈有回应。</p></div></div>
+    <PageHeader eyebrow="反馈处理" title="听见反馈，及时回应" description="跟进服务意见，记录处理结果，让每次反馈有回应。" />
     <el-card shadow="never" class="main-card">
       <div class="header-bar flex-between">
         <span style="font-weight: bold; font-size: 16px;">社区服务投诉与意见反馈</span>
         <el-button icon="Refresh" @click="fetchData">刷新</el-button>
       </div>
 
-      <el-table :data="tableData" v-loading="loading" stripe style="width: 100%">
+      <el-skeleton :loading="loading && !tableData.length" animated :rows="6">
+      <template #default>
+      <el-table :data="tableData" v-loading="loading && tableData.length > 0" stripe style="width: 100%">
         <el-table-column prop="id" label="编号" width="100" />
         <el-table-column prop="orderId" label="关联订单编号" width="180" />
         <el-table-column prop="complaintTitle" label="投诉主题" width="180">
@@ -39,6 +41,8 @@
           </template>
         </el-table-column>
       </el-table>
+      </template>
+      </el-skeleton>
     </el-card>
 
     <!-- 处理投诉弹窗 -->
@@ -63,6 +67,7 @@
 </template>
 
 <script setup>
+import PageHeader from '../../components/PageHeader.vue'
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import request from '../../utils/request'

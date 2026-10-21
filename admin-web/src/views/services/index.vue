@@ -1,13 +1,15 @@
 <template>
   <div class="services-container">
-    <div class="page-intro"><div><div class="eyebrow">SERVICE CATALOG</div><h1>把日常所需，送到家门口</h1><p>维护社区服务项目、价格、服务范围与预约说明。</p></div></div>
+    <PageHeader eyebrow="服务项目" title="把日常所需，送到家门口" description="维护社区服务项目、价格、服务范围与预约说明。" />
     <el-card shadow="never" class="main-card">
       <div class="header-bar flex-between">
         <span style="font-weight: bold; font-size: 16px;">养老服务项目配置</span>
         <el-button type="primary" icon="Plus" @click="openModal(null)">新增服务项目</el-button>
       </div>
 
-      <el-table :data="tableData" v-loading="loading" stripe style="width: 100%">
+      <el-skeleton :loading="loading && !tableData.length" animated :rows="6">
+      <template #default>
+      <el-table :data="tableData" v-loading="loading && tableData.length > 0" stripe style="width: 100%">
         <el-table-column label="服务图片" width="130">
           <template #default="{ row }"><img class="service-thumbnail" :src="imageFor(row.icon, row.category)" alt="服务展示图" @error="useDefaultImage($event, row.category)" /></template>
         </el-table-column>
@@ -59,6 +61,8 @@
           </template>
         </el-table-column>
       </el-table>
+      </template>
+      </el-skeleton>
     </el-card>
 
     <!-- 项目编辑弹窗 -->
@@ -115,6 +119,7 @@
 </template>
 
 <script setup>
+import PageHeader from '../../components/PageHeader.vue'
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import request from '../../utils/request'

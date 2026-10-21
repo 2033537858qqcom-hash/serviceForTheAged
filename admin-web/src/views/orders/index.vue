@@ -1,6 +1,6 @@
 <template>
   <div class="orders-container">
-    <div class="page-intro"><div><div class="eyebrow">SERVICE ORDERS</div><h1>每一次服务，都有迹可循</h1><p>查看预约进度、协调人员安排，跟进服务完成情况。</p></div></div>
+    <PageHeader eyebrow="服务订单" title="每一次服务，都有迹可循" description="查看预约进度、协调人员安排，跟进服务完成情况。" />
     <el-card shadow="never" class="filter-card">
       <el-form :inline="true" :model="queryForm">
         <el-form-item label="订单编号">
@@ -26,7 +26,9 @@
     </el-card>
 
     <el-card shadow="never" class="table-card">
-      <el-table :data="tableData" v-loading="loading" stripe style="width: 100%">
+      <el-skeleton :loading="loading && !tableData.length" animated :rows="6">
+      <template #default>
+      <el-table :data="tableData" v-loading="loading && tableData.length > 0" stripe style="width: 100%">
         <el-table-column prop="order.serviceNameSnapshot" label="服务项目 / 订单编号" min-width="215">
           <template #default="{ row }">
             <div class="cell-title">{{ row.order.serviceNameSnapshot }}</div>
@@ -66,6 +68,8 @@
           </template>
         </el-table-column>
       </el-table>
+      </template>
+      </el-skeleton>
 
       <div class="pagination-box">
         <el-pagination
@@ -170,6 +174,7 @@
 </template>
 
 <script setup>
+import PageHeader from '../../components/PageHeader.vue'
 import { ref, reactive, onMounted, computed } from 'vue'
 import PrivatePhoto from '../../components/PrivatePhoto.vue'
 import { useRoute } from 'vue-router'
