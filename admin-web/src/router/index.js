@@ -12,7 +12,6 @@ const routes = [
     component: () => import('../views/layout/index.vue'),
     redirect: '/dashboard',
     children: [
-      { path: 'operation-logs', name: 'OperationLogs', component: () => import('../views/operation-logs/index.vue'), meta: { title: '操作日志' } },
       {
         path: 'dashboard',
         name: 'Dashboard',
@@ -54,8 +53,20 @@ const routes = [
         name: 'Complaints',
         component: () => import('../views/complaints/index.vue'),
         meta: { title: '反馈处理', icon: 'ChatLineRound' }
+      },
+      {
+        path: 'operation-logs',
+        name: 'OperationLogs',
+        component: () => import('../views/operation-logs/index.vue'),
+        meta: { title: '操作日志' }
       }
     ]
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound',
+    component: () => import('../views/not-found/index.vue'),
+    meta: { title: '页面不存在' }
   }
 ]
 

@@ -48,11 +48,10 @@
         </el-table-column>
         <el-table-column label="操作" width="160" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" link size="small" @click="openModal(row)">编辑</el-button>
+            <el-button type="primary" link @click="openModal(row)">编辑</el-button>
             <el-button
               :type="row.status === 'ON_SHELF' ? 'warning' : 'success'"
               link
-              size="small"
               @click="toggleStatus(row.id)"
             >
               {{ row.status === 'ON_SHELF' ? '下架' : '上架' }}

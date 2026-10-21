@@ -48,11 +48,10 @@
         </el-table-column>
         <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" link size="small" @click="openManageModal(row)">资质与班次</el-button>
+            <el-button type="primary" link @click="openManageModal(row)">资质与班次</el-button>
             <el-button
               type="warning"
               link
-              size="small"
               @click="toggleWorkStatus(row.profile.id, row.profile.currentStatus)"
             >
               {{ row.profile.currentStatus === 'AVAILABLE' ? '设为休息' : '设为接单' }}
@@ -76,7 +75,7 @@
         <div style="margin-top: 24px;">
           <div class="flex-between" style="margin-bottom: 12px;">
             <span style="font-weight: bold;">专业资质与技能</span>
-            <el-button size="small" type="primary" plain @click="skillModalVisible = true">+ 录入新资质</el-button>
+            <el-button type="primary" plain @click="skillModalVisible = true">+ 录入新资质</el-button>
           </div>
           <el-table :data="selectedStaff.skills || []" size="small" border>
             <el-table-column prop="skillCode" label="代码" width="120" />
@@ -84,7 +83,7 @@
             <el-table-column prop="certificateNo" label="证书编号" min-width="160" />
             <el-table-column label="操作" width="90">
               <template #default="{ row }">
-                <el-button type="danger" link size="small" @click="deleteSkill(row.id)">删除</el-button>
+                <el-button type="danger" link @click="deleteSkill(row.id)">删除</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -94,7 +93,7 @@
         <div style="margin-top: 24px;">
           <div class="flex-between" style="margin-bottom: 12px;">
             <span style="font-weight: bold;">有效工作排班班次</span>
-            <el-button size="small" type="success" plain @click="shiftModalVisible = true">+ 添加排班</el-button>
+            <el-button type="success" plain @click="shiftModalVisible = true">+ 添加排班</el-button>
           </div>
           <el-table :data="selectedStaff.shifts || []" size="small" border max-height="250">
             <el-table-column prop="shiftDate" label="工作日期" width="140" />
