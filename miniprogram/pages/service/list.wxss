@@ -56,7 +56,12 @@ page {
   width: var(--swipe-tab-width);
   text-align: center;
   padding: 20rpx 10rpx;
-  font-size: 28rpx;
+  min-height: 88rpx;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-caption);
   color: var(--text-secondary);
   position: relative;
   transition: color 0.25s ease;
@@ -257,6 +262,6 @@ page {
   min-height: var(--control-height);
   line-height: var(--control-height);
   padding: 0 36rpx;
-  font-size: 34rpx;
+  font-size: var(--font-body);
   border-radius: var(--radius-md, 20rpx);
 }

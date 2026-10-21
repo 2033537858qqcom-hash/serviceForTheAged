@@ -102,7 +102,7 @@
 .staff-stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); padding: 24rpx 0 16rpx; text-align: center; }
 .staff-stat-item { display: flex; flex-direction: column; align-items: center; gap: 6rpx; }
 .staff-stat-item:not(:last-child) { border-right: 1rpx solid var(--border-color); }
-.staff-stat-num { font-size: 40rpx; font-weight: 700; color: var(--primary-dark); line-height: 1.2; }
+.staff-stat-num { font-size: var(--font-title); font-weight: 700; color: var(--primary-dark); line-height: 1.2; }
 .staff-stat-unit { font-size: var(--font-meta); font-weight: 400; color: var(--text-secondary); margin-left: 2rpx; }
 .staff-stat-desc { font-size: var(--font-meta); color: var(--text-secondary); }
 .staff-station-bar { margin-top: 16rpx; padding-top: 18rpx; border-top: 1rpx solid var(--border-color); font-size: var(--font-caption); color: var(--text-regular); }
@@ -148,3 +148,7 @@
 .elder-mode .hub-grid { gap: 12rpx; }
 .elder-mode .hub-icon-wrap { width: 84rpx; height: 84rpx; }
 .elder-mode .hub-icon-wrap image { width: 44rpx; height: 44rpx; }
+
+.hub-icon-wrap { position: relative; }
+.hub-badge { position: absolute; top: -10rpx; right: -14rpx; min-width: 36rpx; height: 36rpx; padding: 0 8rpx; border-radius: 18rpx; background: var(--danger-color); color: #fff; font-size: 24rpx; line-height: 36rpx; text-align: center; box-sizing: border-box; }
+.elder-mode .hub-badge { min-width: 44rpx; height: 44rpx; line-height: 44rpx; border-radius: 22rpx; font-size: var(--font-meta); }

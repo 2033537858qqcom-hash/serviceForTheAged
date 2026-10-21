@@ -78,19 +78,17 @@
               <text class="tag {{statusTagMap[item.order.status] || 'tag-info'}}">{{statusTextMap[item.order.status] || item.order.status}}</text>
             </view>
 
-            <view class="flex-between" style="margin-top: 10rpx; margin-bottom: 12rpx;">
-              <view class="flex-row items-center order-no-group">
-                <text class="order-no">订单号：{{item.order.orderNo}}</text>
-                <text class="tag tag-sm {{item.order.requesterType === 'FAMILY' ? 'tag-info' : 'tag-neutral'}}" style="margin-left: 12rpx;">{{item.order.requesterType === 'FAMILY' ? '家属代约' : '老人自约'}}</text>
-              </view>
-              <text class="service-price">¥{{item.order.priceSnapshot}}</text>
-            </view>
+            <view class="order-time">预约时间：{{item.order.plannedStartText}}</view>
 
             <view class="order-row">
               <text>服务对象：{{item.elder ? item.elder.name : '老人'}}</text>
               <text wx:if="{{item.order.requesterType === 'FAMILY' && item.requesterName}}" class="requester-hint">（家属 {{item.requesterName}} 代约）</text>
             </view>
-            <view class="order-row">预约时间：{{item.order.plannedStartText}}</view>
+
+            <view class="flex-between order-meta-row">
+              <text class="tag tag-sm {{item.order.requesterType === 'FAMILY' ? 'tag-info' : 'tag-neutral'}}">{{item.order.requesterType === 'FAMILY' ? '家属代约' : '老人自约'}}</text>
+              <text class="service-price">¥{{item.order.priceSnapshot}}</text>
+            </view>
 
             <view class="card-bottom flex-between" catchtap="noAction">
               <view class="staff-hint" wx:if="{{item.currentStaff}}">

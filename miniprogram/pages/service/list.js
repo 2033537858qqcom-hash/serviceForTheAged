@@ -58,6 +58,7 @@ Page({
   },
 
   onShow() {
+    if (navigation.redirectStaffHome()) return;
     syncTabBar(this, 1);
     if (this._animating) this.selectCategory(this.data.currentCatIndex);
     const isElder = Boolean(app.globalData?.isElderMode);

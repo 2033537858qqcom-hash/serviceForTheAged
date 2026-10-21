@@ -2,6 +2,7 @@ const navigation = require('../../utils/navigation.js');
 const request = require('../../utils/request.js');
 const { lightTap } = require('../../utils/feedback.js');
 const { markOrdersChanged } = require('../../utils/list-state.js');
+const { friendlyTime } = require('../../utils/time-format.js');
 
 function getAppSafe() {
   try {
@@ -28,6 +29,7 @@ const app = new Proxy({}, {
 Page({
   data: {
     orderId: null,
+    reviewContext: null,
     rating: 5,
     content: '',
     submitting: false,
@@ -44,6 +46,11 @@ Page({
   onLoad(options) {
     if (options && options.orderId) {
       this.setData({ orderId: options.orderId });
+    }
+    const decode = value => { try { return value ? decodeURIComponent(value) : ''; } catch (_) { return value || ''; } };
+    const service = decode(options?.service);
+    if (service) {
+      this.setData({ reviewContext: { service, staff: decode(options.staff), doneText: friendlyTime(decode(options.done)) } });
     }
   },
 

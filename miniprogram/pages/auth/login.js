@@ -55,7 +55,7 @@ Page({
   checkAgreement() {
     if (!this.data.isAgreed) {
       wx.showToast({
-        title: '请先勾选底部的服务协议与隐私政策',
+        title: '请先勾选上方的服务协议与隐私政策',
         icon: 'none',
         duration: 2500
       });

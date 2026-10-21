@@ -16,6 +16,6 @@
       <text wx:if="{{success}}">✓ 操作已完成</text>
       <text wx:else>{{confirmText}}</text>
     </button>
-    <button class="sheet-dismiss" hover-class="spring-in" bindtap="onMask" disabled="{{loading}}">{{dismissText}}</button>
+    <button class="sheet-dismiss" hover-class="spring-in" bindtap="onDismiss" disabled="{{loading}}">{{dismissText}}</button>
   </view>
 </view>

@@ -36,6 +36,11 @@ Page({
     emergencyPhone: '',
     healthNote: '',
     careLevel: 'NORMAL',
+    careLevelOptions: [
+      { value: 'NORMAL', label: '能自理' },
+      { value: 'MEDIUM', label: '半自理' },
+      { value: 'HIGH', label: '需全程照护' }
+    ],
     submitting: false,
     isElderMode: false
   },
@@ -73,6 +78,7 @@ Page({
   onUnload() { this._disposed = true; },
 
   onInputName(e) { this.setData({ name: e.detail.value }); },
+  onCareLevelTap(e) { this.setData({ careLevel: e.currentTarget.dataset.value }); },
   onGenderChange(e) { this.setData({ gender: e.detail.value === '1' ? 'FEMALE' : 'MALE' }); },
   onInputAge(e) { this.setData({ age: e.detail.value }); },
   onInputAddress(e) { this.setData({ address: e.detail.value, latitude: null, longitude: null }); },

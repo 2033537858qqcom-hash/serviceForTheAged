@@ -96,3 +96,5 @@
 .elder-mode .slot-chip { min-height: 112rpx; }
 .elder-mode .submit-price { min-width: 150rpx; }
 .elder-mode .submit-box { gap: 16rpx; padding-inline: 24rpx; }
+
+.container.elder-mode { padding-bottom: calc(300rpx + env(safe-area-inset-bottom)); }

@@ -10,7 +10,9 @@ Component({
     dismissText: { type: String, value: '再想想' },
     tone: { type: String, value: '' },
     loading: { type: Boolean, value: false },
-    success: { type: Boolean, value: false }
+    success: { type: Boolean, value: false },
+    // false：点遮罩不关闭（含未提交输入的抽屉），仍可用取消按钮关闭
+    maskClosable: { type: Boolean, value: true }
   },
   data: { rendered: false, drag: 0, dragging: false },
   lifetimes: {
@@ -30,7 +32,8 @@ Component({
   },
   methods: {
     noop() {},
-    onMask() { this.triggerEvent('close'); },
+    onMask() { if (this.data.maskClosable) this.triggerEvent('close'); },
+    onDismiss() { this.triggerEvent('close'); },
     onConfirm() { this.triggerEvent('confirm'); },
     onStart(event) {
       const touch = event.touches && event.touches[0];
@@ -53,8 +56,9 @@ Component({
       const elapsed = Date.now() - this._startAt;
       this._startY = null;
       this.setData({ dragging: false });
+      // 先回弹；若父页面同意关闭，show 变为 false 时再收起，避免确认弹窗取消后抽屉停在半路
+      this.setData({ drag: 0 });
       if (sheetShouldClose(delta, elapsed, 420)) this.triggerEvent('close');
-      else this.setData({ drag: 0 });
     },
     finishClose() {
       this._opened = false;

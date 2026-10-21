@@ -36,3 +36,7 @@ page { background: #263f32; color: #fff; }
   .action-section { margin-top: 30rpx; }
   .hero-eyebrow { margin-bottom: 14rpx; }
 }
+
+/* 协议行移到按钮上方 */
+.agreement-section { margin-top: 40rpx; }
+.login-content .action-section { margin-top: 24rpx; }

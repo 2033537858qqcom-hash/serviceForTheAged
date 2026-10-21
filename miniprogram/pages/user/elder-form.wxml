@@ -23,6 +23,13 @@
     </view>
 
     <view class="form-item">
+      <text class="label">照护等级</text>
+      <view class="care-level-chips">
+        <view wx:for="{{careLevelOptions}}" wx:key="value" class="care-level-chip {{careLevel === item.value ? 'is-active' : ''}}" hover-class="spring-in" hover-stay-time="80" bindtap="onCareLevelTap" data-value="{{item.value}}" role="radio" aria-checked="{{careLevel === item.value}}">{{item.label}}</view>
+      </view>
+    </view>
+
+    <view class="form-item">
       <view class="flex-between label-row">
         <text class="label">居住地址</text>
         <view class="map-picker-btn" bindtap="onChooseLocation" hover-class="spring-in">

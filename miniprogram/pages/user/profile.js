@@ -2,6 +2,13 @@ const navigation = require('../../utils/navigation.js');
 const { syncTabBar } = require('../../utils/tab-bar.js');
 const request = require('../../utils/request.js');
 const { HOTLINE_NUMBER, HOTLINE_HOURS } = require('../../utils/contact.js');
+// 订单看板角标：与订单页分类使用同样的状态组合
+const HUB_STATUSES = {
+  WAIT_DISPATCH: 'WAIT_DISPATCH,WAIT_ACCEPT,WAIT_MANUAL',
+  WAIT_VISIT: 'WAIT_VISIT',
+  IN_SERVICE: 'IN_SERVICE',
+  WAIT_CONFIRM: 'WAIT_CONFIRM'
+};
 
 function getAppSafe() {
   try {
@@ -28,6 +35,7 @@ const app = new Proxy({}, {
 Page({
   data: {
     hotlineHours: HOTLINE_HOURS,
+    hubCounts: {},
     userInfo: null,
     staffProfile: null,
     staffSkills: [],
@@ -61,7 +69,25 @@ Page({
     if (Object.keys(patch).length) this.setData(patch);
     if (state.userInfo?.role === 'STAFF') {
       this.loadStaffProfile();
+    } else if (state.userInfo && app.globalData?.token) {
+      this.loadHubCounts();
     }
+  },
+
+  // 每个状态只取 total；失败时不显示角标，不打扰页面
+  loadHubCounts() {
+    const app = getAppSafe();
+    const key = `${app.globalData?.baseUrl || ''}|${app.globalData?.token || ''}|${app.globalData?.ordersVersion || 0}`;
+    if (this._hubKey === key && Date.now() - (this._hubAt || 0) < 30000) return Promise.resolve();
+    this._hubKey = key; this._hubAt = Date.now();
+    const entries = Object.keys(HUB_STATUSES);
+    return Promise.all(entries.map(name => request.get('/orders/page', { pageNum: 1, pageSize: 1, status: HUB_STATUSES[name] })
+      .then(data => Number(data?.total) || 0).catch(() => 0))).then(totals => {
+      if (this._hubKey !== key) return;
+      const hubCounts = {};
+      entries.forEach((name, i) => { hubCounts[name] = totals[i] > 99 ? '99+' : totals[i]; });
+      this.setData({ hubCounts });
+    });
   },
 
   loadStaffProfile() {
@@ -158,6 +184,11 @@ Page({
         }
       });
     }
+  },
+
+  // 整行可点：切换适老模式（原生 switch 仅作状态展示）
+  toggleElderRow() {
+    this.onModeChange({ detail: { value: !this.data.isElderMode } });
   },
 
   onModeChange(e) {

@@ -42,6 +42,8 @@ Page({
     hotlineHours: HOTLINE_HOURS,
     activeOrder: null,
     activeOrderReady: false,
+    activeOrderError: false,
+    activeMoreCount: 0,
     statusTextMap: {
       'WAIT_DISPATCH': '待派单',
       'WAIT_ACCEPT': '待接单',
@@ -55,6 +57,7 @@ Page({
   },
 
   onShow() {
+    if (navigation.redirectStaffHome()) return;
     syncTabBar(this, 0);
     const app = getAppSafe();
     const patch = {};
@@ -140,10 +143,12 @@ Page({
       if (this._disposed || sessionKey(app) !== context) return;
       if (version !== (app.globalData.ordersVersion || 0)) { this._activeRefreshAfter = true; return; }
       const row = data?.records?.[0];
-      this.setData({ activeOrder: row ? orderCard(row) : null, activeOrderReady: true });
+      const total = Number(data?.total) || (row ? 1 : 0);
+      this.setData({ activeOrder: row ? orderCard(row) : null, activeOrderReady: true, activeOrderError: false, activeMoreCount: row ? Math.max(0, total - 1) : 0 });
       this._activeAt = Date.now(); this._activeVersion = version;
     }).catch(() => {
-      if (!this._disposed && sessionKey(app) === context) this.setData({ activeOrderReady: true });
+      // 失败时不要静默显示欢迎区：没有已知订单就提示可重试
+      if (!this._disposed && sessionKey(app) === context) this.setData({ activeOrderReady: true, activeOrderError: !this.data.activeOrder });
     }).finally(() => {
       if (this._activeTask === task) {
         this._activeTask = null;
@@ -188,6 +193,15 @@ Page({
     navigation.navigateTo({
       url: `/pages/service/detail?id=${id}`
     });
+  },
+
+  retryActiveOrder() {
+    this.setData({ activeOrderReady: false, activeOrderError: false });
+    return this.loadActiveOrder(true);
+  },
+
+  goToActiveOrders() {
+    navigation.switchTab({ url: '/pages/order/list' });
   },
 
   goToOrderDetail(e) {

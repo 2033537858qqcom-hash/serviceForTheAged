@@ -32,6 +32,8 @@
 .bottom-action-box { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1rpx solid var(--border-color); padding: 20rpx 32rpx; padding-bottom: calc(20rpx + env(safe-area-inset-bottom)); box-shadow: 0 -4rpx 14rpx rgba(0,0,0,.03); z-index: 10; }
 .btn-add-bottom { width: 100%; }
 
-.elder-mode .page-title { font-size: 50rpx; }
-.elder-mode .elder-name { font-size: 42rpx; }
-.elder-mode .btn-edit-card { height: var(--control-height); min-height: var(--control-height); line-height: var(--control-height); padding: 0 36rpx; font-size: 34rpx; border-radius: 20rpx; }
+.elder-mode .page-title { font-size: var(--font-title); }
+.elder-mode .elder-name { font-size: var(--font-section); }
+.elder-mode .btn-edit-card { height: var(--control-height); min-height: var(--control-height); line-height: var(--control-height); padding: 0 36rpx; font-size: var(--font-body); border-radius: 20rpx; }
+
+.elder-list-page.elder-mode { padding-bottom: calc(240rpx + env(safe-area-inset-bottom)); }

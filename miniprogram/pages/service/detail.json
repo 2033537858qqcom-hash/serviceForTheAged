@@ -2,6 +2,7 @@
   "navigationBarTitleText": "服务详情",
   "usingComponents": {
     "bottom-sheet": "/components/bottom-sheet/index",
-    "service-photo": "/components/service-photo/index"
+    "service-photo": "/components/service-photo/index",
+    "state-view": "/components/state-view/index"
   }
 }
