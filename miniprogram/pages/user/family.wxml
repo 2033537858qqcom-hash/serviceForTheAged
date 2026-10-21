@@ -1,5 +1,5 @@
 <view class="container {{isElderMode ? 'elder-mode' : ''}}">
-  <view wx:if="{{loadError}}" class="empty-tip" bindtap="loadData">加载失败，点击重试</view>
+  <view wx:if="{{loadError}}" class="card"><state-view type="error" title="绑定信息加载失败" description="请检查网络后重试" bindaction="loadData" /></view>
   <view class="card apply-card">
     <view class="card-title">为家人预约服务</view>
     <view class="form-tip">提交亲属关系证明，由社区管理员核验通过后，即可代老人预约各项居家养老服务。</view>

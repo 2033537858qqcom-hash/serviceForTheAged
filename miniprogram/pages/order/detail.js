@@ -406,8 +406,16 @@ Page({
   },
 
   goToReview() {
+    // 带上服务名、服务人员与完成时间，评价页据此告诉老人正在评价哪一笔
+    const vo = this.data.orderVO || {};
+    const ctx = {
+      service: vo.order?.serviceNameSnapshot || '',
+      staff: vo.currentStaff?.user?.realName || '',
+      done: vo.serviceRecord?.actualEndAt || ''
+    };
+    const query = Object.keys(ctx).filter(k => ctx[k]).map(k => `&${k}=${encodeURIComponent(ctx[k])}`).join('');
     navigation.navigateTo({
-      url: `/pages/order/confirm?orderId=${this.data.orderId}`
+      url: `/pages/order/confirm?orderId=${this.data.orderId}${query}`
     });
   }
 });

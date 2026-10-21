@@ -229,8 +229,8 @@
 .elder-mode .label { flex: auto; }
 .elder-mode .value { text-align: left; }
 .elder-mode .node-content { animation-name: timeline-in-soft; }
-.elder-mode .next-step-heading { font-size: 38rpx; }
-.elder-mode .next-step-text { font-size: 32rpx; line-height: 1.7; }
+.elder-mode .next-step-heading { font-size: var(--font-section); }
+.elder-mode .next-step-text { font-size: var(--font-caption); line-height: 1.7; }
 
 .order-skeleton-banner { height: 204rpx; margin-bottom: 26rpx; border-radius: 24rpx; }
 .order-skeleton-title { height: 56rpx; width: 42%; margin-bottom: 26rpx; }
@@ -247,3 +247,9 @@
 @media (prefers-reduced-motion: reduce) {
   .timeline-line, .dot, .node-content { animation: none !important; opacity: 1; transform: none; }
 }
+
+.container.elder-mode { padding-bottom: calc(280rpx + env(safe-area-inset-bottom)); }
+.status-banner .next-step-body { margin-top: 10rpx; }
+.status-banner .next-step-text { color: #466553; }
+/* 只有“取消订单”一个操作时做成整宽浅红按钮，便于发现 */
+.bottom-actions .btn-cancel.is-solo { flex: 1; min-height: var(--control-height); font-size: var(--font-body); background: #fdf0ef; border: 2rpx solid var(--danger-color); border-radius: 24rpx; }

@@ -20,3 +20,6 @@
 }
 .btn-submit { width: 100%; margin: 0; }
 .btn-submit.is-success { background: #1f8a5b !important; color: #fff !important; }
+
+.review-context-title { font-size: var(--font-section); font-weight: 600; color: var(--text-main); }
+.review-context-meta { margin-top: 8rpx; font-size: var(--font-caption); color: var(--text-secondary); }

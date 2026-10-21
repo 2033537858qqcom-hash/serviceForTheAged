@@ -1,4 +1,9 @@
 <view class="container scroll-content-with-bottom {{isElderMode ? 'elder-mode' : ''}}">
+  <view class="card review-context" wx:if="{{reviewContext}}">
+    <view class="review-context-title">您正在评价：{{reviewContext.service}}</view>
+    <view class="review-context-meta" wx:if="{{reviewContext.staff}}">服务人员：{{reviewContext.staff}}</view>
+    <view class="review-context-meta" wx:if="{{reviewContext.doneText}}">完成时间：{{reviewContext.doneText}}</view>
+  </view>
   <view class="card rating-card">
     <view class="rating-title">服务满意度评分</view>
     <view class="stars-box flex-row">

@@ -104,6 +104,11 @@
   flex: 1;
   text-align: center;
   padding: 16rpx 8rpx;
+  min-height: 88rpx;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: var(--font-caption);
   color: var(--text-secondary);
   border-radius: 12rpx;
@@ -250,8 +255,6 @@
 }
 .photo-delete-btn {
   position: absolute;
-  top: 6rpx;
-  right: 6rpx;
   width: 44rpx;
   height: 44rpx;
   border-radius: 50%;
@@ -261,6 +264,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  /* 视觉 44rpx，透明边框把可点区域扩到 88rpx */
+  border: 22rpx solid transparent;
+  background-clip: padding-box;
+  box-sizing: content-box;
+  top: 0;
+  right: 0;
 }
 .photo-add-btn {
   width: 100%;

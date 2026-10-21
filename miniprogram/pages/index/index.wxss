@@ -165,3 +165,9 @@
 .elder-mode .skeleton-order-title { height: 58rpx; }
 .elder-mode .skeleton-order-meta { height: 44rpx; }
 .elder-mode .skeleton-order-cta { height: var(--control-height); }
+
+.active-more { min-height: 88rpx; display: flex; align-items: center; justify-content: center; margin-top: 12rpx; color: var(--primary-color); font-size: var(--font-caption); }
+.active-order-error { margin-bottom: 24rpx; }
+/* 拨打社区电话：做成可识别的次级按钮 */
+.welcome-contact { border: 2rpx solid var(--primary-color); border-radius: 20rpx; padding: 0 24rpx; margin-top: 20rpx; background: #fff; }
+.welcome-contact .contact-label { color: var(--primary-color); font-weight: 600; }

@@ -103,6 +103,16 @@ function requireRole(allowedRoles, returnUrl) {
   return true;
 }
 
+// 居民专属 tab 页（首页 / 服务 / 订单）：服务人员经分享链接或返回栈进入时送回工作台
+function redirectStaffHome() {
+  let app = null;
+  try { app = getApp(); } catch (_) {}
+  const role = app?.globalData?.role || app?.globalData?.userInfo?.role;
+  if (!app?.globalData?.token || role !== 'STAFF') return false;
+  route('switchTab', { url: WORKBENCH }, true);
+  return true;
+}
+
 function afterLogin(returnUrl) {
   let app = null;
   try { app = getApp(); } catch (_) {}
@@ -133,4 +143,4 @@ function afterLogin(returnUrl) {
   return route('redirectTo', { url: target }, true);
 }
 
-module.exports = { navigateTo, switchTab, redirectTo, navigateBack, toLogin, requireLogin, requireRole, afterLogin, currentUrl };
+module.exports = { navigateTo, switchTab, redirectTo, navigateBack, toLogin, requireLogin, requireRole, redirectStaffHome, afterLogin, currentUrl };

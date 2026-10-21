@@ -94,19 +94,19 @@
       </view>
       <view class="hub-grid">
         <view class="hub-item" bindtap="goToOrderList" data-status="WAIT_DISPATCH">
-          <view class="hub-icon-wrap"><image src="/assets/icons/time.png" /></view>
+          <view class="hub-icon-wrap"><image src="/assets/icons/time.png" /><text wx:if="{{hubCounts.WAIT_DISPATCH}}" class="hub-badge">{{hubCounts.WAIT_DISPATCH}}</text></view>
           <text class="hub-label">待调度</text>
         </view>
         <view class="hub-item" bindtap="goToOrderList" data-status="WAIT_VISIT">
-          <view class="hub-icon-wrap"><image src="/assets/icons/calendar.png" /></view>
+          <view class="hub-icon-wrap"><image src="/assets/icons/calendar.png" /><text wx:if="{{hubCounts.WAIT_VISIT}}" class="hub-badge">{{hubCounts.WAIT_VISIT}}</text></view>
           <text class="hub-label">待上门</text>
         </view>
         <view class="hub-item" bindtap="goToOrderList" data-status="IN_SERVICE">
-          <view class="hub-icon-wrap"><image src="/assets/icons/staff.png" /></view>
+          <view class="hub-icon-wrap"><image src="/assets/icons/staff.png" /><text wx:if="{{hubCounts.IN_SERVICE}}" class="hub-badge">{{hubCounts.IN_SERVICE}}</text></view>
           <text class="hub-label">服务中</text>
         </view>
         <view class="hub-item" bindtap="goToOrderList" data-status="WAIT_CONFIRM">
-          <view class="hub-icon-wrap"><image src="/assets/icons/check.png" /></view>
+          <view class="hub-icon-wrap"><image src="/assets/icons/check.png" /><text wx:if="{{hubCounts.WAIT_CONFIRM}}" class="hub-badge">{{hubCounts.WAIT_CONFIRM}}</text></view>
           <text class="hub-label">待确认</text>
         </view>
       </view>
@@ -146,13 +146,13 @@
 
   <!-- 系统与体验设置卡片 -->
   <view class="card menu-card">
-    <view class="menu-item">
+    <view class="menu-item" hover-class="spring-in" hover-stay-time="80" bindtap="toggleElderRow" role="switch" aria-checked="{{isElderMode}}">
       <view class="menu-icon-wrap"><image src="/assets/icons/care.png" /></view>
       <view class="menu-copy">
         <view class="menu-label">关爱适老模式</view>
-        <view class="menu-description">超大字体、温和对比度与易读排版</view>
+        <view class="menu-description">{{isElderMode ? '已开启' : '已关闭'}} · 超大字体、温和对比度与易读排版</view>
       </view>
-      <switch checked="{{isElderMode}}" color="#176b5d" bindchange="onModeChange" />
+      <switch checked="{{isElderMode}}" color="#176b5d" style="pointer-events: none;" />
     </view>
 
     <!-- 演示账号 ActionSheet 切换 (仅开发模式显示) -->

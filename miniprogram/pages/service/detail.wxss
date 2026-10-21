@@ -49,3 +49,6 @@
 .elder-mode .detail-cover {
   height: 380rpx;
 }
+
+/* 大字模式底栏折行约 240rpx，预留更多空间避免遮挡最后一张卡片 */
+.container.elder-mode { padding-bottom: calc(300rpx + env(safe-area-inset-bottom)); }

@@ -125,7 +125,7 @@
   <bottom-sheet show="{{showRejectSheet}}" title="确认拒绝接单" content="确认无法接单吗？系统将自动释放并重派给其他服务人员。" confirm-text="确认拒绝" tone="danger" dismiss-text="再想想" loading="{{actionLoading}}" bind:close="closeRejectSheet" bind:confirm="confirmRejectDispatch"></bottom-sheet>
 
   <!-- 提交履约记录抽屉 -->
-  <bottom-sheet show="{{showRecordModal}}" title="提交上门服务记录" confirm-text="确认提交" dismiss-text="取消" loading="{{actionLoading}}" bind:close="closeRecordModal" bind:confirm="submitRecord">
+  <bottom-sheet show="{{showRecordModal}}" title="提交上门服务记录" confirm-text="确认提交" dismiss-text="取消" mask-closable="{{false}}" loading="{{actionLoading}}" bind:close="closeRecordModal" bind:confirm="submitRecord">
     <view class="record-sheet-body">
       <view class="modal-tip">请真实填写现场服务情况并拍摄或上传完成图片，以便老人与社区审核留档</view>
       <textarea id="record-textarea" data-no-drag="true" class="record-textarea" placeholder="填写服务工作总结，如老人饮食情况、日常保洁清洁部位、陪同就医事项等..." value="{{recordSummary}}" bindinput="onInputSummary" cursor-spacing="140" />

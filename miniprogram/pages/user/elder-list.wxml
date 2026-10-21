@@ -14,10 +14,7 @@
   </view>
 
   <!-- 错误提示 -->
-  <view class="card empty-tip" wx:elif="{{loadError}}">
-    <view>长辈档案信息暂时未能加载</view>
-    <button class="retry-button" bindtap="loadElders">重新加载</button>
-  </view>
+  <view class="card" wx:elif="{{loadError}}"><state-view type="error" title="老人档案暂时未能加载" description="请检查网络后重试" bindaction="loadElders" /></view>
 
   <!-- 空状态 -->
   <view class="card empty-state-card" wx:elif="{{!elders.length}}">
@@ -37,7 +34,7 @@
           <text class="tag tag-info gender-tag">{{item.gender === 'FEMALE' ? '女' : '男'}}</text>
           <text class="elder-age" wx:if="{{item.age}}">{{item.age}}岁</text>
         </view>
-        <text class="tag tag-success care-tag">{{careLevelMap[item.careLevel] || '自理长辈'}}</text>
+        <text wx:if="{{careLevelMap[item.careLevel]}}" class="tag tag-success care-tag">{{careLevelMap[item.careLevel]}}</text>
       </view>
 
       <view class="elder-detail-item flex-row">

@@ -60,6 +60,7 @@
         <text>{{activeOrder.elder ? activeOrder.elder.name : '服务对象'}}<text wx:if="{{activeOrder.order.requesterType === 'FAMILY' && activeOrder.requesterName}}">（由 {{activeOrder.requesterName}} 代约）</text><text wx:if="{{activeOrder.currentStaff}}"> · 服务人员 {{activeOrder.currentStaff.user.realName}}</text></text>
       </view>
       <button class="btn-primary active-order-cta {{isElderMode ? 'btn-large' : ''}}" hover-class="spring-in" hover-stay-time="80" bindtap="goToOrderDetail" data-id="{{activeOrder.order.id}}">查看服务进度</button>
+      <view wx:if="{{activeMoreCount > 0}}" class="active-more" hover-class="spring-in" hover-stay-time="80" bindtap="goToActiveOrders">还有 {{activeMoreCount}} 个进行中的服务，去订单页查看 ›</view>
     </view>
 
     <view class="section-title home-section-heading compact-heading">
@@ -88,6 +89,7 @@
 
   <!-- 无进行中服务：欢迎区 + 完整四宫格作为主入口 -->
   <block wx:else>
+    <view wx:if="{{activeOrderError}}" class="card active-order-error"><state-view type="error" title="服务进度暂时无法获取" description="已有的预约不会丢失，请稍后重试" action-text="重新查询" bindaction="retryActiveOrder" /></view>
     <view class="welcome-panel">
       <view class="welcome-kicker">家门口的服务，身边的关怀</view>
       <view class="welcome-title">
@@ -97,7 +99,7 @@
       <view class="welcome-caption">日常生活的小事，我们一起照应。</view>
       <view class="welcome-contact" bindtap="callHotline">
         <image src="/assets/icons/phone.png"/>
-        <text>联系社区</text>
+        <text class="contact-label">拨打社区电话</text>
         <text class="contact-hours">{{hotlineHours}}</text>
         <image class="contact-arrow" src="/assets/icons/arrow.png" />
       </view>

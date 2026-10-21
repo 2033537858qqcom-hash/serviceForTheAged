@@ -15,9 +15,7 @@
       <view class="hero-title">陪伴在身边，<view>安心每一天。</view></view>
       <view class="hero-description">为自己和家人，安排一份安心。</view>
     </view>
-    <view class="action-section">
-      <button class="btn-quick-login" hover-class="login-button-pressed" hover-stay-time="80" bindtap="handleQuickLogin" loading="{{loggingIn}}" disabled="{{loggingIn}}">{{loggingIn ? '正在登录…' : '微信快捷登录'}}</button>
-    </view>
+    <!-- 先勾选协议、再点登录：与自上而下的操作顺序一致 -->
     <view class="agreement-section">
       <view class="agreement-row" bindtap="toggleAgreement" role="checkbox" aria-label="同意服务协议与隐私政策" aria-checked="{{isAgreed}}">
         <view class="checkbox-hit-area"><view class="custom-checkbox {{isAgreed ? 'is-checked' : ''}}"><view class="check-stroke"></view></view></view>
@@ -28,6 +26,9 @@
           <text class="doc-link" catchtap="openDocModal" data-type="privacy">《隐私政策》</text>
         </view>
       </view>
+    </view>
+    <view class="action-section">
+      <button class="btn-quick-login" hover-class="login-button-pressed" hover-stay-time="80" bindtap="handleQuickLogin" loading="{{loggingIn}}" disabled="{{loggingIn}}">{{loggingIn ? '正在登录…' : '微信快捷登录'}}</button>
     </view>
     <view class="login-footer">助餐送餐 · 居家助洁 · 陪同照护</view>
   </view>

@@ -77,6 +77,7 @@ Page({
   },
 
   onShow() {
+    if (navigation.redirectStaffHome()) return;
     syncTabBar(this, 2);
     this._hidden = false;
     const token = app.globalData?.token || '';

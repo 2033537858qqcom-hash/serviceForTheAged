@@ -12,10 +12,10 @@ function getAppSafe() {
 }
 
 const careLevelMap = {
-  NORMAL: '自理长辈',
-  LIGHT: '轻度失能',
-  MODERATE: '中度失能',
-  SEVERE: '重度失能'
+  // 与后端 ElderSaveDTO 的 careLevel 取值一致：NORMAL | MEDIUM | HIGH
+  NORMAL: '能自理',
+  MEDIUM: '半自理',
+  HIGH: '需全程照护'
 };
 
 Page({

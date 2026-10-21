@@ -10,22 +10,14 @@
     </view>
     <view class="page-state-tip">正在加载订单详情…</view>
   </view>
-  <view class="card empty-tip" wx:elif="{{loadError}}">订单信息暂时未能加载<button class="retry-button" bindtap="retryDetail">重新加载</button></view>
+  <view class="card" wx:elif="{{loadError}}"><state-view type="error" title="订单信息暂时未能加载" description="请检查网络后重试" bindaction="retryDetail" /></view>
 </view>
 <view class="container scroll-content-with-bottom {{isElderMode ? 'elder-mode' : ''}}" wx:if="{{orderVO}}">
   <view class="detail-refresh-tip" wx:if="{{loadError}}">订单更新失败<button class="retry-button" bindtap="retryDetail">重新加载</button></view>
   <!-- 状态条幅 -->
   <view class="status-banner bg-{{orderVO.order.status}}">
     <view class="status-title">{{statusTextMap[orderVO.order.status] || orderVO.order.status}}</view>
-    <view class="status-sub">{{statusSubMap[orderVO.order.status] || ''}}</view>
-  </view>
-
-  <!-- 接下来怎么办？指引卡片 -->
-  <view class="card next-step-card">
-    <view class="next-step-header flex-row">
-      <image class="next-step-icon" src="/assets/icons/care.png" />
-      <text class="next-step-heading">接下来怎么办？</text>
-    </view>
+    <!-- 状态与“接下来怎么办”合并为一张卡，避免两段相似说明 -->
     <view class="next-step-body">
       <view class="next-step-text" wx:if="{{orderVO.order.status === 'WAIT_DISPATCH' || orderVO.order.status === 'WAIT_MANUAL'}}">
         正在安排具备专业资质的社区服务人员。系统根据资质、评分和距离就近智能调度，稍候将为您派发，请保持手机畅通。
@@ -51,6 +43,7 @@
       <view class="next-step-text" wx:elif="{{orderVO.order.status === 'CANCELLED'}}">
         该预约订单已取消。若您仍有助老需要，随时可在首页或服务列表重新发起预约。
       </view>
+      <view class="next-step-text" wx:else>{{statusSubMap[orderVO.order.status] || ''}}</view>
     </view>
   </view>
 
@@ -199,7 +192,7 @@
 
   <!-- 底部操作按钮栏 -->
   <view class="bottom-actions flex-row" wx:if="{{canCancel || orderVO.order.status === 'WAIT_CONFIRM' || (orderVO.order.status === 'COMPLETED' && !orderVO.serviceReview)}}">
-    <button class="btn-cancel spring" hover-class="spring-in" hover-stay-time="80" wx:if="{{canCancel}}" bindtap="cancelOrder">取消订单</button>
+    <button class="btn-cancel spring {{orderVO.order.status === 'WAIT_CONFIRM' || orderVO.order.status === 'COMPLETED' ? '' : 'is-solo'}}" hover-class="spring-in" hover-stay-time="80" wx:if="{{canCancel}}" bindtap="cancelOrder">取消订单</button>
     <button class="btn-primary btn-confirm {{isElderMode ? 'btn-large' : ''}}" hover-class="spring-in" hover-stay-time="80" wx:if="{{orderVO.order.status === 'WAIT_CONFIRM'}}" bindtap="confirmOrder">确认完成</button>
     <button class="btn-primary btn-review {{isElderMode ? 'btn-large' : ''}}" hover-class="spring-in" hover-stay-time="80" wx:if="{{orderVO.order.status === 'COMPLETED' && !orderVO.serviceReview}}" bindtap="goToReview">评价服务</button>
   </view>

@@ -1,10 +1,11 @@
 <view class="container scroll-content-with-bottom {{isElderMode ? 'elder-mode' : ''}}">
-  <view wx:if="{{eldersLoadError}}" class="empty-tip" bindtap="loadElders">老人档案加载失败，点击重试</view>
+  <view wx:if="{{eldersLoadError}}" class="card"><state-view type="error" title="老人档案加载失败" description="请检查网络后重试" bindaction="loadElders" /></view>
   <!-- 服务项目概要 -->
   <view class="card item-summary flex-between" wx:if="{{service}}">
     <view>
       <view class="item-title">{{service.name}}</view>
       <view class="item-time">服务时长：约 {{service.durationMinutes}} 分钟</view>
+      <view class="item-time">费用由下单人与社区线下结算</view>
     </view>
     <view class="item-price">¥{{service.price}}</view>
   </view>
@@ -101,7 +102,7 @@
   <!-- 提交下单按钮 -->
   <view class="submit-box">
     <view class="submit-price" wx:if="{{service}}">
-      <text class="submit-price-label">预计费用 · 下单人协调线下结算</text>
+      <text class="submit-price-label">预计费用</text>
       <view>¥{{service.price}}<text> / 次</text></view>
     </view>
     <button class="btn-primary btn-submit-order {{submitPhase === 'done' ? 'is-done' : ''}} {{isElderMode ? 'btn-large' : ''}}" hover-class="spring-in" loading="{{submitting && submitPhase !== 'done'}}" disabled="{{submitting}}" bindtap="submitOrder">
