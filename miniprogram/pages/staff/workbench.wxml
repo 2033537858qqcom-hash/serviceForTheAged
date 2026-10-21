@@ -71,6 +71,18 @@
       <view class="task-line">上门地址：{{item.order.addressSnapshot}}</view>
       <view class="task-line">预约时段：{{item.order.plannedStartAt}} ~ {{item.order.plannedEndAt}}</view>
 
+      <!-- 配送与导航动作条 (待上门状态下展示) -->
+      <view class="task-lbs-bar flex-between" wx:if="{{item.order.status === 'WAIT_VISIT'}}">
+        <view class="lbs-hint flex-row">
+          <text class="lbs-icon">📍</text>
+          <text class="lbs-text">地址导航与轨迹</text>
+        </view>
+        <view class="lbs-actions flex-row">
+          <button class="btn-nav" size="mini" bindtap="openNavigation" data-id="{{item.order.id}}">🧭 导航</button>
+          <button class="btn-mock" size="mini" bindtap="mockMoveStep" data-id="{{item.order.id}}">🏃 模拟移动</button>
+        </view>
+      </view>
+
       <!-- 操作按钮流 -->
       <view class="task-actions flex-between">
         <button class="btn-call" size="mini" bindtap="dialPhone" data-phone="{{item.order.contactPhoneSnapshot}}">联系服务对象</button>
@@ -87,9 +99,10 @@
         <text class="completed-hint" wx:if="{{item.order.status === 'COMPLETED'}}">服务已圆满完成</text>
       </view>
     </view>
-    <view class="empty-tip" wx:if="{{filteredTasks.length === 0}}">
+    <view class="empty-tip" wx:if="{{filteredTasks.length === 0 && !tasksLoading && !tasksHasMore && !loadError}}">
       暂无此类服务安排，可通过上方切换接单状态。
     </view>
+    <button wx:if="{{tasksHasMore}}" class="retry-button" loading="{{tasksLoading}}" disabled="{{tasksLoading}}" bindtap="loadMoreTasks">加载更多服务安排</button>
   </view>
 
   <!-- 提交履约记录弹窗 -->

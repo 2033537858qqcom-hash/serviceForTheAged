@@ -26,6 +26,7 @@ const app = new Proxy({}, {
 Page({
   data: {
     isAgreed: false,
+    loggingIn: false,
     showAccountModal: false,
     accountTab: 'login', // 'login' or 'register'
     formUsername: '',
@@ -64,49 +65,57 @@ Page({
     return true;
   },
 
-  // 微信/手机号快捷授权登录
+  onUnload() {
+    this._disposed = true;
+    if (this._loginJob) wx.hideLoading();
+    this._loginJob = null;
+  },
+
+  runLogin(action, title = '正在登录…') {
+    if (this._loginJob || this._disposed) return Promise.resolve();
+    const state = getAppSafe().globalData;
+    const job = { baseUrl: state.baseUrl, token: state.token };
+    this._loginJob = job;
+    this.setData({ loggingIn: true });
+    wx.showLoading({ title, mask: true });
+    const valid = () => !this._disposed && this._loginJob === job &&
+      getAppSafe().globalData.baseUrl === job.baseUrl && getAppSafe().globalData.token === job.token;
+    return Promise.resolve().then(() => {
+      if (valid()) return action(valid);
+    }).then(result => {
+      if (valid() && result) {
+        this.closeAccountModal();
+        this.onLoginSuccess(result);
+      }
+    }).catch(() => {}).finally(() => {
+      if (this._loginJob !== job) return;
+      this._loginJob = null;
+      wx.hideLoading();
+      if (!this._disposed) this.setData({ loggingIn: false });
+    });
+  },
+
   handleQuickLogin() {
     if (!this.checkAgreement()) return;
-
-    wx.showLoading({ title: '正在登录…' });
-    wx.login({
-      success: res => {
-        if (res.code) {
-          request.post('/auth/wechat-login', {
-            code: res.code,
-            role: 'RESIDENT'
-          }).then(loginRes => {
-            wx.hideLoading();
-            this.onLoginSuccess(loginRes);
-          }).catch(error => {
-            wx.hideLoading();
-            // 请求未到达后端时保留网络提示，不误报为微信授权配置缺失。
-            if (error?.isNetworkError) return;
-            // 若后台未配置微信密钥或微信授权失败，友好引导使用演示通道或账号密码
-            wx.showModal({
-              title: '提示',
-              content: '未检测到微信授权环境，可直接通过下方“评测通道”一键登录体验！',
-              confirmText: '立即体验',
-              cancelText: '账号登录',
-              success: (modalRes) => {
-                if (modalRes.confirm) {
-                  this.openRoleSwitchSheet();
-                } else {
-                  this.openAccountModal();
-                }
-              }
-            });
-          });
-        } else {
-          wx.hideLoading();
-          wx.showToast({ title: '获取微信登录Code失败', icon: 'none' });
+    return this.runLogin(valid => new Promise((resolve, reject) => {
+      wx.login({
+        timeout: 10000,
+        success: res => {
+          if (!res.code) {
+            if (valid()) wx.showToast({ title: '获取微信登录凭证失败，请重试', icon: 'none' });
+            reject(new Error('Missing login code'));
+            return;
+          }
+          resolve(res.code);
+        },
+        fail: () => {
+          if (valid()) wx.showToast({ title: '微信登录失败，请重试或使用账号登录', icon: 'none' });
+          reject(new Error('WeChat login failed'));
         }
-      },
-      fail: () => {
-        wx.hideLoading();
-        wx.showToast({ title: '调用微信登录失败', icon: 'none' });
-      }
-    });
+      });
+    }).then(code => {
+      if (valid()) return request.post('/auth/wechat-login', { code, role: 'RESIDENT' });
+    }));
   },
 
   // 演示答辩一键体验快捷入口 (老人/家属/师傅/管理)
@@ -125,13 +134,7 @@ Page({
         const target = roles[res.tapIndex];
         if (target) {
           that.setData({ isAgreed: true });
-          wx.showLoading({ title: `正在以 ${target.name} 登录...` });
-          request.post('/auth/mock-login?username=' + encodeURIComponent(target.username)).then(loginRes => {
-            wx.hideLoading();
-            that.onLoginSuccess(loginRes);
-          }).catch(() => {
-            wx.hideLoading();
-          });
+          return that.runLogin(() => request.post('/auth/mock-login?username=' + encodeURIComponent(target.username)), `正在以 ${target.name} 登录…`);
         }
       }
     });
@@ -177,37 +180,28 @@ Page({
         wx.showToast({ title: '请输入真实姓名', icon: 'none' });
         return;
       }
-      if (!formPhone.trim() || formPhone.length !== 11) {
+      if (!/^1[3-9]\d{9}$/.test(formPhone.trim())) {
         wx.showToast({ title: '请输入有效的11位手机号', icon: 'none' });
         return;
       }
 
-      wx.showLoading({ title: '正在注册…' });
-      request.post('/auth/register', {
-        username: formUsername,
-        password: formPassword,
-        realName: formRealName,
-        phone: formPhone
-      }).then(res => {
-        wx.hideLoading();
-        this.closeAccountModal();
-        this.onLoginSuccess(res);
-      }).catch(() => wx.hideLoading());
-    } else {
-      wx.showLoading({ title: '正在登录…' });
-      request.post('/auth/login', {
-        username: formUsername,
-        password: formPassword
-      }).then(res => {
-        wx.hideLoading();
-        this.closeAccountModal();
-        this.onLoginSuccess(res);
-      }).catch(() => wx.hideLoading());
+      return this.runLogin(() => request.post('/auth/register', {
+        username: formUsername.trim(), password: formPassword,
+        realName: formRealName.trim(), phone: formPhone.trim()
+      }), '正在注册…');
     }
+    return this.runLogin(() => request.post('/auth/login', {
+      username: formUsername.trim(), password: formPassword
+    }));
   },
 
   // 统一登录成功状态更新与跳转
   onLoginSuccess(data) {
+    if (this._disposed) return;
+    if (!data || typeof data.token !== 'string' || !data.token || !data.userInfo || !data.userInfo.role) {
+      wx.showToast({ title: '登录响应异常，请重新登录', icon: 'none' });
+      return;
+    }
     app.globalData.token = data.token;
     app.globalData.userInfo = data.userInfo;
     app.globalData.role = data.userInfo.role;

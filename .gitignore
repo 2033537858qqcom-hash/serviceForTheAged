@@ -31,6 +31,9 @@ dist-ssr/
 Thumbs.db
 *.log
 
+# Local WeChat credentials
+/backend/config/wechat-local.properties
+
 # AI Assistants
 .agents/
 .grok/

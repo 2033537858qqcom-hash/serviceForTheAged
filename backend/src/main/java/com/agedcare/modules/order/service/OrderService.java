@@ -22,6 +22,7 @@ import com.agedcare.modules.fulfillment.mapper.ServiceRecordMapper;
 import com.agedcare.modules.fulfillment.mapper.ServiceReviewMapper;
 import com.agedcare.modules.order.dto.OrderCreateDTO;
 import com.agedcare.modules.order.dto.OrderQueryDTO;
+import com.agedcare.modules.order.dto.OrderTrackingVO;
 import com.agedcare.modules.order.dto.OrderVO;
 import com.agedcare.modules.order.entity.OrderStatusLog;
 import com.agedcare.modules.order.entity.ServiceOrder;
@@ -42,6 +43,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -121,6 +123,21 @@ public class OrderService {
             throw new BusinessException("服务时段不可跨日");
         }
 
+        BigDecimal latitude = dto.getLatitude();
+        BigDecimal longitude = dto.getLongitude();
+        if ((latitude == null) != (longitude == null)) {
+            throw new BusinessException("请同时提供有效的经纬度");
+        }
+        if (latitude != null && !validCoordinates(latitude, longitude)) {
+            throw new BusinessException("经纬度超出有效范围");
+        }
+        // Only reuse a location when it belongs to the same address snapshot.
+        if (latitude == null && Objects.equals(dto.getAddress().trim(), elder.getAddress() == null ? null : elder.getAddress().trim())
+                && validCoordinates(elder.getLatitude(), elder.getLongitude())) {
+            latitude = elder.getLatitude();
+            longitude = elder.getLongitude();
+        }
+
         // 5. 保存快照并创建订单实体
         ServiceOrder order = ServiceOrder.builder()
                 .orderNo(OrderNoGenerator.generateOrderNo())
@@ -135,8 +152,8 @@ public class OrderService {
                 .plannedStartAt(dto.getPlannedStartAt())
                 .plannedEndAt(plannedEndAt)
                 .addressSnapshot(dto.getAddress())
-                .longitude(dto.getLongitude() != null ? dto.getLongitude() : new java.math.BigDecimal("116.407396"))
-                .latitude(dto.getLatitude() != null ? dto.getLatitude() : new java.math.BigDecimal("39.904199"))
+                .longitude(longitude)
+                .latitude(latitude)
                 .coordinateType(StringUtils.hasText(dto.getCoordinateType()) ? dto.getCoordinateType() : "GCJ02")
                 .contactNameSnapshot(dto.getContactName())
                 .contactPhoneSnapshot(dto.getContactPhone())
@@ -171,6 +188,12 @@ public class OrderService {
         }
 
         return serviceOrderMapper.selectById(order.getId());
+    }
+
+    private static boolean validCoordinates(BigDecimal latitude, BigDecimal longitude) {
+        return latitude != null && longitude != null
+                && latitude.abs().compareTo(BigDecimal.valueOf(90)) <= 0
+                && longitude.abs().compareTo(BigDecimal.valueOf(180)) <= 0;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -353,7 +376,145 @@ public class OrderService {
         vo.setLogs(orderStatusLogMapper.selectList(new LambdaQueryWrapper<OrderStatusLog>()
                 .eq(OrderStatusLog::getOrderId, order.getId())
                 .orderByAsc(OrderStatusLog::getCreatedAt)));
+        vo.setTracking(buildTrackingVO(order));
 
         return vo;
+    }
+
+    public OrderTrackingVO getOrderTracking(Long orderId) {
+        LoginUser currentUser = UserContext.getUser();
+        if (currentUser == null) {
+            throw new BusinessException(com.agedcare.common.api.ResultCode.UNAUTHORIZED);
+        }
+        ServiceOrder order = serviceOrderMapper.selectById(orderId);
+        if (order == null) {
+            throw new BusinessException("订单不存在");
+        }
+
+        // 对象级访问权限校验
+        if (!UserRole.ADMIN.getCode().equalsIgnoreCase(currentUser.getRole())) {
+            if (UserRole.RESIDENT.getCode().equalsIgnoreCase(currentUser.getRole())) {
+                boolean isRequester = order.getRequesterUserId().equals(currentUser.getId());
+                if (!isRequester) {
+                    ElderProfile elder = elderProfileMapper.selectById(order.getElderId());
+                    if (elder == null) {
+                        throw new BusinessException(403, "无权查看该订单轨迹");
+                    }
+                    elderProfileService.checkAccessPermission(elder);
+                }
+            } else if (UserRole.STAFF.getCode().equalsIgnoreCase(currentUser.getRole())) {
+                StaffProfile staff = staffProfileMapper.selectOne(new LambdaQueryWrapper<StaffProfile>()
+                        .eq(StaffProfile::getUserId, currentUser.getId()));
+                if (staff == null) {
+                    throw new BusinessException(403, "未找到关联服务人员档案");
+                }
+                Long assignedCount = dispatchAttemptMapper.selectCount(new LambdaQueryWrapper<DispatchAttempt>()
+                        .eq(DispatchAttempt::getOrderId, order.getId())
+                        .eq(DispatchAttempt::getStaffId, staff.getId()));
+                if (assignedCount == null || assignedCount == 0) {
+                    throw new BusinessException(403, "服务人员无权查看非指派给本人的订单轨迹");
+                }
+            }
+        }
+
+        return buildTrackingVO(order);
+    }
+
+    public OrderTrackingVO buildTrackingVO(ServiceOrder order) {
+        OrderTrackingVO vo = new OrderTrackingVO();
+        vo.setOrderId(order.getId());
+        vo.setOrderNo(order.getOrderNo());
+        vo.setStatus(order.getStatus());
+        vo.setServiceName(order.getServiceNameSnapshot());
+        vo.setDestAddress(order.getAddressSnapshot());
+        vo.setElderName(order.getContactNameSnapshot());
+        vo.setContactPhone(order.getContactPhoneSnapshot());
+
+        java.math.BigDecimal destLon = order.getLongitude();
+        java.math.BigDecimal destLat = order.getLatitude();
+        if (destLon == null || destLat == null) {
+            ElderProfile elder = elderProfileMapper.selectById(order.getElderId());
+            if (elder != null) {
+                if (destLon == null && destLat == null
+                        && Objects.equals(order.getAddressSnapshot(), elder.getAddress())
+                        && validCoordinates(elder.getLatitude(), elder.getLongitude())) {
+                    destLon = elder.getLongitude();
+                    destLat = elder.getLatitude();
+                }
+                if (!StringUtils.hasText(vo.getElderName())) vo.setElderName(elder.getName());
+                if (!StringUtils.hasText(vo.getContactPhone())) vo.setContactPhone(elder.getPhone());
+                if (!StringUtils.hasText(vo.getDestAddress())) vo.setDestAddress(elder.getAddress());
+            }
+        }
+        if (!validCoordinates(destLat, destLon)) {
+            destLat = null;
+            destLon = null;
+        }
+        vo.setDestLongitude(destLon);
+        vo.setDestLatitude(destLat);
+
+        if (order.getCurrentDispatchId() != null) {
+            DispatchAttempt attempt = dispatchAttemptMapper.selectById(order.getCurrentDispatchId());
+            if (attempt != null && attempt.getStaffId() != null) {
+                StaffProfile staff = staffProfileMapper.selectById(attempt.getStaffId());
+                if (staff != null) {
+                    vo.setStaffId(staff.getId());
+                    vo.setStaffLongitude(staff.getCurrentLongitude());
+                    vo.setStaffLatitude(staff.getCurrentLatitude());
+                    vo.setLocationUpdatedAt(staff.getLocationUpdatedAt());
+
+                    // 位置新鲜度判断 (超过5分钟无上报即为陈旧位置，防止误解为正在赶往)
+                    LocalDateTime locTime = staff.getLocationUpdatedAt();
+                    if (locTime != null) {
+                        long minutesAgo = java.time.Duration.between(locTime, LocalDateTime.now()).toMinutes();
+                        if (minutesAgo > 5) {
+                            vo.setIsStale(true);
+                            vo.setLocationStatusText(minutesAgo >= 60
+                                    ? "位置暂未更新(超1小时前)"
+                                    : String.format("位置暂未更新(%d分钟前)", minutesAgo));
+                        } else {
+                            vo.setIsStale(false);
+                            vo.setLocationStatusText(minutesAgo <= 1 ? "刚刚更新" : String.format("%d分钟前更新", minutesAgo));
+                        }
+                    } else {
+                        vo.setIsStale(true);
+                        vo.setLocationStatusText("暂未上报实时位置");
+                    }
+
+                    StaffDetailVO staffDetail = staffService.getStaffDetail(staff.getId());
+                    if (staffDetail != null && staffDetail.getUser() != null) {
+                        vo.setStaffName(staffDetail.getUser().getRealName());
+                        vo.setStaffPhone(staffDetail.getUser().getPhone());
+                    }
+                }
+            }
+        }
+
+        if (vo.getStaffLatitude() != null && vo.getStaffLongitude() != null
+                && vo.getDestLatitude() != null && vo.getDestLongitude() != null) {
+            double dist = calculateDistanceMeters(
+                    vo.getStaffLatitude().doubleValue(),
+                    vo.getStaffLongitude().doubleValue(),
+                    vo.getDestLatitude().doubleValue(),
+                    vo.getDestLongitude().doubleValue()
+            );
+            int distInt = (int) Math.round(dist);
+            vo.setDistanceMeters(distInt);
+            int minutes = distInt <= 50 ? 1 : (int) Math.ceil(distInt / 250.0);
+            vo.setEstimatedMinutes(minutes);
+        }
+
+        return vo;
+    }
+
+    public static double calculateDistanceMeters(double lat1, double lon1, double lat2, double lon2) {
+        final int R = 6371000;
+        double latDistance = Math.toRadians(lat2 - lat1);
+        double lonDistance = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
     }
 }

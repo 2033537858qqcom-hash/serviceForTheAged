@@ -1,12 +1,12 @@
 <view class="sheet-mask" wx:if="{{rendered}}" bindtap="onMask">
   <view
-    class="sheet-panel"
+    class="sheet-panel {{dragging ? 'is-dragging' : ''}}"
     style="{{drag ? 'transform: translateY(' + drag + 'px);' : ''}}"
     catchtap="noop"
-    catchtouchmove="noop"
+    catchtouchmove="onMove"
     bindtouchstart="onStart"
-    bindtouchmove="onMove"
     bindtouchend="onEnd"
+    bindtouchcancel="onCancel"
   >
     <view class="sheet-handle"></view>
     <view class="sheet-title" wx:if="{{title}}">{{title}}</view>

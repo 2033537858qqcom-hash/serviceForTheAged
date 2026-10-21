@@ -17,12 +17,13 @@ function expireSession(app, token, baseUrl) {
 function request(options) {
   return new Promise((resolve, reject) => {
     const app = getApp();
-    const token = app.globalData.token || '';
+    const token = app?.globalData?.token || '';
     const baseUrl = (app && app.globalData && app.globalData.baseUrl) || wx.getStorageSync('customBaseUrl') || 'http://localhost:8080/api';
 
     wx.request({
       url: baseUrl + options.url,
       method: options.method || 'GET',
+      timeout: 15000,
       data: options.data || {},
       header: {
         'Content-Type': 'application/json',
@@ -32,6 +33,11 @@ function request(options) {
       success(res) {
         if (res.statusCode === 200) {
           const apiRes = res.data;
+          if (!apiRes || typeof apiRes !== 'object' || typeof apiRes.code !== 'number') {
+            wx.showToast({ title: '服务器响应格式异常，请稍后重试', icon: 'none' });
+            reject({ message: '服务器响应格式异常', isInvalidResponse: true });
+            return;
+          }
           if (apiRes.code === 200) {
             resolve(apiRes.data);
           } else if (apiRes.code === 401) {

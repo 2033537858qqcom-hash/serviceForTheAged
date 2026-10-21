@@ -67,6 +67,10 @@ Page({
     if (this.data.submitting) return;
     if (this._submitted) { this.returnToOrder(); return; }
     const { orderId, rating, content } = this.data;
+    if (!orderId) {
+      wx.showToast({ title: '缺少订单信息，请从订单详情进入', icon: 'none' });
+      return;
+    }
     this.setData({ submitting: true });
     return request.post('/fulfillment/review', {
       orderId,
@@ -81,6 +85,6 @@ Page({
     }).catch(() => { if (!this._disposed) this.setData({ submitting: false }); });
   },
   returnToOrder() {
-    navigation.navigateBack({ fail: () => { if (!this._disposed) this.setData({ submitting: false }); } });
+    navigation.navigateBack({ fallbackUrl: this.data.orderId ? `/pages/order/detail?id=${this.data.orderId}` : '/pages/order/list', fail: () => { if (!this._disposed) this.setData({ submitting: false }); } });
   }
 });

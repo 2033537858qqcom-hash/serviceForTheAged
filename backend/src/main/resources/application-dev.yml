@@ -1,4 +1,8 @@
 spring:
+  config:
+    import:
+      - optional:file:./config/wechat-local.properties
+      - optional:file:./backend/config/wechat-local.properties
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/aged_care_db?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
@@ -12,8 +16,8 @@ app:
 
 wechat:
   miniapp:
-    appid: ${WECHAT_APPID:wxc3039ae6e2412b11}
-    secret: ${WECHAT_SECRET:38c9b661e8e9286bc8ab4729e9b6ff0e}
+    appid: ${WECHAT_APPID:wxb460b87f30a9791b}
+    secret: ${WECHAT_SECRET:}
 
 springdoc:
   api-docs:

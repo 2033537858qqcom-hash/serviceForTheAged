@@ -29,6 +29,8 @@ Page({
     gender: 'MALE',
     age: '',
     address: '阳光花园社区',
+    latitude: null,
+    longitude: null,
     emergencyContact: '',
     emergencyPhone: '',
     healthNote: '',
@@ -47,15 +49,35 @@ Page({
   onInputName(e) { this.setData({ name: e.detail.value }); },
   onGenderChange(e) { this.setData({ gender: e.detail.value === '1' ? 'FEMALE' : 'MALE' }); },
   onInputAge(e) { this.setData({ age: e.detail.value }); },
-  onInputAddress(e) { this.setData({ address: e.detail.value }); },
+  onInputAddress(e) { this.setData({ address: e.detail.value, latitude: null, longitude: null }); },
   onInputContact(e) { this.setData({ emergencyContact: e.detail.value }); },
   onInputPhone(e) { this.setData({ emergencyPhone: e.detail.value }); },
   onInputHealth(e) { this.setData({ healthNote: e.detail.value }); },
 
+  onChooseLocation() {
+    wx.chooseLocation({
+      latitude: this.data.latitude ? Number(this.data.latitude) : undefined,
+      longitude: this.data.longitude ? Number(this.data.longitude) : undefined,
+      success: (res) => {
+        const fullAddress = res.name ? (res.address ? `${res.address} (${res.name})` : res.name) : res.address;
+        this.setData({
+          address: fullAddress || this.data.address,
+          latitude: res.latitude,
+          longitude: res.longitude
+        });
+      },
+      fail: (err) => {
+        if (err && err.errMsg && !err.errMsg.includes('cancel')) {
+          wx.showToast({ title: '打开地图选点失败', icon: 'none' });
+        }
+      }
+    });
+  },
+
   saveElder() {
     if (this.data.submitting) return;
     if (this._saved) { this.returnToPrevious(); return; }
-    const { name, gender, age, address, emergencyContact, emergencyPhone, healthNote } = this.data;
+    const { name, gender, age, address, latitude, longitude, emergencyContact, emergencyPhone, healthNote } = this.data;
     if (!name.trim()) {
       wx.showToast({ title: '请填写老人姓名', icon: 'none' });
       return;
@@ -71,6 +93,8 @@ Page({
       gender,
       age: age ? parseInt(age, 10) : null,
       address,
+      latitude: latitude != null ? latitude : null,
+      longitude: longitude != null ? longitude : null,
       community: '阳光花园社区',
       emergencyContact,
       emergencyPhone,
@@ -84,6 +108,6 @@ Page({
     }).catch(() => { if (!this._disposed) this.setData({ submitting: false }); });
   },
   returnToPrevious() {
-    navigation.navigateBack({ fail: () => { if (!this._disposed) this.setData({ submitting: false }); } });
+    navigation.navigateBack({ fallbackUrl: '/pages/user/profile', fail: () => { if (!this._disposed) this.setData({ submitting: false }); } });
   }
 });

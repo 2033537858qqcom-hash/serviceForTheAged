@@ -18,10 +18,10 @@
 
   <!-- 操作按钮区域 (高度还原截图) -->
   <view class="action-section">
-    <!-- 主登录大按钮：微信/手机号快捷登录 -->
-    <button class="btn-quick-login spring" hover-class="spring-in" hover-stay-time="80" bindtap="handleQuickLogin">
+    <!-- 主登录大按钮：微信/微信快捷登录 -->
+    <button class="btn-quick-login spring" hover-class="spring-in" hover-stay-time="80" bindtap="handleQuickLogin" loading="{{loggingIn}}" disabled="{{loggingIn}}">
       <image class="wechat-icon" src="/assets/icons/check.png" />
-      <text>手机号快捷登录</text>
+      <text>微信快捷登录</text>
     </button>
 
     <!-- 次级按钮：账号密码登录/注册 -->
@@ -78,7 +78,7 @@
           </view>
         </block>
 
-        <button class="btn-primary modal-submit-btn" hover-class="spring-in" bindtap="submitAccountForm">
+        <button class="btn-primary modal-submit-btn" hover-class="spring-in" bindtap="submitAccountForm" loading="{{loggingIn}}" disabled="{{loggingIn}}">
           {{accountTab === 'login' ? '立即登录' : '注册并登录'}}
         </button>
       </view>

@@ -32,6 +32,46 @@
     <button class="btn-dial" size="mini" bindtap="callStaff">拨打电话</button>
   </view>
 
+  <!-- 地图与实时轨迹卡片 (待上门/服务中 展示) -->
+  <view class="card map-tracking-card" wx:if="{{hasTrackingLocation && tracking && (orderVO.order.status === 'WAIT_VISIT' || orderVO.order.status === 'IN_SERVICE')}}">
+    <view class="map-header flex-between">
+      <view class="map-status-badge flex-row">
+        <view class="pulse-dot {{tracking.isStale ? 'dot-stale' : ''}}"></view>
+        <text class="map-status-text {{tracking.isStale ? 'status-text-stale' : ''}}">{{orderVO.order.status === 'IN_SERVICE' ? '服务人员已到达服务现场' : (tracking.isStale ? tracking.locationStatusText : '服务人员正在赶往老人住址')}}</text>
+      </view>
+      <view class="map-eta" wx:if="{{trackingDistanceText}}">
+        <text class="eta-dist">{{trackingDistanceText}}</text>
+        <text class="eta-time" wx:if="{{orderVO.order.status === 'WAIT_VISIT'}}"> · 预估约{{tracking.estimatedMinutes}}分钟{{tracking.isStale ? '(参考)' : ''}}</text>
+      </view>
+    </view>
+    <view class="stale-tip-bar flex-row" wx:if="{{tracking.isStale && orderVO.order.status === 'WAIT_VISIT'}}">
+      <text class="stale-tip-icon">ℹ️</text>
+      <text class="stale-tip-text">{{tracking.locationStatusText}}，预估到达时间基于历史位置测算</text>
+    </view>
+
+    <map
+      id="orderMap"
+      class="order-map"
+      latitude="{{mapCenter.latitude}}"
+      longitude="{{mapCenter.longitude}}"
+      scale="{{mapScale}}"
+      markers="{{markers}}"
+      polyline="{{polyline}}"
+      show-location="{{false}}"
+    ></map>
+
+    <view class="map-actions-bar flex-between">
+      <view class="map-address-info flex-row" bindtap="openNavigation">
+        <text class="loc-pin">📍</text>
+        <text class="address-text">{{tracking.destAddress || orderVO.order.addressSnapshot}}</text>
+      </view>
+      <view class="map-btns flex-row">
+        <button class="btn-map-action" size="mini" bindtap="openNavigation">查看导航</button>
+        <button class="btn-map-action btn-refresh" size="mini" bindtap="fetchTracking">刷新位置</button>
+      </view>
+    </view>
+  </view>
+
   <!-- 服务基本信息 -->
   <view class="card info-card">
     <view class="card-title">服务基本信息</view>

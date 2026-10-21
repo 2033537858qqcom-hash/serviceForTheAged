@@ -194,7 +194,7 @@ test('successful booking redirects immediately and retries routing without creat
   const calls = []; let posts = 0;
   const rt = createRuntime(appData(), { showToast() {}, redirectTo: o => calls.push(o) }, { post: async () => { posts++; return { id: '42', status: 'WAIT_ACCEPT' }; } }, { setTimeout: fn => { fn(); return 0; } });
   const page = rt.page('order/create');
-  Object.assign(page.data, { selectedElder: { id: '1' }, service: { id: '2' }, selectedDate: '2026-10-21', selectedTime: '09:00', address: '社区', contactName: '居民', contactPhone: '123' });
+  Object.assign(page.data, { selectedElder: { id: '1' }, service: { id: '2' }, selectedDate: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString().slice(0, 10), selectedTime: '09:00', address: '社区', contactName: '居民', contactPhone: '123' });
   await page.submitOrder();
   assert.equal(calls[0].url, '/pages/order/detail?id=42');
   calls[0].fail(); calls[0].complete();

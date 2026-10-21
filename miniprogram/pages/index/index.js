@@ -36,7 +36,6 @@ Page({
     serviceError: false,
     categoryIcons: { MEAL: 'meal', CLEANING: 'cleaning', ERRAND: 'errand', ESCORT: 'escort' },
     activeOrder: null,
-    titleStyle: '',
     statusTextMap: {
       'WAIT_DISPATCH': '待派单',
       'WAIT_ACCEPT': '待接单',
@@ -62,18 +61,6 @@ Page({
   },
 
   onUnload() { this._disposed = true; },
-
-  onPageScroll(event) {
-    const progress = Math.max(0, Math.min(1, (event.scrollTop || 0) / 160));
-    const step = Math.round(progress * 16) / 16;
-    if (step === this._titleProgress) return;
-    this._titleProgress = step;
-    const calm = this.data.isElderMode ? 0.65 : 1;
-    const shift = Math.round(step * 28 * calm);
-    const lift = Math.round(step * -18 * calm);
-    const scale = (1 - step * 0.14 * calm).toFixed(3);
-    this.setData({ titleStyle: `transform: translate3d(${shift}rpx, ${lift}rpx, 0) scale(${scale}); background: rgba(246,247,243,${step});` });
-  },
 
   onPullDownRefresh() {
     return Promise.all([this.loadServiceItems(true), this.loadActiveOrder(true)])

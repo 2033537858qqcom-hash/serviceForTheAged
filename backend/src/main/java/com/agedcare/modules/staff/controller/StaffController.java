@@ -4,11 +4,14 @@ import com.agedcare.common.api.Result;
 import com.agedcare.common.enums.UserRole;
 import com.agedcare.common.security.RequireRole;
 import com.agedcare.modules.staff.dto.StaffDetailVO;
+import com.agedcare.modules.staff.dto.StaffLocationReportDTO;
+import com.agedcare.modules.staff.entity.StaffProfile;
 import com.agedcare.modules.staff.entity.StaffShift;
 import com.agedcare.modules.staff.service.StaffService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -112,5 +115,18 @@ public class StaffController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
     ) {
         return Result.success(staffService.getStaffShifts(id, startDate, endDate));
+    }
+
+    @Operation(summary = "服务人员上报实时经纬度位置")
+    @PostMapping("/location/report")
+    public Result<Void> reportLocation(@Valid @RequestBody StaffLocationReportDTO dto) {
+        staffService.reportLocation(dto);
+        return Result.success();
+    }
+
+    @Operation(summary = "模拟服务人员向订单目的地移动演示")
+    @PostMapping("/location/mock-move")
+    public Result<StaffProfile> mockMoveLocation(@RequestParam Long orderId) {
+        return Result.success(staffService.mockMoveLocation(orderId));
     }
 }

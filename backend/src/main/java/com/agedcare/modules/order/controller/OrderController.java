@@ -3,6 +3,7 @@ package com.agedcare.modules.order.controller;
 import com.agedcare.common.api.Result;
 import com.agedcare.modules.order.dto.OrderCreateDTO;
 import com.agedcare.modules.order.dto.OrderQueryDTO;
+import com.agedcare.modules.order.dto.OrderTrackingVO;
 import com.agedcare.modules.order.dto.OrderVO;
 import com.agedcare.modules.order.entity.ServiceOrder;
 import com.agedcare.modules.order.service.OrderService;
@@ -47,5 +48,11 @@ public class OrderController {
     ) {
         orderService.cancelOrder(id, reason);
         return Result.success();
+    }
+
+    @Operation(summary = "获取订单配送与服务人员实时轨迹")
+    @GetMapping("/{id}/tracking")
+    public Result<OrderTrackingVO> getOrderTracking(@PathVariable Long id) {
+        return Result.success(orderService.getOrderTracking(id));
     }
 }

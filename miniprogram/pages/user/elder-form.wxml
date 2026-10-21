@@ -19,9 +19,19 @@
       <input class="input" type="number" placeholder="年龄(如80)" value="{{age}}" bindinput="onInputAge" />
     </view>
 
-    <view class="form-item flex-row">
-      <text class="label">居住地址</text>
-      <input class="input" placeholder="阳光花园社区X号楼X单元" value="{{address}}" bindinput="onInputAddress" />
+    <view class="form-item">
+      <view class="flex-between label-row">
+        <text class="label">居住地址</text>
+        <view class="map-picker-btn" bindtap="onChooseLocation" hover-class="spring-in">
+          <text class="map-icon">📍</text>
+          <text class="map-text">在地图上选点</text>
+        </view>
+      </view>
+      <input class="input" placeholder="社区楼栋门牌号（支持地图选点自动填入）" value="{{address}}" bindinput="onInputAddress" />
+      <view class="coord-badge flex-row" wx:if="{{latitude != null && longitude != null}}">
+        <text class="badge-icon">✓</text>
+        <text class="badge-text">已定位: ({{longitude}}, {{latitude}})</text>
+      </view>
     </view>
 
     <view class="form-item flex-row">

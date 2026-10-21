@@ -71,7 +71,7 @@ Page({
     const context = app.globalData?.baseUrl || '';
     if (!this.data.serviceId) return Promise.resolve();
     if (this._pending && this._serviceContext === context) return this._pending;
-    if (this._serviceContext !== undefined && this._serviceContext !== context && !this.data.service) {
+    if (this._serviceContext !== undefined && this._serviceContext !== context) {
       this.setData({ service: null });
     }
     this._serviceContext = context;

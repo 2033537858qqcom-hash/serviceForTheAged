@@ -15,6 +15,7 @@ public class CandidateEvaluationResult {
     private Long staffId;
     private String staffName;
     private boolean qualified;
+    private boolean locationUnknown;
     private String excludeReason;
     private int travelMinutes;
     private BigDecimal metricD;

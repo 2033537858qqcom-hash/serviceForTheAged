@@ -47,28 +47,28 @@ public class DispatchScoreEngine {
     private final ObjectMapper objectMapper;
 
     @Value("${dispatch.speed-km-per-hour:15.0}")
-    private double speedKmPerHour;
+    private double speedKmPerHour = 15.0;
 
     @Value("${dispatch.buffer-minutes:10}")
-    private int bufferMinutes;
+    private int bufferMinutes = 10;
 
     @Value("${dispatch.weights.distance:0.35}")
-    private double weightDistance;
+    private double weightDistance = 0.35;
 
     @Value("${dispatch.weights.quality:0.30}")
-    private double weightQuality;
+    private double weightQuality = 0.30;
 
     @Value("${dispatch.weights.workload:0.25}")
-    private double weightWorkload;
+    private double weightWorkload = 0.25;
 
     @Value("${dispatch.weights.familiarity:0.10}")
-    private double weightFamiliarity;
+    private double weightFamiliarity = 0.10;
 
     @Value("${dispatch.prior.rating:4.0}")
-    private double priorRating;
+    private double priorRating = 4.0;
 
     @Value("${dispatch.prior.samples:5}")
-    private int priorSamples;
+    private int priorSamples = 5;
 
     public List<CandidateEvaluationResult> evaluateAllCandidates(ServiceOrder order) {
         List<StaffProfile> allStaff = staffProfileMapper.selectList(new LambdaQueryWrapper<StaffProfile>()
@@ -148,10 +148,18 @@ public class DispatchScoreEngine {
         // 3. 技能硬约束检查
         String requiredSkillsStr = order.getRequiredSkillsSnapshot();
         if (StringUtils.hasText(requiredSkillsStr)) {
-            List<String> required = Arrays.stream(requiredSkillsStr.split(","))
-                    .map(String::trim)
-                    .filter(StringUtils::hasText)
-                    .collect(Collectors.toList());
+            List<String> required = new ArrayList<>();
+            if (requiredSkillsStr.trim().startsWith("[")) {
+                try {
+                    required = objectMapper.readValue(requiredSkillsStr, new com.fasterxml.jackson.core.type.TypeReference<List<String>>() {});
+                } catch (Exception ignored) {}
+            }
+            if (required == null || required.isEmpty()) {
+                required = Arrays.stream(requiredSkillsStr.split(","))
+                        .map(String::trim)
+                        .filter(StringUtils::hasText)
+                        .collect(Collectors.toList());
+            }
 
             if (!required.isEmpty()) {
                 List<StaffSkill> skills = staffSkillMapper.selectList(new LambdaQueryWrapper<StaffSkill>()
@@ -235,18 +243,46 @@ public class DispatchScoreEngine {
             }
         }
 
-        double destLat = order.getLatitude() != null ? order.getLatitude().doubleValue() : originLat;
-        double destLng = order.getLongitude() != null ? order.getLongitude().doubleValue() : originLng;
+        BigDecimal orderLat = order.getLatitude();
+        BigDecimal orderLng = order.getLongitude();
+        if (orderLat == null || orderLng == null) {
+            if (order.getElderId() != null) {
+                ElderProfile elder = elderProfileMapper.selectById(order.getElderId());
+                if (elder != null && elder.getLatitude() != null && elder.getLongitude() != null) {
+                    orderLat = elder.getLatitude();
+                    orderLng = elder.getLongitude();
+                }
+            }
+        }
 
-        double distanceKm = DistanceUtil.calculateDistanceKm(originLat, originLng, destLat, destLng);
-        int travelMinutes = DistanceUtil.estimateTravelMinutes(distanceKm, speedKmPerHour, bufferMinutes);
+        boolean locationUnknown = false;
+        double destLat;
+        double destLng;
+        double distanceKm;
+        int travelMinutes;
+
+        if (orderLat != null && orderLng != null) {
+            destLat = orderLat.doubleValue();
+            destLng = orderLng.doubleValue();
+            distanceKm = DistanceUtil.calculateDistanceKm(originLat, originLng, destLat, destLng);
+            travelMinutes = DistanceUtil.estimateTravelMinutes(distanceKm, speedKmPerHour, bufferMinutes);
+        } else {
+            // 坐标缺失：明确标记位置未知，按社区中位半径保守预估 3.0km (约需22分钟出行时间)，防止零距离高分刷榜
+            locationUnknown = true;
+            destLat = originLat;
+            destLng = originLng;
+            distanceKm = 3.0;
+            travelMinutes = DistanceUtil.estimateTravelMinutes(distanceKm, speedKmPerHour, bufferMinutes);
+        }
+        result.setLocationUnknown(locationUnknown);
         result.setTravelMinutes(travelMinutes);
 
         // 检查前序出行是否可行: plannedStartAt - travelMinutes 必须晚于或等于 prevBooking.endTime
         LocalDateTime earliestDepart = prevBooking != null ? prevBooking.getEndTime() : dayStart.with(shiftStart);
         LocalDateTime requiredDepart = order.getPlannedStartAt().minusMinutes(travelMinutes);
         if (requiredDepart.isBefore(earliestDepart)) {
-            result.setExcludeReason(String.format("前序任务衔接路程时间不足(需要预留%d分钟)", travelMinutes));
+            result.setExcludeReason(String.format("前序任务衔接路程时间不足(需要预留%d分钟%s)",
+                    travelMinutes, locationUnknown ? "，位置未知按3.0km保守测算" : ""));
             recordContext(result, debugContext);
             return result;
         }
@@ -294,7 +330,10 @@ public class DispatchScoreEngine {
         result.setExcludeReason("");
 
         // 1. 指标 D: 到达便利度 D = 1 - min(travelMinutes / 30.0, 1.0)
-        double dVal = Math.max(0.0, 1.0 - Math.min((double) travelMinutes / 30.0, 1.0));
+        // 坐标未知时采取保守估值(0.30)，防止位置未知订单因零距离获得1.0满分
+        double dVal = locationUnknown
+                ? 0.30
+                : Math.max(0.0, 1.0 - Math.min((double) travelMinutes / 30.0, 1.0));
         BigDecimal metricD = BigDecimal.valueOf(dVal).setScale(4, RoundingMode.HALF_UP);
         result.setMetricD(metricD);
 

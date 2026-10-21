@@ -2,7 +2,7 @@
   "miniprogramRoot": "miniprogram/",
   "projectname": "community-aged-care",
   "description": "基于Java和微信小程序的社区居家养老服务与智能派单系统",
-  "appid": "wxc3039ae6e2412b11",
+  "appid": "wxb460b87f30a9791b",
   "setting": {
     "urlCheck": false,
     "es6": true,

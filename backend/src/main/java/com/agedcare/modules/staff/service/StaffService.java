@@ -5,7 +5,14 @@ import com.agedcare.common.enums.UserRole;
 import com.agedcare.common.exception.BusinessException;
 import com.agedcare.common.security.LoginUser;
 import com.agedcare.common.security.UserContext;
+import com.agedcare.modules.dispatch.entity.DispatchAttempt;
+import com.agedcare.modules.dispatch.mapper.DispatchAttemptMapper;
+import com.agedcare.modules.elder.entity.ElderProfile;
+import com.agedcare.modules.elder.mapper.ElderProfileMapper;
+import com.agedcare.modules.order.entity.ServiceOrder;
+import com.agedcare.modules.order.mapper.ServiceOrderMapper;
 import com.agedcare.modules.staff.dto.StaffDetailVO;
+import com.agedcare.modules.staff.dto.StaffLocationReportDTO;
 import com.agedcare.modules.staff.entity.StaffProfile;
 import com.agedcare.modules.staff.entity.StaffShift;
 import com.agedcare.modules.staff.entity.StaffSkill;
@@ -17,10 +24,12 @@ import com.agedcare.modules.user.mapper.SysUserMapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,6 +44,12 @@ public class StaffService {
     private final StaffSkillMapper staffSkillMapper;
     private final StaffShiftMapper staffShiftMapper;
     private final SysUserMapper sysUserMapper;
+    private final ServiceOrderMapper serviceOrderMapper;
+    private final ElderProfileMapper elderProfileMapper;
+    private final DispatchAttemptMapper dispatchAttemptMapper;
+
+    @Value("${app.dev-mode:false}")
+    private boolean devMode;
 
     public Page<StaffDetailVO> pageStaff(int pageNum, int pageSize, String name, String auditStatus, String currentStatus) {
         Page<StaffProfile> page = new Page<>(pageNum, pageSize);
@@ -173,6 +188,107 @@ public class StaffService {
         }
         wrapper.orderByAsc(StaffShift::getShiftDate).orderByAsc(StaffShift::getStartTime);
         return staffShiftMapper.selectList(wrapper);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void reportLocation(StaffLocationReportDTO dto) {
+        LoginUser currentUser = UserContext.getUser();
+        if (currentUser == null) {
+            throw new BusinessException(ResultCode.UNAUTHORIZED);
+        }
+        StaffProfile profile = staffProfileMapper.selectOne(new LambdaQueryWrapper<StaffProfile>()
+                .eq(StaffProfile::getUserId, currentUser.getId()));
+        if (profile == null) {
+            throw new BusinessException("未找到服务人员档案");
+        }
+        profile.setCurrentLongitude(dto.getLongitude());
+        profile.setCurrentLatitude(dto.getLatitude());
+        profile.setLocationUpdatedAt(LocalDateTime.now());
+        profile.setUpdatedAt(LocalDateTime.now());
+        staffProfileMapper.updateById(profile);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public StaffProfile mockMoveLocation(Long orderId) {
+        if (!devMode) {
+            throw new BusinessException(403, "模拟移动功能仅在开发/答辩演示模式下开放");
+        }
+
+        LoginUser currentUser = UserContext.getUser();
+        if (currentUser == null) {
+            throw new BusinessException(ResultCode.UNAUTHORIZED);
+        }
+
+        ServiceOrder order = serviceOrderMapper.selectById(orderId);
+        if (order == null) {
+            throw new BusinessException("订单不存在");
+        }
+
+        if (!"WAIT_VISIT".equals(order.getStatus()) && !"IN_SERVICE".equals(order.getStatus())) {
+            throw new BusinessException("当前订单非待上门/服务中状态，无法执行位置模拟");
+        }
+
+        if (order.getCurrentDispatchId() == null) {
+            throw new BusinessException("该订单尚未指派服务人员，无法模拟位置");
+        }
+
+        DispatchAttempt attempt = dispatchAttemptMapper.selectById(order.getCurrentDispatchId());
+        if (attempt == null || attempt.getStaffId() == null) {
+            throw new BusinessException("未找到该订单的有效派单记录");
+        }
+
+        StaffProfile profile = staffProfileMapper.selectById(attempt.getStaffId());
+        if (profile == null) {
+            throw new BusinessException("未找到被派工的服务人员档案");
+        }
+
+        // 权限校验：必须是系统管理员，或者该订单被指派的服务人员本人
+        boolean isAdmin = UserRole.ADMIN.getCode().equalsIgnoreCase(currentUser.getRole());
+        boolean isAssignedStaff = currentUser.getId().equals(profile.getUserId());
+        if (!isAdmin && !isAssignedStaff) {
+            throw new BusinessException(403, "无权对非本人负责的订单执行模拟移动");
+        }
+
+        // 获取订单目的地
+        BigDecimal destLon = order.getLongitude();
+        BigDecimal destLat = order.getLatitude();
+        if (destLon == null || destLat == null) {
+            ElderProfile elder = elderProfileMapper.selectById(order.getElderId());
+            if (elder != null && elder.getLongitude() != null && elder.getLatitude() != null) {
+                destLon = elder.getLongitude();
+                destLat = elder.getLatitude();
+            }
+        }
+        if (destLon == null || destLat == null) {
+            destLon = new BigDecimal("116.407400");
+            destLat = new BigDecimal("39.904200");
+        }
+
+        BigDecimal currLon = profile.getCurrentLongitude();
+        BigDecimal currLat = profile.getCurrentLatitude();
+        if (currLon == null || currLat == null) {
+            // 初始在目的地西南方约 1.2 公里
+            currLon = destLon.subtract(new BigDecimal("0.010000"));
+            currLat = destLat.subtract(new BigDecimal("0.008000"));
+        } else {
+            // 向目的地推进 35%
+            BigDecimal diffLon = destLon.subtract(currLon);
+            BigDecimal diffLat = destLat.subtract(currLat);
+            if (diffLon.abs().compareTo(new BigDecimal("0.0002")) < 0 && diffLat.abs().compareTo(new BigDecimal("0.0002")) < 0) {
+                currLon = destLon.subtract(new BigDecimal("0.010000"));
+                currLat = destLat.subtract(new BigDecimal("0.008000"));
+            } else {
+                currLon = currLon.add(diffLon.multiply(new BigDecimal("0.35")));
+                currLat = currLat.add(diffLat.multiply(new BigDecimal("0.35")));
+            }
+        }
+
+        profile.setCurrentLongitude(currLon);
+        profile.setCurrentLatitude(currLat);
+        profile.setLocationUpdatedAt(LocalDateTime.now());
+        profile.setUpdatedAt(LocalDateTime.now());
+        staffProfileMapper.updateById(profile);
+        return profile;
     }
 
     private StaffDetailVO assembleStaffDetail(StaffProfile profile) {

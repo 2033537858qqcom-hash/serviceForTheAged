@@ -1,5 +1,17 @@
 <view class="container home-page {{isElderMode ? 'elder-mode' : ''}}">
-  <view class="home-header" style="{{titleStyle}}"><view class="home-brand"><view class="home-brand-icon"><image src="/assets/icons/home.png" /></view><view><view class="brand-name">颐邻<text>.</text></view><view class="brand-community">阳光花园社区</view></view></view><button class="care-mode-control" bindtap="toggleMode"><image src="/assets/icons/care.png" /><text>{{isElderMode ? '标准版' : '大字版'}}</text></button></view>
+  <view class="home-header">
+    <view class="home-brand">
+      <view class="home-brand-icon"><image src="/assets/icons/home.png" /></view>
+      <view class="home-brand-copy">
+        <view class="brand-name">颐邻<text>.</text></view>
+        <view class="brand-community">阳光花园社区</view>
+      </view>
+    </view>
+    <button class="care-mode-control" hover-class="care-mode-pressed" hover-stay-time="80" bindtap="toggleMode">
+      <image src="/assets/icons/care.png" />
+      <text>{{isElderMode ? '标准版' : '大字版'}}</text>
+    </button>
+  </view>
   <view class="welcome-panel"><view class="welcome-kicker">家门口的服务，身边的关怀</view><view class="welcome-title"><view>照护在身边，</view><view>安心每一天。</view></view><view class="welcome-caption">日常生活的小事，我们一起照应。</view><view class="welcome-contact" bindtap="callHotline"><image src="/assets/icons/phone.png"/><text>联系社区</text><text class="contact-hours">08:00—20:00</text><image class="contact-arrow" src="/assets/icons/arrow.png" /></view></view>
   <view class="section-title home-section-heading"><text>今天，需要什么帮助？</text><text class="section-note">社区便民服务</text></view>
   <view class="service-stage"><view class="service-entry service-entry-main spring" hover-class="spring-in" hover-stay-time="80" bindtap="goToService" data-category="MEAL"><view class="service-entry-icon meal-icon"><image src="/assets/icons/meal.png" /></view><view class="grid-name">助餐送餐</view><view class="grid-desc">热餐送到家门口，是每天最常需要的一件事。</view></view><view class="service-stack"><view class="service-entry spring" hover-class="spring-in" hover-stay-time="80" bindtap="goToService" data-category="CLEANING"><view class="service-entry-icon"><image src="/assets/icons/cleaning.png" /></view><view class="grid-name">居家保洁</view></view><view class="service-entry spring" hover-class="spring-in" hover-stay-time="80" bindtap="goToService" data-category="ERRAND"><view class="service-entry-icon"><image src="/assets/icons/errand.png" /></view><view class="grid-name">代买代办</view></view><view class="service-entry spring" hover-class="spring-in" hover-stay-time="80" bindtap="goToService" data-category="ESCORT"><view class="service-entry-icon"><image src="/assets/icons/escort.png" /></view><view class="grid-name">陪同办事</view></view></view></view>

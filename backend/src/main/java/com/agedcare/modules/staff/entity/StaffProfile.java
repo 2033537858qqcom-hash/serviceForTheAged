@@ -25,6 +25,9 @@ public class StaffProfile implements Serializable {
     private String baseStationName;
     private BigDecimal baseLongitude;
     private BigDecimal baseLatitude;
+    private BigDecimal currentLongitude;
+    private BigDecimal currentLatitude;
+    private LocalDateTime locationUpdatedAt;
     private String currentStatus; // RESTING, AVAILABLE, BUSY
     private String auditStatus; // PENDING, APPROVED, REJECTED
     private LocalDateTime auditTime;

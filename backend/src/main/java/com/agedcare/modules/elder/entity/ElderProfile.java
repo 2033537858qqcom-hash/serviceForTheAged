@@ -26,6 +26,8 @@ public class ElderProfile implements Serializable {
     private Integer age;
     private String phone;
     private String address;
+    private java.math.BigDecimal longitude;
+    private java.math.BigDecimal latitude;
     private String community;
     private String emergencyContact;
     private String emergencyPhone;

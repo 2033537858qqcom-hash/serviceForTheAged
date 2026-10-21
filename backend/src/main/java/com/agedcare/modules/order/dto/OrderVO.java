@@ -20,4 +20,5 @@ public class OrderVO {
     private ServiceRecord serviceRecord;
     private ServiceReview serviceReview;
     private List<OrderStatusLog> logs;
+    private OrderTrackingVO tracking;
 }

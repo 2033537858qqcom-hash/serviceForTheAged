@@ -9,7 +9,7 @@
 | 模块 | 技术选型 | 说明 |
 | :--- | :--- | :--- |
 | **Java 后端 (`backend/`)** | Java 17/21, Spring Boot 3.3.4, MyBatis-Plus 3.5.7, MySQL 8.0, JWT, BCrypt, Springdoc OpenAPI (Swagger) | 业务流转、并发控制锁协议、多因素智能派单引擎与异常超时恢复定时任务 |
-| **微信原生小程序 (`miniprogram/`)** | 原生微信小程序 (WXML/WXSS/JS), AppID: `wxc3039ae6e2412b11` | 居民端/家属端服务预约、大字适老化关爱模式、服务人员移动端工作台（接单倒计时/上门签到/履约记录） |
+| **微信原生小程序 (`miniprogram/`)** | 原生微信小程序 (WXML/WXSS/JS), AppID: `wxb460b87f30a9791b` | 居民端/家属端服务预约、大字适老化关爱模式、服务人员移动端工作台（接单倒计时/上门签到/履约记录） |
 | **管理控制后台 (`admin-web/`)** | Vue 3, Vite, Element Plus, Pinia, Vue Router, ECharts | 数据监控大屏、订单全生命周期追踪、算法评分透明化解释与待人工调度队列、老人及家属审核、人员排班 |
 | **数据库 (`sql/`)** | MySQL 8.0+, utf8mb4 | 17 张规范核心业务表与完整演示数据 |
 
@@ -46,6 +46,7 @@ mysql -u root -p123456 --default-character-set=utf8mb4 < sql/data.sql
 cd backend
 mvn spring-boot:run
 ```
+- 微信本地配置：`backend/config/wechat-local.properties`（已忽略 Git 提交）。开发配置会自动加载此文件；也可通过 `WECHAT_APPID` / `WECHAT_SECRET` 环境变量覆盖。
 - 后端服务端口：`http://localhost:8080/api`
 - Swagger / OpenAPI 在线接口文档：`http://localhost:8080/api/swagger-ui.html`
 
@@ -60,7 +61,7 @@ npm run dev
 ### 4. 运行微信小程序
 1. 打开**微信开发者工具**。
 2. 点击“导入项目”，选择目录 `d:\serviceForTheAged\miniprogram`。
-3. AppID 已配置为您的专属 AppID：`wxc3039ae6e2412b11`。
+3. AppID 已配置为您的专属 AppID：`wxb460b87f30a9791b`。
 4. 在开发工具详情设置中勾选“不校验合法域名、web-view（业务域名）、TLS版本以及HTTPS证书”（开发联调专用）。
 
 ---

@@ -13,6 +13,123 @@
 .staff-name .tag { display: block; width: fit-content; margin: 8rpx 0; }
 .staff-sub { font-size: var(--font-caption); color: var(--text-secondary); }
 .btn-dial { width: 100%; min-height: var(--control-height); display: flex; justify-content: center; align-items: center; color: var(--primary-dark); background: var(--primary-soft); font-size: var(--font-body); margin: 12rpx 0 0; border-radius: 14rpx; }
+
+/* 地图轨迹卡片 */
+.map-tracking-card {
+  padding: 24rpx;
+  margin-bottom: 24rpx;
+  background: #ffffff;
+  border-radius: 20rpx;
+  overflow: hidden;
+}
+.map-header {
+  margin-bottom: 18rpx;
+}
+.map-status-badge {
+  align-items: center;
+  gap: 12rpx;
+}
+.pulse-dot {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  background: #176B5D;
+  box-shadow: 0 0 0 0 rgba(23, 107, 93, 0.7);
+  animation: pulse-ring 1.8s infinite;
+}
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(23, 107, 93, 0.7); }
+  70% { box-shadow: 0 0 0 12rpx rgba(23, 107, 93, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(23, 107, 93, 0); }
+}
+.map-status-text {
+  font-size: var(--font-caption);
+  font-weight: 600;
+  color: var(--primary-dark);
+}
+.pulse-dot.dot-stale {
+  background: #a89476;
+  box-shadow: none;
+  animation: none;
+}
+.status-text-stale {
+  color: #7a6e5d !important;
+}
+.stale-tip-bar {
+  background: #fbf6ec;
+  border: 1rpx solid #eedec4;
+  border-radius: 12rpx;
+  padding: 10rpx 16rpx;
+  margin-bottom: 16rpx;
+  align-items: center;
+  gap: 10rpx;
+}
+.stale-tip-icon {
+  font-size: 22rpx;
+}
+.stale-tip-text {
+  font-size: 22rpx;
+  color: #8c6020;
+}
+.map-eta {
+  font-size: var(--font-caption);
+  color: var(--text-secondary);
+}
+.eta-dist {
+  color: #ad652f;
+  font-weight: 600;
+}
+.eta-time {
+  color: var(--primary-color);
+  font-weight: 500;
+}
+.order-map {
+  width: 100%;
+  height: 380rpx;
+  border-radius: 16rpx;
+  overflow: hidden;
+  border: 1rpx solid #e0e7d9;
+}
+.map-actions-bar {
+  margin-top: 18rpx;
+  align-items: center;
+  gap: 16rpx;
+}
+.map-address-info {
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  gap: 8rpx;
+}
+.loc-pin {
+  font-size: 26rpx;
+  flex-shrink: 0;
+}
+.address-text {
+  font-size: 24rpx;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.map-btns {
+  gap: 12rpx;
+  flex-shrink: 0;
+}
+.btn-map-action {
+  font-size: 22rpx;
+  padding: 8rpx 20rpx;
+  margin: 0;
+  background: var(--primary-color);
+  color: #ffffff;
+  border-radius: 999rpx;
+  line-height: 1.5;
+}
+.btn-map-action.btn-refresh {
+  background: rgba(23, 107, 93, 0.1);
+  color: var(--primary-dark);
+}
+
 .card-title { font-size: var(--font-section); font-weight: 600; margin-bottom: 26rpx; }
 .info-item { padding: 20rpx 0; border-bottom: 1rpx solid #eef1ec; align-items: flex-start; }
 .info-item:last-child { border-bottom: 0; padding-bottom: 0; }

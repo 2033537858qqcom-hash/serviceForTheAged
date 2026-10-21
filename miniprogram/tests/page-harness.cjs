@@ -48,6 +48,7 @@ function createRuntime(app = { globalData: {} }, wx = {}, request = { get: () =>
       result.events = [];
       result.triggerEvent = name => result.events.push(name);
       result.lifecycle = (group, name) => component[group][name].call(result);
+      result.observe = (name, value) => component.observers[name].call(result, value);
       return result;
     }
   };

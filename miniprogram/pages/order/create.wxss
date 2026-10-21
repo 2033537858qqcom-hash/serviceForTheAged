@@ -6,6 +6,37 @@
 .form-card { padding: 30rpx; margin-top: 24rpx; }
 .form-title { display: flex; align-items: center; gap: 15rpx; font-size: var(--font-body); font-weight: 600; color: var(--text-main); margin-bottom: 28rpx; }
 .section-number { font-size: var(--font-meta); font-weight: 500; color: #79906b; }
+.map-picker-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 8rpx 18rpx;
+  background: rgba(23, 107, 93, 0.08);
+  border: 1rpx solid rgba(23, 107, 93, 0.25);
+  border-radius: 999rpx;
+  font-size: 24rpx;
+  color: var(--primary-color);
+  font-weight: 500;
+  cursor: pointer;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+.map-picker-btn:active {
+  transform: scale(0.96);
+  background: rgba(23, 107, 93, 0.16);
+}
+.coord-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8rpx;
+  font-size: 22rpx;
+  color: var(--primary-color);
+  background: rgba(23, 107, 93, 0.05);
+  padding: 8rpx 14rpx;
+  border-radius: 8rpx;
+  margin-top: 10rpx;
+  margin-bottom: 8rpx;
+}
+.badge-icon { font-weight: bold; }
 .picker-box { background: #f6f8f1; border: 1rpx solid #e0e7d9; padding: 24rpx; border-radius: 13rpx; font-size: var(--font-body); min-height: 96rpx; }
 .placeholder { color: var(--text-secondary); }
 .arrow { font-size: var(--font-meta); color: #718565; }

@@ -1,4 +1,5 @@
 <view class="container {{isElderMode ? 'elder-mode' : ''}}">
+  <view wx:if="{{loadError}}" class="empty-tip" bindtap="loadData">加载失败，点击重试</view>
   <view class="card apply-card">
     <view class="card-title">为家人预约服务</view>
     <view class="form-tip">提交亲属关系证明，由社区管理员核验通过后，即可代老人预约各项居家养老服务。</view>
@@ -18,7 +19,7 @@
       <text class="label">按老人手机号精准查询绑定</text>
       <view class="flex-row search-row">
         <input class="input-box" type="number" placeholder="输入老人预留手机号" value="{{searchPhone}}" bindinput="onInputSearchPhone" />
-        <button class="search-button" bindtap="searchElder">查找</button>
+        <button class="search-button" bindtap="searchElder" loading="{{searching}}" disabled="{{searching}}">查找</button>
       </view>
       <view wx:if="{{targetElder}}" class="search-result">
         ✓ 已定位老人：{{targetElder.name}} ({{targetElder.community || targetElder.address}})
@@ -35,7 +36,7 @@
       <input class="input-box" placeholder="简述亲属证明或户籍关系" value="{{proofMaterials}}" bindinput="onInputProof" />
     </view>
 
-    <button class="btn-primary btn-apply {{isElderMode ? 'btn-large' : ''}}" bindtap="submitApply">提交绑定申请</button>
+    <button class="btn-primary btn-apply {{isElderMode ? 'btn-large' : ''}}" bindtap="submitApply" loading="{{applying}}" disabled="{{applying || searching}}">提交绑定申请</button>
   </view>
 
   <view class="section-title">我的家属绑定记录</view>
@@ -51,6 +52,6 @@
         <view class="revoke-btn" wx:if="{{item.status === 'APPROVED'}}" bindtap="revokeBinding" data-id="{{item.id}}">撤销</view>
       </view>
     </view>
-    <view class="empty-tip" wx:if="{{bindings.length === 0}}">暂无家属绑定记录</view>
+    <view class="empty-tip" wx:if="{{bindings.length === 0 && !loading && !loadError}}">暂无家属绑定记录</view>
   </view>
 </view>

@@ -1,7 +1,15 @@
 const navigation = require('../../utils/navigation.js');
 const request = require('../../utils/request.js');
+const { hasCoordinates } = require('../../utils/coordinates.js');
 const { lightTap } = require('../../utils/feedback.js');
 const { markOrdersChanged, sessionKey } = require('../../utils/list-state.js');
+
+function formatTrackingDistance(value) {
+  if (value === null || value === undefined || value === '') return '';
+  const meters = Number(value);
+  if (!Number.isFinite(meters) || meters < 0) return '';
+  return meters >= 1000 ? (meters / 1000).toFixed(1) + 'km' : meters + 'm';
+}
 
 function getAppSafe() {
   try {
@@ -35,6 +43,13 @@ Page({
     isElderMode: false,
     cancelSheet: false,
     confirmSheet: false,
+    tracking: null,
+    hasTrackingLocation: false,
+    trackingDistanceText: '',
+    markers: [],
+    polyline: [],
+    mapCenter: { latitude: 39.9042, longitude: 116.4074 },
+    mapScale: 15,
     statusTextMap: {
       'WAIT_DISPATCH': '待派单',
       'WAIT_ACCEPT': '待接单',
@@ -66,6 +81,7 @@ Page({
   },
 
   onShow() {
+    this._hidden = false;
     const app = getAppSafe();
     const isElder = Boolean(app.globalData?.isElderMode);
     if (this.data.isElderMode !== isElder) {
@@ -77,8 +93,15 @@ Page({
     }
   },
 
+  onHide() {
+    this._hidden = true;
+    this.stopTrackingPoll();
+  },
+
   onUnload() {
     this._disposed = true;
+    this._hidden = true;
+    this.stopTrackingPoll();
   },
 
   onPullDownRefresh() {
@@ -99,6 +122,8 @@ Page({
       this._updatedAt = 0;
       this._refreshAfter = false;
       if (this.data.orderVO) this.setData({ orderVO: null, canCancel: false });
+      this.updateMapState(null);
+      this.stopTrackingPoll();
     }
     const version = app.globalData?.ordersVersion || 0;
     if (this._pending) {
@@ -106,6 +131,7 @@ Page({
       return this._pending;
     }
     if (!force && this._version === version && this._updatedAt && Date.now() - this._updatedAt < 15000) {
+      if (['WAIT_VISIT', 'IN_SERVICE'].includes(this.data.orderVO?.order?.status)) this.startTrackingPoll();
       return Promise.resolve();
     }
     this._requestVersion = version;
@@ -118,10 +144,16 @@ Page({
         this._refreshAfter = true;
         return;
       }
-      const canCancel = ['WAIT_DISPATCH', 'WAIT_ACCEPT', 'WAIT_VISIT', 'WAIT_MANUAL'].includes(data.order.status);
+      const canCancel = ['WAIT_DISPATCH', 'WAIT_ACCEPT', 'WAIT_VISIT', 'WAIT_MANUAL'].includes(data?.order?.status);
       this.setData({ orderVO: data, canCancel });
       this._version = version;
       this._updatedAt = Date.now();
+      this.updateMapState(data?.tracking || null);
+      if (['WAIT_VISIT', 'IN_SERVICE'].includes(data?.order?.status)) {
+        this.startTrackingPoll();
+      } else {
+        this.stopTrackingPoll();
+      }
     }).catch(err => {
       console.warn('[order/detail loadDetail error]', err);
       if (valid()) this.setData({ loadError: true });
@@ -136,6 +168,162 @@ Page({
     });
     this._pending = task;
     return task;
+  },
+
+  fetchTracking() {
+    if (!this.data.orderId || this._disposed || this._hidden) return Promise.resolve();
+    const context = sessionKey(getAppSafe());
+    const id = this.data.orderId;
+    if (this._trackingPending?.context === context) return this._trackingPending.task;
+    const job = { context };
+    this._trackingPending = job;
+    const task = request.get(`/orders/${id}/tracking`).then(tracking => {
+      if (this._disposed || this._hidden || sessionKey(getAppSafe()) !== context || this.data.orderId !== id) return;
+      const status = this.data.orderVO?.order?.status;
+      if (status && !['WAIT_VISIT', 'IN_SERVICE'].includes(status)) return;
+      if (tracking?.status && status && tracking.status !== status) {
+        return this.loadDetail(id, true);
+      }
+      this.updateMapState(tracking);
+    }).catch(err => {
+      console.warn('[order/detail fetchTracking error]', err);
+    }).finally(() => {
+      if (this._trackingPending === job) this._trackingPending = null;
+    });
+    job.task = task;
+    return task;
+  },
+
+  updateMapState(tracking) {
+    if (!tracking) {
+      this.setData({ tracking: null, trackingDistanceText: '', hasTrackingLocation: false, markers: [], polyline: [] });
+      return;
+    }
+    const trackingDistanceText = formatTrackingDistance(tracking.distanceMeters);
+    const destLat = Number(tracking.destLatitude);
+    const destLon = Number(tracking.destLongitude);
+    const staffLat = Number(tracking.staffLatitude);
+    const staffLon = Number(tracking.staffLongitude);
+    const hasStaff = hasCoordinates(tracking.staffLatitude, tracking.staffLongitude);
+
+    if (!hasCoordinates(tracking.destLatitude, tracking.destLongitude)) {
+      this.setData({ tracking, trackingDistanceText, hasTrackingLocation: false, markers: [], polyline: [] });
+      return;
+    }
+
+    const markers = [];
+    markers.push({
+      id: 1,
+      latitude: destLat,
+      longitude: destLon,
+      title: '服务目的地',
+      iconPath: '/assets/icons/home.png',
+      width: 32,
+      height: 32,
+      callout: {
+        content: `老人住址: ${tracking.elderName || '老人'}\n${tracking.destAddress || ''}`,
+        color: '#176B5D',
+        fontSize: 12,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#d8e4cf',
+        bgColor: '#ffffff',
+        padding: 6,
+        display: 'ALWAYS'
+      }
+    });
+
+    if (hasStaff) {
+      markers.push({
+        id: 2,
+        latitude: staffLat,
+        longitude: staffLon,
+        title: tracking.staffName || '服务人员',
+        iconPath: '/assets/icons/staff.png',
+        width: 34,
+        height: 34,
+        callout: {
+          content: `${tracking.staffName || '服务人员'}${trackingDistanceText ? ' (距约' + trackingDistanceText + ')' : ''}`,
+          color: '#ffffff',
+          fontSize: 12,
+          borderRadius: 8,
+          borderWidth: 0,
+          bgColor: '#176B5D',
+          padding: 6,
+          display: 'ALWAYS'
+        }
+      });
+    }
+
+    let centerLat = destLat;
+    let centerLon = destLon;
+    let scale = 15;
+    if (hasStaff) {
+      centerLat = (destLat + staffLat) / 2;
+      centerLon = (destLon + staffLon) / 2;
+      const dist = tracking.distanceMeters || 1000;
+      if (dist > 5000) scale = 12;
+      else if (dist > 2000) scale = 13;
+      else if (dist > 800) scale = 14;
+      else scale = 16;
+    }
+
+    const polyline = hasStaff ? [{
+      points: [
+        { latitude: staffLat, longitude: staffLon },
+        { latitude: destLat, longitude: destLon }
+      ],
+      color: '#176B5D',
+      width: 4,
+      dottedLine: true,
+      arrowLine: true
+    }] : [];
+
+    this.setData({
+      tracking,
+      trackingDistanceText,
+      hasTrackingLocation: true,
+      markers,
+      polyline,
+      mapCenter: { latitude: centerLat, longitude: centerLon },
+      mapScale: scale
+    });
+  },
+
+  startTrackingPoll() {
+    this.stopTrackingPoll();
+    if (this._disposed || this._hidden) return;
+    if (typeof wx === 'undefined' || typeof wx.createMapContext !== 'function') return;
+    this._trackingTimer = setInterval(() => {
+      if (!this._disposed && !this._hidden) {
+        this.fetchTracking();
+      }
+    }, 15000);
+    if (this._trackingTimer && typeof this._trackingTimer.unref === 'function') {
+      this._trackingTimer.unref();
+    }
+  },
+
+  stopTrackingPoll() {
+    if (this._trackingTimer) {
+      clearInterval(this._trackingTimer);
+      this._trackingTimer = null;
+    }
+  },
+
+  openNavigation() {
+    const tracking = this.data.tracking;
+    if (!tracking || !hasCoordinates(tracking.destLatitude, tracking.destLongitude)) {
+      wx.showToast({ title: '暂无目的地坐标', icon: 'none' });
+      return;
+    }
+    wx.openLocation({
+      latitude: Number(tracking.destLatitude),
+      longitude: Number(tracking.destLongitude),
+      name: tracking.destAddress || '服务地址',
+      address: tracking.destAddress || '',
+      scale: 18
+    });
   },
 
   callStaff() {
@@ -161,7 +349,7 @@ Page({
       markOrdersChanged();
       wx.showToast({ title: '订单已取消', icon: 'success' });
       return this.loadDetail(this.data.orderId, true);
-    }).finally(() => { this._cancelling = false; });
+    }).catch(() => {}).finally(() => { this._cancelling = false; });
   },
 
   confirmOrder() {
@@ -181,7 +369,7 @@ Page({
       markOrdersChanged();
       wx.showToast({ title: '服务确认完成', icon: 'success' });
       return this.loadDetail(this.data.orderId, true);
-    }).finally(() => { this._confirming = false; });
+    }).catch(() => {}).finally(() => { this._confirming = false; });
   },
 
   goToReview() {

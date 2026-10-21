@@ -23,6 +23,7 @@ function taskCard(item) {
   const order = item.order;
   Object.assign(card.order, {
     addressSnapshot: order.addressSnapshot, plannedEndAt: order.plannedEndAt,
+    latitude: order.latitude, longitude: order.longitude,
     contactPhoneSnapshot: order.contactPhoneSnapshot,
     durationMinutesSnapshot: order.durationMinutesSnapshot
   });

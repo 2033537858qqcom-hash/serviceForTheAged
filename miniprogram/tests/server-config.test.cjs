@@ -98,6 +98,7 @@ test('a blocked network request does not open a misleading WeChat authorization 
   const rt = createRuntime(app, wx, null, { console: { error() {} } });
   const page = rt.page('auth/login'); page.data.isAgreed = true;
   page.handleQuickLogin();
+  await new Promise(resolve => setImmediate(resolve));
   requests[0].fail({ errMsg: 'request:fail url not in domain list', errno: 600002 });
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(modals, 0);
@@ -114,6 +115,7 @@ test('a connection timeout tells the user to check WiFi and the LAN address', as
   const rt = createRuntime(app, wx, null, { console: { error() {} } });
   const page = rt.page('auth/login'); page.data.isAgreed = true;
   page.handleQuickLogin();
+  await new Promise(resolve => setImmediate(resolve));
   requests[0].fail({ errMsg: 'request:fail -118:net::ERR_CONNECTION_TIMED_OUT', errno: 600001 });
   await new Promise(resolve => setImmediate(resolve));
   assert.match(toasts.at(-1).title, /同一WiFi|服务地址/);

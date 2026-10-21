@@ -1,4 +1,5 @@
 <view class="container {{isElderMode ? 'elder-mode' : ''}}">
+  <view wx:if="{{eldersLoadError}}" class="empty-tip" bindtap="loadElders">老人档案加载失败，点击重试</view>
   <!-- 服务项目概要 -->
   <view class="card item-summary flex-between" wx:if="{{service}}">
     <view>
@@ -43,10 +44,20 @@
 
   <!-- 上门地址与联系方式 -->
   <view class="card form-card">
-    <view class="form-title"><text class="section-number">03</text>上门地址与联系信息</view>
+    <view class="form-title flex-between">
+      <view><text class="section-number">03</text>上门地址与联系信息</view>
+      <view class="map-picker-btn" bindtap="onChooseLocation" hover-class="spring-in">
+        <text class="map-icon">📍</text>
+        <text class="map-text">地图选址</text>
+      </view>
+    </view>
     <view class="form-item flex-row">
       <text class="form-label">服务地址</text>
       <input class="form-input" placeholder="详细居住地址" value="{{address}}" bindinput="onInputAddress" />
+    </view>
+    <view class="coord-badge flex-row" wx:if="{{latitude != null && longitude != null}}">
+      <text class="badge-icon">✓</text>
+      <text class="badge-text">已设定精准坐标: ({{longitude}}, {{latitude}})</text>
     </view>
     <view class="form-item flex-row">
       <text class="form-label">联系人</text>

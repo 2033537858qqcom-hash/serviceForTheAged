@@ -52,7 +52,18 @@ function navigateTo(options) {
 }
 function switchTab(options) { return route('switchTab', options); }
 function redirectTo(options) { return route('redirectTo', options); }
-function navigateBack(options = {}) { return route('navigateBack', options); }
+function navigateBack(options = {}) {
+  const { fallbackUrl, ...nativeOptions } = options;
+  if (!fallbackUrl) return route('navigateBack', nativeOptions);
+  if (typeof getCurrentPages === 'function' && pages().length <= 1) return afterLogin(fallbackUrl);
+  return route('navigateBack', {
+    ...nativeOptions,
+    fail(error) {
+      nativeOptions.fail?.(error);
+      if (!error?.errMsg?.includes('navigation in progress')) afterLogin(fallbackUrl);
+    }
+  });
+}
 
 function toLogin(returnUrl = currentUrl() || HOME) {
   if (active?.url.startsWith(LOGIN)) return false;
