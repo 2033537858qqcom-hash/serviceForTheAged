@@ -13,7 +13,7 @@
         <text wx:else>登录后，为自己和家人安排养老照料</text>
       </view>
     </view>
-    <button wx:if="{{userInfo}}" class="btn-logout spring" hover-class="spring-in" hover-stay-time="80" size="mini" bindtap="confirmLogout">退出</button>
+    <button wx:if="{{userInfo}}" class="btn-logout" hover-class="logout-pressed" hover-stay-time="80" bindtap="confirmLogout">退出登录</button>
   </view>
 
   <!-- 未登录状态进入登录页面 -->

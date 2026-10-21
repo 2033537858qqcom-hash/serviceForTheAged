@@ -10,18 +10,21 @@
 .user-name { font-size: var(--font-title); font-weight: 600; line-height: 1.4; color: var(--text-main); }
 .user-sub { color: var(--text-secondary); font-size: var(--font-caption); margin-top: 8rpx; display: flex; align-items: center; }
 .role-badge { display: inline-block; background: var(--primary-soft); color: var(--primary-color); border-radius: 8rpx; padding: 4rpx 14rpx; font-size: 22rpx; font-weight: 550; }
-.btn-logout {
-  background: #fdf1f0;
-  color: #c4403a;
-  font-size: 24rpx;
+.profile-hero .btn-logout {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 152rpx;
+  background: #edf1eb;
+  color: #526456;
+  font-size: 26rpx;
   font-weight: 500;
-  height: 52rpx;
-  min-height: 52rpx;
-  line-height: 50rpx;
-  padding: 0 20rpx;
+  height: 80rpx;
+  min-height: 80rpx;
+  line-height: 1.4;
+  padding: 0 24rpx;
   margin: 0;
-  border: 1rpx solid #fbd2cf;
-  border-radius: 8rpx;
+  border: 0;
+  border-radius: 40rpx;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -31,9 +34,9 @@
 .btn-logout::after {
   border: none;
 }
-.btn-logout:active {
-  background: #fce4e2;
-  transform: scale(.96);
+.profile-hero .btn-logout.logout-pressed {
+  background: #dfe7dc;
+  transform: scale(.98);
 }
 
 .profile-login { margin-bottom: 28rpx; }
