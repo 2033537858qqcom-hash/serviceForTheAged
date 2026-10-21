@@ -1,5 +1,6 @@
 // Only presentation fields cross the logic/view bridge.
 const { DEFAULT_IMAGES, serviceImage } = require('./service-images.js');
+const { friendlyTime, friendlyRange } = require('./time-format.js');
 function serviceCard(item) {
   const { id, name, category, description, durationMinutes, serviceArea, price } = item;
   return { id, name, category, description, durationMinutes, serviceArea, price,
@@ -14,6 +15,7 @@ function orderCard(item) {
       id: order.id, orderNo: order.orderNo, status: order.status,
       serviceNameSnapshot: order.serviceNameSnapshot,
       priceSnapshot: order.priceSnapshot, plannedStartAt: order.plannedStartAt,
+      plannedStartText: friendlyTime(order.plannedStartAt),
       requesterType
     },
     requesterType,
@@ -32,7 +34,8 @@ function taskCard(item) {
     addressSnapshot: order.addressSnapshot, plannedEndAt: order.plannedEndAt,
     latitude: order.latitude, longitude: order.longitude,
     contactPhoneSnapshot: order.contactPhoneSnapshot,
-    durationMinutesSnapshot: order.durationMinutesSnapshot
+    durationMinutesSnapshot: order.durationMinutesSnapshot,
+    plannedRangeText: friendlyRange(order.plannedStartAt, order.plannedEndAt)
   });
   if (item.elder) card.elder.age = item.elder.age;
   card.currentDispatch = item.currentDispatch ? {

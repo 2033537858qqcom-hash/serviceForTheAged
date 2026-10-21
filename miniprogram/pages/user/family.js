@@ -1,6 +1,7 @@
 const navigation = require('../../utils/navigation.js');
 const request = require('../../utils/request.js');
 const { sessionKey } = require('../../utils/list-state.js');
+const { friendlyTime } = require('../../utils/time-format.js');
 
 function getAppSafe() {
   try {
@@ -74,7 +75,7 @@ Page({
     const valid = () => !this._disposed && sessionKey(getAppSafe()) === context && this._dataJob === job;
     this.setData({ loading: true, loadError: false });
     const task = Promise.all([request.get('/elders/my-list'), request.get('/family-bindings/my-bindings')]).then(([elders, bindings]) => {
-      if (valid()) this.setData({ allElders: elders || [], bindings: bindings || [] });
+      if (valid()) this.setData({ allElders: elders || [], bindings: (bindings || []).map(item => Object.assign({}, item, { createdAtText: friendlyTime(item.createdAt) })) });
     }).catch(() => {
       if (valid()) this.setData({ loadError: true });
     }).finally(() => {

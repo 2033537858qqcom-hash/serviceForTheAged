@@ -53,7 +53,7 @@
       </view>
       <view class="active-order-meta">
         <image src="/assets/icons/calendar.png"/>
-        <text>预约上门：{{activeOrder.order.plannedStartAt}}</text>
+        <text>预约上门：{{activeOrder.order.plannedStartText}}</text>
       </view>
       <view class="active-order-meta">
         <image src="/assets/icons/user.png"/>
@@ -98,7 +98,7 @@
       <view class="welcome-contact" bindtap="callHotline">
         <image src="/assets/icons/phone.png"/>
         <text>联系社区</text>
-        <text class="contact-hours">08:00—20:00</text>
+        <text class="contact-hours">{{hotlineHours}}</text>
         <image class="contact-arrow" src="/assets/icons/arrow.png" />
       </view>
     </view>

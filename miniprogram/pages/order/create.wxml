@@ -32,20 +32,24 @@
   <!-- 预约时间选择 -->
   <view class="card form-card">
     <view class="form-title"><text class="section-number">02</text>希望什么时候上门</view>
-    <view class="flex-between time-pickers">
-      <picker mode="date" value="{{selectedDate}}" start="{{startDate}}" end="{{endDate}}" bindchange="onDateChange">
-        <view class="picker-item flex-between">
-          <text>{{friendlyDateText || selectedDate || '选择服务日期'}}</text>
-          <image class="picker-icon" src="/assets/icons/calendar.png" />
-        </view>
-      </picker>
-      <picker mode="time" value="{{selectedTime}}" start="08:00" end="18:00" bindchange="onTimeChange">
-        <view class="picker-item flex-between">
-          <text>{{selectedTime || '选择到达时间'}}</text>
-          <image class="picker-icon" src="/assets/icons/time.png" />
-        </view>
-      </picker>
+    <view class="slot-label">选择日期</view>
+    <view class="day-chips">
+      <view wx:for="{{bookingDays}}" wx:key="date" class="day-chip {{selectedDate === item.date ? 'is-active' : ''}}" hover-class="spring-in" hover-stay-time="80" bindtap="onDayTap" data-date="{{item.date}}">
+        <text class="day-chip-label">{{item.label}}</text>
+        <text class="day-chip-sub">{{item.sub}}</text>
+      </view>
     </view>
+    <picker mode="date" value="{{selectedDate}}" start="{{startDate}}" end="{{endDate}}" bindchange="onDateChange">
+      <view class="more-date flex-between">
+        <text>{{selectedDate === bookingDays[0].date || selectedDate === bookingDays[1].date || selectedDate === bookingDays[2].date ? '选择更晚的日期' : '已选：' + friendlyDateText}}</text>
+        <image class="picker-icon" src="/assets/icons/calendar.png" />
+      </view>
+    </picker>
+    <view class="slot-label">选择上门时间</view>
+    <view class="slot-grid">
+      <view wx:for="{{timeSlots}}" wx:key="time" class="slot-chip {{selectedTime === item.time ? 'is-active' : ''}} {{item.disabled ? 'is-disabled' : ''}}" bindtap="onSlotTap" data-time="{{item.time}}" data-disabled="{{item.disabled}}" aria-disabled="{{item.disabled}}">{{item.time}}</view>
+    </view>
+    <view class="slot-empty" wx:if="{{!selectedTime}}">当天已没有可预约的时段，请选择其他日期。</view>
     <view class="field-error" wx:if="{{formErrors.time}}">
       <image class="field-error-icon" src="/assets/icons/time.png" />
       <text>{{formErrors.time}}</text>

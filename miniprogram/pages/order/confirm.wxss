@@ -13,7 +13,7 @@
   bottom: 0;
   background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(20px);
-  padding: 20rpx 32rpx;
+  padding: 20rpx 32rpx calc(20rpx + env(safe-area-inset-bottom));
   box-shadow: 0 -4rpx 16rpx rgba(36, 52, 46, 0.06);
   z-index: 50;
   border-top: 1rpx solid var(--border-color);

@@ -34,7 +34,7 @@
         系统已向合适的服务人员派发任务，人员正在确认接单，请耐心等候。
       </view>
       <view class="next-step-text" wx:elif="{{orderVO.order.status === 'WAIT_VISIT'}}">
-        服务人员已接单，预计上门时间：{{orderVO.order.plannedStartAt}}。请于预约时间在家等候，如有疑问可点击下方“拨打电话”联系。
+        服务人员已接单，预计上门时间：{{orderVO.order.plannedStartText}}。请于预约时间在家等候，如有疑问可点击下方“联系服务人员”。
       </view>
       <view class="next-step-text" wx:elif="{{orderVO.order.status === 'IN_SERVICE'}}">
         服务人员已到达服务现场，正在提供居家照护服务。服务结束后将录入工作总结，随后请您核对确认。
@@ -60,7 +60,7 @@
       <view class="staff-avatar"><image src="/assets/icons/staff.png" /></view>
       <view>
         <view class="staff-name">{{orderVO.currentStaff.user.realName}} <text class="tag tag-success">社区服务人员</text></view>
-        <view class="staff-sub">服务评分： {{orderVO.currentStaff.profile.priorRating}}分 | 累计完成: {{orderVO.currentStaff.profile.totalOrders}}单</view>
+        <view class="staff-sub">服务评分：{{orderVO.currentStaff.profile && orderVO.currentStaff.profile.priorRating != null ? orderVO.currentStaff.profile.priorRating + '分' : '暂无评分'}} | 累计完成：{{orderVO.currentStaff.profile && orderVO.currentStaff.profile.totalOrders != null ? orderVO.currentStaff.profile.totalOrders : 0}}单</view>
       </view>
     </view>
     <button class="btn-dial" bindtap="callStaff">联系服务人员</button>
@@ -131,7 +131,7 @@
     </view>
     <view class="info-item flex-between">
       <text class="label">预约开始</text>
-      <text class="value">{{orderVO.order.plannedStartAt}}</text>
+      <text class="value">{{orderVO.order.plannedStartText}}</text>
     </view>
     <view class="info-item flex-between">
       <text class="label">服务对象</text>
@@ -158,7 +158,7 @@
   <!-- 履约上门记录 (服务人员提交后展示) -->
   <view class="card record-card" wx:if="{{orderVO.serviceRecord && orderVO.serviceRecord.actualEndAt}}">
     <view class="card-title">现场服务履约记录</view>
-    <view class="record-line">实际服务时间：{{orderVO.serviceRecord.actualStartAt}} ~ {{orderVO.serviceRecord.actualEndAt}}</view>
+    <view class="record-line">实际服务时间：{{orderVO.serviceRecord.actualRangeText}}</view>
     <view class="record-summary">工作总结：{{orderVO.serviceRecord.serviceSummary}}</view>
 
     <view wx:if="{{unavailablePhotos}}" class="record-photos-label">{{unavailablePhotos}}张凭证暂时无法加载，请稍后重试</view>
@@ -190,7 +190,7 @@
         <view class="timeline-line" style="animation-delay: {{index < 3 ? 280 + index * 50 : 420}}ms"></view>
         <view class="dot" style="animation-delay: {{index < 3 ? 280 + index * 50 : 420}}ms"></view>
         <view class="node-content" style="animation-delay: {{index < 3 ? 280 + index * 50 : 420}}ms">
-          <view class="node-time">{{item.createdAt}}</view>
+          <view class="node-time">{{item.createdAtText}}</view>
           <view class="node-text">{{statusTextMap[item.toStatus] || item.toStatus}}：{{item.reason}}</view>
         </view>
       </view>

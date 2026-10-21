@@ -4,6 +4,14 @@ const { loadMedia } = require('../../utils/media-url.js');
 const { hasCoordinates } = require('../../utils/coordinates.js');
 const { lightTap } = require('../../utils/feedback.js');
 const { markOrdersChanged, sessionKey } = require('../../utils/list-state.js');
+const { friendlyTime, friendlyRange } = require('../../utils/time-format.js');
+
+function decorateTimes(data) {
+  if (!data) return;
+  if (data.order) data.order.plannedStartText = friendlyTime(data.order.plannedStartAt);
+  if (data.serviceRecord) data.serviceRecord.actualRangeText = friendlyRange(data.serviceRecord.actualStartAt, data.serviceRecord.actualEndAt);
+  if (Array.isArray(data.logs)) data.logs.forEach(log => { log.createdAtText = friendlyTime(log.createdAt); });
+}
 
 function formatTrackingDistance(value) {
   if (value === null || value === undefined || value === '') return '';
@@ -160,6 +168,7 @@ Page({
         } catch (_) {}
       }
       if (!valid()) return;
+      decorateTimes(data);
       this.setData({ orderVO: data, canCancel, fulfillmentPhotos, unavailablePhotos });
       this._version = version;
       this._updatedAt = Date.now();

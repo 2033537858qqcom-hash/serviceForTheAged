@@ -48,7 +48,7 @@
     <view class="card binding-item flex-between" wx:for="{{bindings}}" wx:key="id">
       <view>
         <view class="elder-title">{{item.elder ? item.elder.name : '老人'}} <text class="tag tag-info">{{item.relation}}</text></view>
-        <view class="bind-meta">申请时间：{{item.createdAt}}</view>
+        <view class="bind-meta">申请时间：{{item.createdAtText}}</view>
         <view class="bind-meta" wx:if="{{item.reviewReason}}">审核备注：{{item.reviewReason}}</view>
       </view>
       <view>

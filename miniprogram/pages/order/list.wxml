@@ -90,7 +90,7 @@
               <text>服务对象：{{item.elder ? item.elder.name : '老人'}}</text>
               <text wx:if="{{item.order.requesterType === 'FAMILY' && item.requesterName}}" class="requester-hint">（家属 {{item.requesterName}} 代约）</text>
             </view>
-            <view class="order-row">预约时间：{{item.order.plannedStartAt}}</view>
+            <view class="order-row">预约时间：{{item.order.plannedStartText}}</view>
 
             <view class="card-bottom flex-between" catchtap="noAction">
               <view class="staff-hint" wx:if="{{item.currentStaff}}">
