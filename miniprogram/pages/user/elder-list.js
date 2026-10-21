@@ -31,7 +31,7 @@ Page({
     const app = getAppSafe();
     const isElder = Boolean(app.globalData?.isElderMode);
     if (this.data.isElderMode !== isElder) this.setData({ isElderMode: isElder });
-    if (!navigation.requireLogin('/pages/user/elder-list')) return;
+    if (!navigation.requireRole(['RESIDENT'], '/pages/user/elder-list')) return;
     this.loadElders();
   },
 

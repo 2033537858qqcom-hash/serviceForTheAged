@@ -99,12 +99,12 @@
       <switch checked="{{isElderMode}}" color="#176b5d" bindchange="onModeChange" />
     </view>
 
-    <!-- 演示账号 ActionSheet 切换 (取代原先平铺的简陋按钮) -->
-    <view class="menu-item" hover-class="spring-in" hover-stay-time="80" bindtap="openRoleSwitchSheet">
+    <!-- 演示账号 ActionSheet 切换 (仅开发模式显示) -->
+    <view wx:if="{{isDevMode}}" class="menu-item" hover-class="spring-in" hover-stay-time="80" bindtap="openRoleSwitchSheet">
       <view class="menu-icon-wrap"><image src="/assets/icons/settings.png" /></view>
       <view class="menu-copy">
         <view class="menu-label">切换演示身份</view>
-        <view class="menu-description">老人本人、家属代约、服务人员、管理员一键流转</view>
+        <view class="menu-description">老人本人、家属代约、服务人员一键流转</view>
       </view>
       <image class="menu-arrow" src="/assets/icons/arrow.png" />
     </view>

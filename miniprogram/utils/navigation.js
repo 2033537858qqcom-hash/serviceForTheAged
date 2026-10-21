@@ -1,6 +1,7 @@
 const LOGIN = '/pages/auth/login';
 const HOME = '/pages/index/index';
-const TAB_PAGES = [HOME, '/pages/service/list', '/pages/order/list', '/pages/user/profile'];
+const WORKBENCH = '/pages/staff/workbench';
+const TAB_PAGES = [HOME, '/pages/service/list', '/pages/order/list', '/pages/user/profile', WORKBENCH];
 let active = null;
 let priorityAfterRoute = null;
 
@@ -82,11 +83,54 @@ function requireLogin(returnUrl) {
   return false;
 }
 
+function requireRole(allowedRoles, returnUrl) {
+  if (!requireLogin(returnUrl)) return false;
+  let app = null;
+  try { app = getApp(); } catch (_) {}
+  const role = app?.globalData?.role || app?.globalData?.userInfo?.role || 'RESIDENT';
+  if (Array.isArray(allowedRoles) && allowedRoles.length > 0 && !allowedRoles.includes(role)) {
+    if (typeof wx !== 'undefined' && wx.showToast) {
+      wx.showToast({ title: '无权访问该角色页面', icon: 'none' });
+    }
+    const fallback = role === 'STAFF' ? WORKBENCH : HOME;
+    if (TAB_PAGES.includes(fallback)) {
+      route('switchTab', { url: fallback }, true);
+    } else {
+      route('redirectTo', { url: fallback }, true);
+    }
+    return false;
+  }
+  return true;
+}
+
 function afterLogin(returnUrl) {
-  const target = /^\/pages\/[\w/-]+(?:\?.*)?$/.test(returnUrl || '') && !returnUrl.startsWith(LOGIN) ? returnUrl : HOME;
+  let app = null;
+  try { app = getApp(); } catch (_) {}
+  const role = app?.globalData?.role || app?.globalData?.userInfo?.role || 'RESIDENT';
+
+  if (role === 'ADMIN') {
+    if (typeof wx !== 'undefined' && wx.showToast) {
+      wx.showToast({ title: '管理员请前往电脑端管理平台', icon: 'none' });
+    }
+    return false;
+  }
+
+  let target = /^\/pages\/[\w/-]+(?:\?.*)?$/.test(returnUrl || '') && !returnUrl.startsWith(LOGIN) ? returnUrl : null;
+  if (!target) {
+    target = role === 'STAFF' ? WORKBENCH : HOME;
+  } else {
+    // 角色边界矫正
+    const path = target.split('?')[0];
+    if (role === 'STAFF' && (path === HOME || path === '/pages/order/create' || path === '/pages/user/family' || path === '/pages/user/elder-form')) {
+      target = WORKBENCH;
+    } else if (role === 'RESIDENT' && path === WORKBENCH) {
+      target = HOME;
+    }
+  }
+
   const path = target.split('?')[0];
   if (TAB_PAGES.includes(path)) return route('switchTab', { url: path }, true);
   return route('redirectTo', { url: target }, true);
 }
 
-module.exports = { navigateTo, switchTab, redirectTo, navigateBack, toLogin, requireLogin, afterLogin, currentUrl };
+module.exports = { navigateTo, switchTab, redirectTo, navigateBack, toLogin, requireLogin, requireRole, afterLogin, currentUrl };

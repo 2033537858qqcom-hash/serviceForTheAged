@@ -1,5 +1,6 @@
 const navigation = require('../../utils/navigation.js');
 const request = require('../../utils/request.js');
+const { syncTabBar } = require('../../utils/tab-bar.js');
 const { hasCoordinates } = require('../../utils/coordinates.js');
 const { taskCard, sessionKey, markOrdersChanged } = require('../../utils/list-state.js');
 
@@ -58,12 +59,16 @@ Page({
       'IN_SERVICE': 'tag-info',
       'WAIT_CONFIRM': 'tag-warning',
       'COMPLETED': 'tag-success'
-    }
+    },
+    isDevMode: false
   },
 
   onShow() {
     this._hidden = false;
+    syncTabBar(this, 0);
     const app = getAppSafe();
+    const isDev = /^https?:\/\/(localhost|127\.0\.0\.1|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01]))/i.test(app.globalData?.baseUrl || '');
+    if (this.data.isDevMode !== isDev) this.setData({ isDevMode: isDev });
     const context = sessionKey(app);
     if (this._context !== context) {
       this._context = context;
@@ -76,7 +81,7 @@ Page({
     }
     const isElder = Boolean(app.globalData?.isElderMode);
     if (this.data.isElderMode !== isElder) this.setData({ isElderMode: isElder });
-    if (!navigation.requireLogin('/pages/staff/workbench')) {
+    if (!navigation.requireRole(['STAFF'], '/pages/staff/workbench')) {
       return Promise.resolve();
     }
     return this.loadStaffData().then(() => {

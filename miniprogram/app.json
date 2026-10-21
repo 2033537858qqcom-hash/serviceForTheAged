@@ -47,6 +47,12 @@
         "selectedIconPath": "assets/icons/order.png"
       },
       {
+        "pagePath": "pages/staff/workbench",
+        "text": "工作台",
+        "iconPath": "assets/icons/staff-muted.png",
+        "selectedIconPath": "assets/icons/staff.png"
+      },
+      {
         "pagePath": "pages/user/profile",
         "text": "我的",
         "iconPath": "assets/icons/user-muted.png",

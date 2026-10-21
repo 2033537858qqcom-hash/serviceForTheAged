@@ -123,6 +123,10 @@ Page({
       wx.showToast({ title: '登录响应异常，请重新登录', icon: 'none' });
       return;
     }
+    if (data.userInfo.role === 'ADMIN') {
+      wx.showToast({ title: '管理员请前往电脑端管理平台', icon: 'none', duration: 2500 });
+      return;
+    }
     app.globalData.token = data.token;
     app.globalData.userInfo = data.userInfo;
     app.globalData.role = data.userInfo.role;

@@ -91,7 +91,7 @@ Page({
     const app = getAppSafe();
     const isElder = Boolean(app.globalData?.isElderMode);
     if (this.data.isElderMode !== isElder) this.setData({ isElderMode: isElder });
-    if (!navigation.requireLogin(`/pages/order/create?serviceId=${this.data.serviceId || ''}`)) return;
+    if (!navigation.requireRole(['RESIDENT'], `/pages/order/create?serviceId=${this.data.serviceId || ''}`)) return;
     return this.loadElders();
   },
   onUnload() { this._disposed = true; },

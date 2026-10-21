@@ -68,7 +68,7 @@ Page({
     const app = getAppSafe();
     const isElder = Boolean(app.globalData?.isElderMode);
     if (this.data.isElderMode !== isElder) this.setData({ isElderMode: isElder });
-    navigation.requireLogin('/pages/user/elder-form');
+    if (!navigation.requireRole(['RESIDENT'], '/pages/user/elder-form')) return;
   },
   onUnload() { this._disposed = true; },
 

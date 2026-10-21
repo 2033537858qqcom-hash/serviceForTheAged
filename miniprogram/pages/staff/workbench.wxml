@@ -79,7 +79,7 @@
         </view>
         <view class="lbs-actions flex-row">
           <button class="btn-nav" size="mini" bindtap="openNavigation" data-id="{{item.order.id}}">路线导航</button>
-          <button class="btn-mock" size="mini" bindtap="mockMoveStep" data-id="{{item.order.id}}">模拟移动</button>
+          <button wx:if="{{isDevMode}}" class="btn-mock" size="mini" bindtap="mockMoveStep" data-id="{{item.order.id}}">模拟移动</button>
         </view>
       </view>
 

@@ -28,6 +28,7 @@ Page({
   data: {
     userInfo: null,
     isElderMode: false,
+    isDevMode: false,
     currentBaseUrl: 'http://localhost:8080/api',
     logoutSheet: false,
     roleTextMap: {
@@ -41,9 +42,11 @@ Page({
     syncTabBar(this, 3);
     const app = getAppSafe();
     const patch = {};
+    const isDev = /^https?:\/\/(localhost|127\.0\.0\.1|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01]))/i.test(app.globalData?.baseUrl || '');
     const state = {
       userInfo: app.globalData?.userInfo || null,
       isElderMode: Boolean(app.globalData?.isElderMode),
+      isDevMode: isDev,
       currentBaseUrl: app.globalData?.baseUrl || 'http://localhost:8080/api'
     };
     for (const key of Object.keys(state)) {
@@ -67,8 +70,7 @@ Page({
     const roles = [
       { username: 'resident01', name: '赵大爷', desc: '老人本人 (阳光社区长辈)' },
       { username: 'family01', name: '赵志强', desc: '家属代约 (社区居民)' },
-      { username: 'staff01', name: '张玉兰', desc: '服务师傅 (专业居家护理)' },
-      { username: 'admin', name: '系统管理员', desc: '管理员 (调度运营中心)' }
+      { username: 'staff01', name: '张玉兰', desc: '服务师傅 (专业居家护理)' }
     ];
 
     const that = this;
@@ -88,6 +90,9 @@ Page({
 
             that.setData({ userInfo: loginRes.userInfo });
             wx.showToast({ title: `已登录为 ${loginRes.userInfo.realName}`, icon: 'success' });
+
+            const dest = loginRes.userInfo.role === 'STAFF' ? '/pages/staff/workbench' : '/pages/index/index';
+            navigation.switchTab({ url: dest, fail: () => navigation.redirectTo({ url: dest }) });
           }).catch(() => {
             wx.hideLoading();
           });
