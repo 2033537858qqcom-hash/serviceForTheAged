@@ -13,5 +13,5 @@
 .binding-item { align-items: flex-start; }
 .elder-title { font-size: var(--font-body); font-weight: 600; }
 .bind-meta { font-size: var(--font-caption); color: var(--text-secondary); margin-top: 14rpx; overflow-wrap: anywhere; }
-.revoke-btn { margin-top: 16rpx; padding: 12rpx 0; text-align: right; color: var(--danger-color); font-size: var(--font-caption); min-width: 88rpx; }
+.revoke-btn { margin-top: 16rpx; min-height: 88rpx; display: flex; align-items: center; justify-content: flex-end; padding: 12rpx 16rpx; text-align: right; color: var(--danger-color); font-size: var(--font-caption); min-width: 88rpx; }
 .elder-mode .binding-item { flex-wrap: wrap; }

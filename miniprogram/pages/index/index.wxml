@@ -18,7 +18,7 @@
   <block wx:if="{{activeOrder}}">
     <view class="section-title home-section-heading">
       <text>今天的服务</text>
-      <text class="tag tag-success">{{statusTextMap[activeOrder.order.status] || '进行中'}}</text>
+      <text class="section-note">上门照护实时跟进</text>
     </view>
     <view class="card active-order-card spring" hover-class="spring-in" hover-stay-time="80" bindtap="goToOrderDetail" data-id="{{activeOrder.order.id}}">
       <view class="flex-between">
@@ -93,18 +93,6 @@
         <view class="grid-desc">就医陪诊出行看护</view>
       </view>
     </view>
-  </view>
-
-  <!-- 服务人员工作台横幅 -->
-  <view wx:if="{{isStaff}}" class="card staff-banner flex-between" bindtap="goToWorkbench">
-    <view class="flex-row">
-      <image class="ui-icon" src="/assets/icons/staff.png"/>
-      <view>
-        <view class="staff-title">服务人员工作台</view>
-        <view class="staff-sub">查看排班任务，及时回应上门照护需求</view>
-      </view>
-    </view>
-    <image class="ui-icon-small" src="/assets/icons/arrow.png"/>
   </view>
 
   <!-- 推荐服务列表 -->

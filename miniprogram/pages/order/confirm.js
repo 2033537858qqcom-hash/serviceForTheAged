@@ -1,5 +1,6 @@
 const navigation = require('../../utils/navigation.js');
 const request = require('../../utils/request.js');
+const { lightTap } = require('../../utils/feedback.js');
 const { markOrdersChanged } = require('../../utils/list-state.js');
 
 function getAppSafe() {
@@ -56,6 +57,7 @@ Page({
 
   setRating(e) {
     const rating = e.currentTarget.dataset.rating;
+    try { lightTap(); } catch (_) {}
     this.setData({ rating });
   },
 
@@ -80,6 +82,7 @@ Page({
       markOrdersChanged();
       this._submitted = true;
       if (this._disposed) return;
+      try { lightTap(); } catch (_) {}
       wx.showToast({ title: '评价成功，感谢反馈', icon: 'success' });
       this.returnToOrder();
     }).catch(() => { if (!this._disposed) this.setData({ submitting: false }); });

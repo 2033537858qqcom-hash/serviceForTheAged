@@ -2,6 +2,7 @@
   "navigationBarTitleText": "服务人员工作台",
   "enablePullDownRefresh": true,
   "usingComponents": {
-    "dispatch-countdown": "/components/dispatch-countdown/index"
+    "dispatch-countdown": "/components/dispatch-countdown/index",
+    "bottom-sheet": "/components/bottom-sheet/index"
   }
 }

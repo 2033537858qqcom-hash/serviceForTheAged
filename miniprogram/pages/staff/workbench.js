@@ -1,5 +1,6 @@
 const navigation = require('../../utils/navigation.js');
 const request = require('../../utils/request.js');
+const { lightTap } = require('../../utils/feedback.js');
 const { syncTabBar } = require('../../utils/tab-bar.js');
 const { hasCoordinates } = require('../../utils/coordinates.js');
 const { taskCard, sessionKey, markOrdersChanged } = require('../../utils/list-state.js');
@@ -46,6 +47,12 @@ Page({
     currentOrderId: null,
     recordSummary: '',
     actionLoading: false,
+    actionId: null,
+    showStartSheet: false,
+    startOrderId: null,
+    startServiceAddress: '',
+    showRejectSheet: false,
+    rejectDispatchId: null,
     loadError: false,
     isElderMode: false,
     statusTextMap: {
@@ -198,22 +205,25 @@ Page({
     });
   },
 
-  performAction(url, body, message, changesOrders = true) {
+  performAction(url, body, message, changesOrders = true, actionId = null) {
     if (this.data.actionLoading) return Promise.resolve();
-    this.setData({ actionLoading: true });
+    this.setData({ actionLoading: true, actionId });
     const context = sessionKey(getAppSafe());
     return request.post(url, body).then(() => {
       if (sessionKey(getAppSafe()) !== context) return;
       if (changesOrders) markOrdersChanged();
       if (this._disposed) return;
+      try { lightTap(); } catch (_) {}
       wx.showToast({ title: message, icon: 'success' });
       this.closeRecordModal();
+      this.closeStartSheet();
+      this.closeRejectSheet();
       return Promise.all([this._staffPromise, this._tasksPromise].map(pending => Promise.resolve(pending).catch(() => {})))
         .then(() => {
           if (!this._disposed) return this.loadStaffData(true);
         });
     }).catch(() => {}).finally(() => {
-      if (!this._disposed) this.setData({ actionLoading: false });
+      if (!this._disposed) this.setData({ actionLoading: false, actionId: null });
     });
   },
 
@@ -226,28 +236,69 @@ Page({
   },
 
   acceptDispatch(e) {
+    const dispatchId = e?.currentTarget?.dataset?.id || e;
+    return this.performAction(`/dispatch/accept/${dispatchId}`, undefined, '接单成功，请按时上门', true, dispatchId);
+  },
+
+  openRejectSheet(e) {
     const dispatchId = e.currentTarget.dataset.id;
-    return this.performAction(`/dispatch/accept/${dispatchId}`, undefined, '接单成功，请按时上门');
+    this.setData({ showRejectSheet: true, rejectDispatchId: dispatchId });
+  },
+
+  closeRejectSheet() {
+    this.setData({ showRejectSheet: false, rejectDispatchId: null });
+  },
+
+  confirmRejectDispatch() {
+    const dispatchId = this.data.rejectDispatchId;
+    if (!dispatchId) return;
+    return this.performAction('/dispatch/reject', { dispatchId, reason: '人员当前工作安排冲突' }, '已拒单并释放预留', true, dispatchId);
   },
 
   rejectDispatch(e) {
-    const dispatchId = e.currentTarget.dataset.id;
+    const dispatchId = e?.currentTarget?.dataset?.id || e;
     const that = this;
-    wx.showModal({
-      title: '拒绝接单',
-      content: '确认无法接单吗？系统将自动释放并重派其他人员。',
-      confirmColor: '#b83a3a',
-      success(res) {
-        if (res.confirm) {
-          that.performAction('/dispatch/reject', { dispatchId, reason: '人员当前工作安排冲突' }, '已拒单并释放预留');
+    if (typeof wx !== 'undefined' && typeof wx.showModal === 'function') {
+      wx.showModal({
+        title: '拒绝接单',
+        content: '确认无法接单吗？系统将自动释放并重派其他人员。',
+        confirmColor: '#b83a3a',
+        success(res) {
+          if (res.confirm) {
+            that.performAction('/dispatch/reject', { dispatchId, reason: '人员当前工作安排冲突' }, '已拒单并释放预留', true, dispatchId);
+          }
         }
-      }
+      });
+    } else {
+      return this.performAction('/dispatch/reject', { dispatchId, reason: '人员当前工作安排冲突' }, '已拒单并释放预留', true, dispatchId);
+    }
+  },
+
+  openStartService(e) {
+    const orderId = e.currentTarget.dataset.id;
+    const task = (this.data.filteredTasks || []).find(t => String(t.order.id) === String(orderId));
+    const addr = task?.order?.addressSnapshot || '老人居住住址';
+    this.setData({
+      showStartSheet: true,
+      startOrderId: orderId,
+      startServiceAddress: `您确认已到达【${addr}】，即将开始上门照护服务吗？`
     });
   },
 
+  closeStartSheet() {
+    this.setData({ showStartSheet: false, startOrderId: null });
+  },
+
+  confirmStartService() {
+    const orderId = this.data.startOrderId;
+    if (!orderId) return;
+    return this.performAction(`/fulfillment/start/${orderId}`, undefined, '已签到，开始服务', true, orderId);
+  },
+
   startService(e) {
-    const orderId = e.currentTarget.dataset.id;
-    return this.performAction(`/fulfillment/start/${orderId}`, undefined, '已签到，开始服务');
+    const orderId = e?.currentTarget?.dataset?.id || e;
+    if (!orderId) return;
+    return this.performAction(`/fulfillment/start/${orderId}`, undefined, '已签到，开始服务', true, orderId);
   },
 
   openSubmitRecordModal(e) {

@@ -57,7 +57,7 @@
 
       <view class="card-actions flex-between">
         <text class="community-name">{{item.community || '阳光花园社区'}}</text>
-        <button class="btn-secondary btn-edit-card" size="mini" bindtap="goToEdit" data-id="{{item.id}}">编辑档案</button>
+        <button class="btn-secondary btn-edit-card" bindtap="goToEdit" data-id="{{item.id}}">编辑档案</button>
       </view>
     </view>
   </view>

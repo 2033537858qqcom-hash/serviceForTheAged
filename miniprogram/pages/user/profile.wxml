@@ -13,7 +13,6 @@
         <text wx:else>登录后，为自己和家人安排养老照料</text>
       </view>
     </view>
-    <button wx:if="{{userInfo}}" class="btn-logout" hover-class="logout-pressed" hover-stay-time="80" bindtap="confirmLogout">退出登录</button>
   </view>
 
   <!-- 未登录状态进入登录页面 -->
@@ -31,21 +30,21 @@
       </view>
       <view class="staff-stats-grid">
         <view class="staff-stat-item">
-          <view class="staff-stat-num">{{staffProfile ? staffProfile.priorRating : '4.8'}}<text class="staff-stat-unit">分</text></view>
+          <view class="staff-stat-num">{{staffProfile && staffProfile.priorRating != null ? staffProfile.priorRating : '—'}}<text class="staff-stat-unit" wx:if="{{staffProfile && staffProfile.priorRating != null}}">分</text></view>
           <text class="staff-stat-desc">综合服务评分</text>
         </view>
         <view class="staff-stat-item">
-          <view class="staff-stat-num">{{staffProfile && staffProfile.totalOrders != null ? staffProfile.totalOrders : '31'}}<text class="staff-stat-unit">单</text></view>
+          <view class="staff-stat-num">{{staffProfile && staffProfile.totalOrders != null ? staffProfile.totalOrders : '0'}}<text class="staff-stat-unit">单</text></view>
           <text class="staff-stat-desc">累计完成订单</text>
         </view>
         <view class="staff-stat-item">
-          <view class="staff-stat-num">{{staffSkills.length || 3}}<text class="staff-stat-unit">项</text></view>
+          <view class="staff-stat-num">{{staffSkills ? staffSkills.length : 0}}<text class="staff-stat-unit">项</text></view>
           <text class="staff-stat-desc">认证专业技能</text>
         </view>
       </view>
       <view class="staff-station-bar flex-row">
         <image src="/assets/icons/location.png" />
-        <text>服务基站：{{staffProfile && staffProfile.baseStationName ? staffProfile.baseStationName : '阳光社区助老服务站'}} ({{staffProfile && staffProfile.serviceArea ? staffProfile.serviceArea : '阳光花园社区'}})</text>
+        <text>服务基站：{{staffProfile && staffProfile.baseStationName ? staffProfile.baseStationName : '暂未分配基站'}} ({{staffProfile && staffProfile.serviceArea ? staffProfile.serviceArea : '本社区网格'}})</text>
       </view>
     </view>
 
@@ -173,6 +172,11 @@
       </view>
       <image class="menu-arrow" src="/assets/icons/arrow.png" />
     </view>
+  </view>
+
+  <!-- 退出登录 (置于页面底部次级独立触控区，热区达到 88rpx) -->
+  <view class="profile-logout-box" wx:if="{{userInfo}}">
+    <button class="btn-secondary btn-logout-bottom" hover-class="spring-in" hover-stay-time="80" bindtap="confirmLogout">退出登录</button>
   </view>
 
   <!-- 页脚信息 -->

@@ -150,12 +150,16 @@
   flex-shrink: 0;
 }
 .btn-map-action {
-  font-size: 22rpx;
-  padding: 8rpx 20rpx;
+  font-size: 26rpx;
+  min-height: 88rpx;
+  padding: 0 28rpx;
   margin: 0;
   background: var(--primary-color);
   color: #ffffff;
   border-radius: 999rpx;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   line-height: 1.5;
 }
 .btn-map-action.btn-refresh {
@@ -187,8 +191,9 @@
 
 /* 底部操作按钮栏 */
 .bottom-actions { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; padding: 24rpx 32rpx calc(24rpx + env(safe-area-inset-bottom)); border-top: 1rpx solid var(--border-color); gap: 20rpx; z-index: 5; box-shadow: 0 -4rpx 16rpx rgba(0,0,0,.04); }
-.bottom-actions button { flex: 1; margin: 0; min-height: var(--control-height); font-size: var(--font-body); display: flex; align-items: center; justify-content: center; border-radius: 24rpx; font-weight: 550; letter-spacing: 1rpx; }
-.btn-cancel { background: #fdf2f1; color: var(--danger-color); border: 1.5rpx solid #f8d3cf; padding: 20rpx; }
+.bottom-actions button { margin: 0; min-height: var(--control-height); font-size: var(--font-body); display: flex; align-items: center; justify-content: center; border-radius: 24rpx; font-weight: 550; letter-spacing: 1rpx; }
+.bottom-actions .btn-cancel { flex: 0 0 auto; min-height: 88rpx; background: transparent; color: var(--danger-color); border: none; padding: 0 28rpx; font-size: var(--font-caption); }
+.bottom-actions .btn-confirm, .bottom-actions .btn-review { flex: 1; }
 
 .elder-mode .info-item { flex-direction: column; gap: 10rpx; }
 .elder-mode .label { flex: auto; }

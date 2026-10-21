@@ -94,7 +94,7 @@
 
             <view class="card-bottom flex-between" catchtap="noAction">
               <view class="staff-hint" wx:if="{{item.currentStaff}}">
-                服务人员：{{item.currentStaff.user.realName}} ({{item.currentStaff.user.phone}})
+                服务人员：{{item.currentStaff.user.realName}} (社区护理员)
               </view>
               <view class="staff-hint" wx:else>
                 服务安排请查看详情

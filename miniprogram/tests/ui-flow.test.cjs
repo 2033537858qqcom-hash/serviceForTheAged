@@ -131,3 +131,24 @@ test('profile opens elder list and elder list navigates to create or edit', asyn
   elderPage.goToEdit({ currentTarget: { dataset: { id: 101 } } });
   assert.equal(navigated[2], '/pages/user/elder-form?id=101');
 });
+
+test('accessibility touch target and workbench tab-bar bottom padding standards are satisfied', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const appWxss = fs.readFileSync(path.join(__dirname, '../app.wxss'), 'utf8');
+  const workbenchWxss = fs.readFileSync(path.join(__dirname, '../pages/staff/workbench.wxss'), 'utf8');
+  const workbenchWxml = fs.readFileSync(path.join(__dirname, '../pages/staff/workbench.wxml'), 'utf8');
+  const profileWxml = fs.readFileSync(path.join(__dirname, '../pages/user/profile.wxml'), 'utf8');
+
+  // W1: Workbench page has tab-bar bottom padding
+  assert.equal(workbenchWxml.includes('workbench-page'), true);
+  assert.equal(workbenchWxss.includes('--tab-bar-height'), true);
+
+  // G3: Global buttons enforce minimum 88rpx accessible touch height
+  assert.equal(/button\s*\{[^}]*min-height:\s*88rpx/.test(appWxss), true);
+  assert.equal(/button\[size="mini"\]\s*\{[^}]*min-height:\s*88rpx/.test(appWxss), true);
+
+  // P1: Profile does not display hardcoded fake statistics when profile data is empty
+  assert.equal(profileWxml.includes("'4.8'"), false);
+  assert.equal(profileWxml.includes("'31'"), false);
+});

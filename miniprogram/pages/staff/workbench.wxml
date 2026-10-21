@@ -1,24 +1,7 @@
-<view class="container {{isElderMode ? 'elder-mode' : ''}}">
+<view class="container workbench-page {{isElderMode ? 'elder-mode' : ''}}">
   <view wx:if="{{loadError}}" class="empty-tip">工作台暂时未能完整加载<button class="retry-button" bindtap="loadStaffData">重新加载</button></view>
-  <!-- 服务人员档案顶栏 -->
-  <view class="staff-header-card card flex-between" wx:if="{{staffProfile}}">
-    <view class="flex-row">
-      <view class="staff-avatar"><image src="/assets/icons/staff.png" /></view>
-      <view>
-        <view class="staff-name">{{staffProfile.user.realName}} <text class="tag tag-success">认证上岗</text></view>
-        <view class="staff-meta">服务评分： {{staffProfile.profile.priorRating}}分 · 已完成： {{staffProfile.profile.totalOrders}}单</view>
-      </view>
-    </view>
-    <view class="status-toggle">
-      <picker range="{{['可接单', '休息中']}}" value="{{staffProfile.profile.currentStatus === 'RESTING' ? 1 : 0}}" bindchange="changeStatus">
-        <view class="status-pill {{staffProfile.profile.currentStatus === 'AVAILABLE' ? 'pill-online' : 'pill-offline'}}">
-          {{staffProfile.profile.currentStatus === 'AVAILABLE' ? '● 正在接单' : '○ 休息中'}}
-        </view>
-      </picker>
-    </view>
-  </view>
 
-  <!-- 待接单新任务强提醒 (倒计时) -->
+  <!-- 待接单新任务强提醒 (倒计时置顶优先暴露) -->
   <view class="section-title flex-between alert-heading" wx:if="{{pendingAttempt}}">
     <text class="alert-title">有一项新服务待接单</text>
     <dispatch-countdown deadline="{{pendingAttempt.attempt.deadline}}" bindexpire="onDispatchExpired" />
@@ -33,9 +16,28 @@
     <view class="pending-line">服务地点：{{pendingAttempt.order.addressSnapshot}}</view>
     <view class="pending-line">服务单价：¥{{pendingAttempt.order.priceSnapshot}} ({{pendingAttempt.order.durationMinutesSnapshot}}分钟)</view>
 
+    <!-- 70/30 不对称操作布局：主接单 70%，次拒单 30% -->
     <view class="pending-actions flex-row">
-      <button class="btn-reject" disabled="{{actionLoading}}" bindtap="rejectDispatch" data-id="{{pendingAttempt.attempt.id}}">拒绝接单</button>
-      <button class="btn-primary btn-accept" loading="{{actionLoading}}" disabled="{{actionLoading}}" bindtap="acceptDispatch" data-id="{{pendingAttempt.attempt.id}}">立即接单</button>
+      <button class="btn-tertiary btn-reject-action" disabled="{{actionLoading}}" bindtap="openRejectSheet" data-id="{{pendingAttempt.attempt.id}}">拒绝</button>
+      <button class="btn-primary btn-accept-action" loading="{{actionId === pendingAttempt.attempt.id ? actionLoading : false}}" disabled="{{actionLoading}}" bindtap="acceptDispatch" data-id="{{pendingAttempt.attempt.id}}">立即接单</button>
+    </view>
+  </view>
+
+  <!-- 服务人员档案顶栏 -->
+  <view class="staff-header-card card flex-between" wx:if="{{staffProfile}}">
+    <view class="flex-row">
+      <view class="staff-avatar"><image src="/assets/icons/staff.png" /></view>
+      <view>
+        <view class="staff-name">{{staffProfile.user.realName}} <text class="tag tag-success">认证上岗</text></view>
+        <view class="staff-meta">服务评分： {{staffProfile.profile.priorRating != null ? staffProfile.profile.priorRating : '5.0'}}分 · 已完成： {{staffProfile.profile.totalOrders != null ? staffProfile.profile.totalOrders : '0'}}单</view>
+      </view>
+    </view>
+    <view class="status-toggle">
+      <picker range="{{['可接单', '休息中']}}" value="{{staffProfile.profile.currentStatus === 'RESTING' ? 1 : 0}}" bindchange="changeStatus">
+        <view class="status-pill {{staffProfile.profile.currentStatus === 'AVAILABLE' ? 'pill-online' : 'pill-offline'}}">
+          {{staffProfile.profile.currentStatus === 'AVAILABLE' ? '● 在岗接单' : '○ 休息中'}}
+        </view>
+      </picker>
     </view>
   </view>
 
@@ -78,20 +80,20 @@
           <text class="lbs-text">地址导航与轨迹</text>
         </view>
         <view class="lbs-actions flex-row">
-          <button class="btn-nav" size="mini" bindtap="openNavigation" data-id="{{item.order.id}}">路线导航</button>
-          <button wx:if="{{isDevMode}}" class="btn-mock" size="mini" bindtap="mockMoveStep" data-id="{{item.order.id}}">模拟移动</button>
+          <button class="btn-nav" bindtap="openNavigation" data-id="{{item.order.id}}">路线导航</button>
+          <button wx:if="{{isDevMode}}" class="btn-mock" bindtap="mockMoveStep" data-id="{{item.order.id}}">模拟移动</button>
         </view>
       </view>
 
-      <!-- 操作按钮流 -->
+      <!-- 操作按钮流 (去除 mini 属性，保持适老 88rpx 触控高度) -->
       <view class="task-actions flex-between">
-        <button class="btn-call" size="mini" bindtap="dialPhone" data-phone="{{item.order.contactPhoneSnapshot}}">联系服务对象</button>
+        <button class="btn-call" bindtap="dialPhone" data-phone="{{item.order.contactPhoneSnapshot}}">联系服务对象</button>
 
-        <button class="btn-primary" size="mini" wx:if="{{item.order.status === 'WAIT_VISIT'}}" loading="{{actionLoading}}" disabled="{{actionLoading}}" bindtap="startService" data-id="{{item.order.id}}">
+        <button class="btn-primary" wx:if="{{item.order.status === 'WAIT_VISIT'}}" loading="{{actionId === item.order.id ? actionLoading : false}}" disabled="{{actionLoading}}" bindtap="openStartService" data-id="{{item.order.id}}">
           到达现场 · 开始服务
         </button>
 
-        <button class="btn-primary" size="mini" wx:if="{{item.order.status === 'IN_SERVICE'}}" bindtap="openSubmitRecordModal" data-id="{{item.order.id}}">
+        <button class="btn-primary" wx:if="{{item.order.status === 'IN_SERVICE'}}" bindtap="openSubmitRecordModal" data-id="{{item.order.id}}">
           服务完成 · 提交记录
         </button>
 
@@ -105,16 +107,17 @@
     <button wx:if="{{tasksHasMore}}" class="retry-button" loading="{{tasksLoading}}" disabled="{{tasksLoading}}" bindtap="loadMoreTasks">加载更多服务安排</button>
   </view>
 
-  <!-- 提交履约记录弹窗 -->
-  <view class="modal-mask" wx:if="{{showRecordModal}}">
-    <view class="modal-box">
-      <view class="modal-title">提交上门服务记录</view>
+  <!-- 二次确认弹层：确认开始服务 -->
+  <bottom-sheet show="{{showStartSheet}}" title="确认开始服务" content="{{startServiceAddress}}" confirm-text="确认到达并开始" dismiss-text="再等等" bind:close="closeStartSheet" bind:confirm="confirmStartService"></bottom-sheet>
+
+  <!-- 二次确认弹层：确认拒绝接单 -->
+  <bottom-sheet show="{{showRejectSheet}}" title="确认拒绝接单" content="确认无法接单吗？系统将自动释放并重派给其他服务人员。" confirm-text="确认拒绝" tone="danger" dismiss-text="再想想" bind:close="closeRejectSheet" bind:confirm="confirmRejectDispatch"></bottom-sheet>
+
+  <!-- 提交履约记录抽屉 -->
+  <bottom-sheet show="{{showRecordModal}}" title="提交上门服务记录" confirm-text="确认提交" dismiss-text="取消" bind:close="closeRecordModal" bind:confirm="submitRecord">
+    <view class="record-sheet-body">
       <view class="modal-tip">请真实填写现场服务情况，以便老人与社区审核留档</view>
-      <textarea class="modal-textarea" placeholder="填写服务工作总结，如老人饮食情况、日常保洁清洁部位、陪同就医事项等..." value="{{recordSummary}}" bindinput="onInputSummary" />
-      <view class="modal-btns flex-row">
-        <button class="modal-btn-cancel" bindtap="closeRecordModal">取消</button>
-        <button class="btn-primary modal-btn-submit" loading="{{actionLoading}}" disabled="{{actionLoading}}" bindtap="submitRecord">确认提交</button>
-      </view>
+      <textarea class="modal-textarea" placeholder="填写服务工作总结，如老人饮食情况、日常保洁清洁部位、陪同就医事项等..." value="{{recordSummary}}" bindinput="onInputSummary" cursor-spacing="140" />
     </view>
-  </view>
+  </bottom-sheet>
 </view>
