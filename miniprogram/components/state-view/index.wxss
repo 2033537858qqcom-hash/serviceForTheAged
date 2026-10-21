@@ -1,0 +1,6 @@
+.state-view { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 56rpx 32rpx; gap: 12rpx; }
+.state-view-icon { width: 96rpx; height: 96rpx; opacity: .7; margin-bottom: 8rpx; }
+.state-view-title { font-size: var(--font-body); color: var(--text-main); font-weight: 550; line-height: 1.6; }
+.state-view-desc { font-size: var(--font-caption); color: var(--text-secondary); line-height: 1.7; }
+.state-view-action { min-height: 88rpx; min-width: 280rpx; margin-top: 16rpx; font-size: var(--font-body); }
+.state-view-error .state-view-title { color: var(--warning-color); }

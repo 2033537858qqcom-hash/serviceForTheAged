@@ -120,16 +120,9 @@
           </view>
 
           <!-- 空状态 -->
-          <view class="empty-tip" wx:if="{{tabData[index].loaded && !tabData[index].error && !tabData[index].loading && tabData[index].list.length === 0}}">
-            <image class="empty-icon" src="/assets/icons/order.png" />
-            <view class="empty-text">暂无此类订单记录</view>
-            <button class="btn-primary empty-action-btn" bindtap="goToServices">去预约服务</button>
-          </view>
+          <state-view wx:if="{{tabData[index].loaded && !tabData[index].error && !tabData[index].loading && tabData[index].list.length === 0}}" icon="/assets/icons/order.png" title="暂无此类订单记录" action-text="去预约服务" bindaction="goToServices" />
 
-          <view wx:if="{{tabData[index].error}}" class="empty-tip">
-            加载暂时失败，已有订单仍可查看。
-            <button class="retry-button" data-index="{{index}}" bindtap="retryTab">重新加载</button>
-          </view>
+          <state-view wx:if="{{tabData[index].error}}" type="error" title="订单暂时未能加载" description="已有订单仍可查看" data-index="{{index}}" bindaction="retryTab" />
           <view wx:if="{{!tabData[index].loaded && !tabData[index].loading && !tabData[index].error}}" class="loading-more">选择此分类查看订单</view>
           <!-- 底部提示 -->
           <view class="loading-more" wx:if="{{tabData[index].loading && !tabData[index].isRefreshing}}">
