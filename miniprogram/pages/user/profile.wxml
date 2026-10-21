@@ -24,9 +24,7 @@
     <view class="card staff-stats-card">
       <view class="staff-stats-header flex-between">
         <text class="staff-stats-title">服务执业概览</text>
-        <text class="staff-status-pill {{staffProfile && staffProfile.currentStatus === 'AVAILABLE' ? 'staff-status-available' : (staffProfile && staffProfile.currentStatus === 'BUSY' ? 'staff-status-busy' : 'staff-status-resting')}}">
-          {{staffProfile && staffProfile.currentStatus === 'AVAILABLE' ? '在岗接单中' : (staffProfile && staffProfile.currentStatus === 'BUSY' ? '现场服务中' : '休息中')}}
-        </text>
+        <view class="staff-status-pill {{staffProfile && staffProfile.currentStatus === 'AVAILABLE' ? 'staff-status-available' : (staffProfile && staffProfile.currentStatus === 'BUSY' ? 'staff-status-busy' : 'staff-status-resting')}}">{{staffProfile && staffProfile.currentStatus === 'AVAILABLE' ? '在岗接单中' : (staffProfile && staffProfile.currentStatus === 'BUSY' ? '现场服务中' : '休息中')}}</view>
       </view>
       <view class="staff-stats-grid">
         <view class="staff-stat-item">

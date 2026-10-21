@@ -60,17 +60,17 @@
 .staff-stats-title { font-size: var(--font-body); font-weight: 600; color: var(--text-main); }
 .staff-status-pill {
   font-size: var(--font-caption);
-  height: 52rpx;
-  min-height: 52rpx;
-  padding: 0 20rpx;
+  height: 50rpx;
+  line-height: 48rpx;
+  padding: 0 18rpx;
   border-radius: var(--radius-sm, 12rpx);
   font-weight: 500;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  line-height: 50rpx;
   text-align: center;
   box-sizing: border-box;
+  white-space: nowrap;
 }
 .staff-status-available { background: #edf7f1; color: #1b7a54; border: 1rpx solid #cbe9d6; }
 .staff-status-resting { background: #f1f4f2; color: #55655e; border: 1rpx solid #d8e0db; }
