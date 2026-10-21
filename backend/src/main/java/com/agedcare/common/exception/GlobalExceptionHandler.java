@@ -30,7 +30,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public Result<Void> handleValidException(MethodArgumentNotValidException e) {
         String msg = e.getBindingResult().getFieldErrors().stream()
-                .map(FieldError::getDefaultMessage)
+                .map(GlobalExceptionHandler::friendlyMessage)
+                .distinct()
                 .collect(Collectors.joining("; "));
         log.warn("参数校验异常: {}", msg);
         return Result.error(ResultCode.BAD_REQUEST.getCode(), msg);
@@ -39,7 +40,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BindException.class)
     public Result<Void> handleBindException(BindException e) {
         String msg = e.getBindingResult().getFieldErrors().stream()
-                .map(FieldError::getDefaultMessage)
+                .map(GlobalExceptionHandler::friendlyMessage)
+                .distinct()
                 .collect(Collectors.joining("; "));
         log.warn("数据绑定异常: {}", msg);
         return Result.error(ResultCode.BAD_REQUEST.getCode(), msg);
@@ -65,5 +67,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
     public Result<Void> handleNotFound(org.springframework.web.servlet.resource.NoResourceFoundException e) {
         return Result.error(404,"请求的资源不存在");
+    }
+
+    /** 注解未写中文提示时（如 @Size(max=255)），回退为带字段名的中文提示，避免返回英文默认文案。 */
+    static String friendlyMessage(FieldError error) {
+        String message = error.getDefaultMessage();
+        if (message != null && message.codePoints().anyMatch(c -> Character.UnicodeScript.of(c) == Character.UnicodeScript.HAN)) {
+            return message;
+        }
+        return "参数“" + error.getField() + "”填写不正确，请检查后重试";
     }
 }
