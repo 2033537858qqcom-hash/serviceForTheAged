@@ -2,7 +2,7 @@
   <!-- 顶部品牌与适老切换 -->
   <view class="home-header">
     <view class="home-brand">
-      <view class="home-brand-icon"><image src="/assets/icons/home.png" /></view>
+      <image class="home-brand-icon" src="/assets/brand/yilin-icon.png" mode="aspectFit" />
       <view class="home-brand-copy">
         <view class="brand-name">颐邻<text>.</text></view>
         <view class="brand-community">阳光花园社区</view>

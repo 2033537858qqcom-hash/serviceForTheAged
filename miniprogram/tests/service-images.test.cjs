@@ -67,3 +67,14 @@ test('service photo containers do not restrict images to tiny icon dimensions in
   assert.equal(indexWxss.includes('.service-list-icon image'), true);
   assert.equal(detailWxss.includes('.detail-cover image'), true);
 });
+
+test('home brand icon matches login brand icon path', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const indexWxml = fs.readFileSync(path.join(__dirname, '../pages/index/index.wxml'), 'utf8');
+  const loginWxml = fs.readFileSync(path.join(__dirname, '../pages/auth/login.wxml'), 'utf8');
+
+  assert.equal(indexWxml.includes('/assets/brand/yilin-icon.png'), true);
+  assert.equal(loginWxml.includes('/assets/brand/yilin-icon.png'), true);
+  assert.equal(indexWxml.includes('/assets/icons/home.png'), false);
+});
