@@ -11,7 +11,8 @@
     "pages/staff/workbench",
     "pages/user/profile",
     "pages/user/family",
-    "pages/user/elder-form"
+    "pages/user/elder-form",
+    "pages/user/elder-list"
   ],
   "window": {
     "backgroundTextStyle": "light",

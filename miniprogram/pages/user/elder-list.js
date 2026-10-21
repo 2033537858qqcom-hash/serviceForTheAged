@@ -1,0 +1,76 @@
+const navigation = require('../../utils/navigation.js');
+const request = require('../../utils/request.js');
+const { lightTap } = require('../../utils/feedback.js');
+const { sessionKey } = require('../../utils/list-state.js');
+
+function getAppSafe() {
+  try {
+    return getApp() || { globalData: {} };
+  } catch (_) {
+    return { globalData: {} };
+  }
+}
+
+const careLevelMap = {
+  NORMAL: '自理长辈',
+  LIGHT: '轻度失能',
+  MODERATE: '中度失能',
+  SEVERE: '重度失能'
+};
+
+Page({
+  data: {
+    elders: [],
+    loading: true,
+    loadError: false,
+    isElderMode: false,
+    careLevelMap
+  },
+
+  onShow() {
+    const app = getAppSafe();
+    const isElder = Boolean(app.globalData?.isElderMode);
+    if (this.data.isElderMode !== isElder) this.setData({ isElderMode: isElder });
+    if (!navigation.requireLogin('/pages/user/elder-list')) return;
+    this.loadElders();
+  },
+
+  onUnload() {
+    this._disposed = true;
+  },
+
+  onPullDownRefresh() {
+    this.loadElders().finally(() => {
+      wx.stopPullDownRefresh();
+    });
+  },
+
+  loadElders() {
+    this.setData({ loading: true, loadError: false });
+    const context = sessionKey(getAppSafe());
+    return request.get('/elders/my-list').then(data => {
+      if (this._disposed || sessionKey(getAppSafe()) !== context) return;
+      this.setData({
+        elders: data || [],
+        loading: false,
+        loadError: false
+      });
+    }).catch(() => {
+      if (!this._disposed) {
+        this.setData({ loading: false, loadError: true });
+      }
+    });
+  },
+
+  goToCreate() {
+    lightTap();
+    navigation.navigateTo({ url: '/pages/user/elder-form' });
+  },
+
+  goToEdit(e) {
+    const id = e.currentTarget?.dataset?.id;
+    if (!id) return;
+    lightTap();
+    navigation.navigateTo({ url: `/pages/user/elder-form?id=${id}` });
+  }
+});

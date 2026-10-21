@@ -27,6 +27,26 @@ const app = new Proxy({}, {
   }
 });
 
+function formatFriendlyDate(dateStr) {
+  if (!dateStr) return '';
+  const now = new Date();
+  const pad = n => (n < 10 ? '0' + n : n);
+  const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  const tomorrow = new Date(now.getTime() + 86400000);
+  const tomorrowStr = `${tomorrow.getFullYear()}-${pad(tomorrow.getMonth() + 1)}-${pad(tomorrow.getDate())}`;
+  const parts = dateStr.split('-');
+  if (parts.length < 3) return dateStr;
+  const month = parseInt(parts[1], 10);
+  const day = parseInt(parts[2], 10);
+  if (dateStr === todayStr) {
+    return `今天 ${month}月${day}日`;
+  }
+  if (dateStr === tomorrowStr) {
+    return `明天 ${month}月${day}日`;
+  }
+  return `${month}月${day}日`;
+}
+
 Page({
   data: {
     serviceId: null,
@@ -38,6 +58,7 @@ Page({
     startDate: '',
     endDate: '',
     selectedDate: '',
+    friendlyDateText: '',
     selectedTime: '09:00',
     address: '',
     latitude: null,
@@ -48,7 +69,14 @@ Page({
     submitting: false,
     submitPhase: '',
     idempotencyKey: '',
-    isElderMode: false
+    isElderMode: false,
+    formErrors: {
+      elder: '',
+      time: '',
+      address: '',
+      contactName: '',
+      contactPhone: ''
+    }
   },
 
   onLoad(options) {
@@ -85,10 +113,13 @@ Page({
       firstSlot.setDate(firstSlot.getDate() + 1);
       firstSlot.setHours(8, 0, 0, 0);
     } else if (firstSlot.getHours() < 8) firstSlot.setHours(8, 0, 0, 0);
+
+    const selectedDate = `${firstSlot.getFullYear()}-${pad(firstSlot.getMonth() + 1)}-${pad(firstSlot.getDate())}`;
     this.setData({
       startDate: todayStr,
       endDate: maxStr,
-      selectedDate: `${firstSlot.getFullYear()}-${pad(firstSlot.getMonth() + 1)}-${pad(firstSlot.getDate())}`,
+      selectedDate,
+      friendlyDateText: formatFriendlyDate(selectedDate),
       selectedTime: `${pad(firstSlot.getHours())}:${pad(firstSlot.getMinutes())}`
     });
   },
@@ -136,6 +167,7 @@ Page({
   onElderChange(e) {
     const index = parseInt(e.detail.value, 10);
     this.selectElder(index);
+    this.setData({ 'formErrors.elder': '' });
   },
 
   selectElder(index) {
@@ -148,7 +180,11 @@ Page({
         latitude: elder.latitude ?? null,
         longitude: elder.longitude ?? null,
         contactName: elder.emergencyContact || elder.name || '',
-        contactPhone: String(elder.emergencyPhone || elder.phone || '')
+        contactPhone: String(elder.emergencyPhone || elder.phone || ''),
+        'formErrors.elder': '',
+        'formErrors.address': '',
+        'formErrors.contactName': '',
+        'formErrors.contactPhone': ''
       });
     }
   },
@@ -162,7 +198,8 @@ Page({
         this.setData({
           address: fullAddress || this.data.address,
           latitude: res.latitude,
-          longitude: res.longitude
+          longitude: res.longitude,
+          'formErrors.address': ''
         });
       },
       fail: (err) => {
@@ -174,16 +211,44 @@ Page({
   },
 
   onDateChange(e) {
-    this.setData({ selectedDate: e.detail.value });
+    const selectedDate = e.detail.value;
+    this.setData({
+      selectedDate,
+      friendlyDateText: formatFriendlyDate(selectedDate),
+      'formErrors.time': ''
+    });
   },
 
   onTimeChange(e) {
-    this.setData({ selectedTime: e.detail.value });
+    this.setData({
+      selectedTime: e.detail.value,
+      'formErrors.time': ''
+    });
   },
 
-  onInputAddress(e) { this.setData({ address: e.detail.value, latitude: null, longitude: null }); },
-  onInputContactName(e) { this.setData({ contactName: e.detail.value }); },
-  onInputContactPhone(e) { this.setData({ contactPhone: e.detail.value }); },
+  onInputAddress(e) {
+    this.setData({
+      address: e.detail.value,
+      latitude: null,
+      longitude: null,
+      'formErrors.address': ''
+    });
+  },
+
+  onInputContactName(e) {
+    this.setData({
+      contactName: e.detail.value,
+      'formErrors.contactName': ''
+    });
+  },
+
+  onInputContactPhone(e) {
+    this.setData({
+      contactPhone: e.detail.value,
+      'formErrors.contactPhone': ''
+    });
+  },
+
   onInputRemark(e) { this.setData({ remark: e.detail.value }); },
 
   goToAddElder() {
@@ -217,25 +282,40 @@ Page({
       return;
     }
 
+    const formErrors = { elder: '', time: '', address: '', contactName: '', contactPhone: '' };
+    let hasError = false;
+
     if (!selectedElder) {
-      wx.showToast({ title: '请选择服务对象老人', icon: 'none' });
-      return;
+      formErrors.elder = '请选择接受服务的老人';
+      hasError = true;
     }
     if (!selectedDate || !selectedTime) {
-      wx.showToast({ title: '请选择预约上门时间', icon: 'none' });
-      return;
+      formErrors.time = '请选择预约上门时间';
+      hasError = true;
+    } else {
+      const start = new Date(`${selectedDate.replace(/-/g, '/')} ${selectedTime}:00`);
+      if (!Number.isFinite(start.getTime()) || start.getTime() < Date.now() + 30 * 60000) {
+        formErrors.time = '预约时间需至少提前30分钟';
+        hasError = true;
+      }
     }
-    const start = new Date(`${selectedDate.replace(/-/g, '/')} ${selectedTime}:00`);
-    if (!Number.isFinite(start.getTime()) || start.getTime() < Date.now() + 30 * 60000) {
-      wx.showToast({ title: '请至少提前30分钟预约', icon: 'none' });
-      return;
+    if (!address || !address.trim()) {
+      formErrors.address = '请填写详细上门服务地址';
+      hasError = true;
     }
-    if (!address.trim()) {
-      wx.showToast({ title: '请填写详细服务地址', icon: 'none' });
-      return;
+    if (!contactName || !contactName.trim()) {
+      formErrors.contactName = '请填写联系人姓名';
+      hasError = true;
     }
-    if (!contactName.trim() || !contactPhone.trim()) {
-      wx.showToast({ title: '请填写联系人和联系电话', icon: 'none' });
+    if (!contactPhone || !contactPhone.trim()) {
+      formErrors.contactPhone = '请填写联系电话';
+      hasError = true;
+    }
+
+    if (hasError) {
+      this.setData({ formErrors });
+      const firstError = formErrors.elder || formErrors.time || formErrors.address || formErrors.contactName || formErrors.contactPhone;
+      wx.showToast({ title: firstError, icon: 'none' });
       return;
     }
 

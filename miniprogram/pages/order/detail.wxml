@@ -12,12 +12,46 @@
   </view>
   <view class="card empty-tip" wx:elif="{{loadError}}">订单信息暂时未能加载<button class="retry-button" bindtap="retryDetail">重新加载</button></view>
 </view>
-<view class="container {{isElderMode ? 'elder-mode' : ''}}" wx:if="{{orderVO}}">
+<view class="container scroll-content-with-bottom {{isElderMode ? 'elder-mode' : ''}}" wx:if="{{orderVO}}">
   <view class="detail-refresh-tip" wx:if="{{loadError}}">订单更新失败<button class="retry-button" bindtap="retryDetail">重新加载</button></view>
   <!-- 状态条幅 -->
   <view class="status-banner bg-{{orderVO.order.status}}">
     <view class="status-title">{{statusTextMap[orderVO.order.status] || orderVO.order.status}}</view>
     <view class="status-sub">{{statusSubMap[orderVO.order.status] || ''}}</view>
+  </view>
+
+  <!-- 接下来怎么办？指引卡片 -->
+  <view class="card next-step-card">
+    <view class="next-step-header flex-row">
+      <image class="next-step-icon" src="/assets/icons/care.png" />
+      <text class="next-step-heading">接下来怎么办？</text>
+    </view>
+    <view class="next-step-body">
+      <view class="next-step-text" wx:if="{{orderVO.order.status === 'WAIT_DISPATCH' || orderVO.order.status === 'WAIT_MANUAL'}}">
+        正在安排具备专业资质的社区服务人员。系统根据资质、评分和距离就近智能调度，稍候将为您派发，请保持手机畅通。
+      </view>
+      <view class="next-step-text" wx:elif="{{orderVO.order.status === 'WAIT_ACCEPT'}}">
+        系统已向合适的服务人员派发任务，人员正在确认接单，请耐心等候。
+      </view>
+      <view class="next-step-text" wx:elif="{{orderVO.order.status === 'WAIT_VISIT'}}">
+        服务人员已接单，预计上门时间：{{orderVO.order.plannedStartAt}}。请于预约时间在家等候，如有疑问可点击下方“拨打电话”联系。
+      </view>
+      <view class="next-step-text" wx:elif="{{orderVO.order.status === 'IN_SERVICE'}}">
+        服务人员已到达服务现场，正在提供居家照护服务。服务结束后将录入工作总结，随后请您核对确认。
+      </view>
+      <view class="next-step-text" wx:elif="{{orderVO.order.status === 'WAIT_CONFIRM'}}">
+        现场服务已完成！请查看下方“现场服务履约记录”，核对服务时间与总结无误后，点击底部“确认完成”。
+      </view>
+      <view class="next-step-text" wx:elif="{{orderVO.order.status === 'COMPLETED' && !orderVO.serviceReview}}">
+        本次居家照护已圆满完成！欢迎点击底部“评价服务”，为服务人员的专业态度与质量打分。
+      </view>
+      <view class="next-step-text" wx:elif="{{orderVO.order.status === 'COMPLETED' && orderVO.serviceReview}}">
+        感谢您的反馈！评价已记录，颐邻社区将持续优化居家养老服务质量。
+      </view>
+      <view class="next-step-text" wx:elif="{{orderVO.order.status === 'CANCELLED'}}">
+        该预约订单已取消。若您仍有助老需要，随时可在首页或服务列表重新发起预约。
+      </view>
+    </view>
   </view>
 
   <!-- 派单师傅信息卡片 (已接单后展示) -->
@@ -45,7 +79,7 @@
       </view>
     </view>
     <view class="stale-tip-bar flex-row" wx:if="{{tracking.isStale && orderVO.order.status === 'WAIT_VISIT'}}">
-      <text class="stale-tip-icon">ℹ️</text>
+      <image class="stale-tip-img ui-icon-small" src="/assets/icons/time.png" />
       <text class="stale-tip-text">{{tracking.locationStatusText}}，预估到达时间基于历史位置测算</text>
     </view>
 
@@ -62,7 +96,7 @@
 
     <view class="map-actions-bar flex-between">
       <view class="map-address-info flex-row" bindtap="openNavigation">
-        <text class="loc-pin">📍</text>
+        <image class="loc-pin-icon ui-icon-small" src="/assets/icons/location.png" />
         <text class="address-text">{{tracking.destAddress || orderVO.order.addressSnapshot}}</text>
       </view>
       <view class="map-btns flex-row">
@@ -124,7 +158,7 @@
   <view class="card review-card" wx:if="{{orderVO.serviceReview}}">
     <view class="card-title flex-between">
       <text>服务评价反馈</text>
-      <text class="rating-stars">{{orderVO.serviceReview.rating}}  / 5 分</text>
+      <text class="rating-stars">{{orderVO.serviceReview.rating}} / 5 分</text>
     </view>
     <view class="review-content">{{orderVO.serviceReview.content || '客户未填写文字评价'}}</view>
   </view>

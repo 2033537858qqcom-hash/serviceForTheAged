@@ -74,12 +74,12 @@
       <!-- 配送与导航动作条 (待上门状态下展示) -->
       <view class="task-lbs-bar flex-between" wx:if="{{item.order.status === 'WAIT_VISIT'}}">
         <view class="lbs-hint flex-row">
-          <text class="lbs-icon">📍</text>
+          <image class="ui-icon-small" src="/assets/icons/location.png" />
           <text class="lbs-text">地址导航与轨迹</text>
         </view>
         <view class="lbs-actions flex-row">
-          <button class="btn-nav" size="mini" bindtap="openNavigation" data-id="{{item.order.id}}">🧭 导航</button>
-          <button class="btn-mock" size="mini" bindtap="mockMoveStep" data-id="{{item.order.id}}">🏃 模拟移动</button>
+          <button class="btn-nav" size="mini" bindtap="openNavigation" data-id="{{item.order.id}}">路线导航</button>
+          <button class="btn-mock" size="mini" bindtap="mockMoveStep" data-id="{{item.order.id}}">模拟移动</button>
         </view>
       </view>
 

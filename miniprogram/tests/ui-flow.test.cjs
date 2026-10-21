@@ -6,7 +6,7 @@ function loadPage(name, app, wx = {}, request) { return createRuntime(app, wx, r
 test('a home service shortcut uses switchTab and consumes its category once', () => {
   const app = { globalData: { isElderMode: false } };
   let target;
-  const home = loadPage('index/index', app, { switchTab: value => { target = value.url; } });
+  const home = loadPage('index/index', app, { switchTab: value => { target = value.url; value.complete?.(); } });
   home.goToService({ currentTarget: { dataset: { category: 'MEAL' } } });
   assert.equal(target, '/pages/service/list');
   const list = loadPage('service/list', app);
@@ -87,4 +87,47 @@ test('the service preview leaves loading state on request failure', async () => 
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(home.data.serviceError, true);
   assert.equal(home.data.servicesLoading, false);
+});
+
+test('booking form surfaces in-place field validation errors and clears them on input', () => {
+  const page = loadPage('order/create', { globalData: { token: 't' } }, { showToast() {} });
+  page.setData({ service: { id: 1, name: '助餐', price: 20 } });
+  page.submitOrder();
+  assert.equal(page.data.formErrors.elder, '请选择接受服务的老人');
+  assert.equal(page.data.formErrors.address, '请填写详细上门服务地址');
+  assert.equal(page.data.formErrors.contactName, '请填写联系人姓名');
+  assert.equal(page.data.formErrors.contactPhone, '请填写联系电话');
+
+  page.onInputAddress({ detail: { value: '阳光花园1号楼' } });
+  assert.equal(page.data.formErrors.address, '');
+  page.onInputContactName({ detail: { value: '张三' } });
+  assert.equal(page.data.formErrors.contactName, '');
+  page.onInputContactPhone({ detail: { value: '13800000000' } });
+  assert.equal(page.data.formErrors.contactPhone, '');
+});
+
+test('profile opens elder list and elder list navigates to create or edit', async () => {
+  const navigated = [];
+  const wx = {
+    navigateTo(o) { navigated.push(o.url); o.complete?.(); },
+    showToast() {},
+    vibrateShort() {}
+  };
+  const profile = loadPage('user/profile', { globalData: { token: 't' } }, wx);
+  profile.goToElderList();
+  assert.equal(navigated[0], '/pages/user/elder-list');
+
+  const eldersList = [{ id: 101, name: '李大爷', age: 80, community: '阳光花园' }];
+  const elderPage = loadPage('user/elder-list', { globalData: { token: 't' } }, wx, {
+    get: async () => eldersList
+  });
+  await elderPage.loadElders();
+  assert.equal(elderPage.data.elders.length, 1);
+  assert.equal(elderPage.data.elders[0].name, '李大爷');
+
+  elderPage.goToCreate();
+  assert.equal(navigated[1], '/pages/user/elder-form');
+
+  elderPage.goToEdit({ currentTarget: { dataset: { id: 101 } } });
+  assert.equal(navigated[2], '/pages/user/elder-form?id=101');
 });

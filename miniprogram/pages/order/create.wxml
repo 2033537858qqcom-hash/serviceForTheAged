@@ -1,4 +1,4 @@
-<view class="container {{isElderMode ? 'elder-mode' : ''}}">
+<view class="container scroll-content-with-bottom {{isElderMode ? 'elder-mode' : ''}}">
   <view wx:if="{{eldersLoadError}}" class="empty-tip" bindtap="loadElders">老人档案加载失败，点击重试</view>
   <!-- 服务项目概要 -->
   <view class="card item-summary flex-between" wx:if="{{service}}">
@@ -16,9 +16,13 @@
       <view class="picker-box flex-between">
         <text wx:if="{{selectedElder}}">{{selectedElder.name}} ({{selectedElder.age}}岁 - {{selectedElder.community}})</text>
         <text wx:else class="placeholder">请选择接受服务的老人 ›</text>
-        <text class="arrow">▼</text>
+        <image class="picker-arrow-icon" src="/assets/icons/arrow.png" />
       </view>
     </picker>
+    <view class="field-error" wx:if="{{formErrors.elder}}">
+      <image class="field-error-icon" src="/assets/icons/care.png" />
+      <text>{{formErrors.elder}}</text>
+    </view>
     <view class="add-elder-link" bindtap="goToAddElder">+ 新增老人档案</view>
   </view>
 
@@ -28,7 +32,7 @@
     <view class="flex-between time-pickers">
       <picker mode="date" value="{{selectedDate}}" start="{{startDate}}" end="{{endDate}}" bindchange="onDateChange">
         <view class="picker-item flex-between">
-          <text>{{selectedDate || '选择服务日期'}}</text>
+          <text>{{friendlyDateText || selectedDate || '选择服务日期'}}</text>
           <image class="picker-icon" src="/assets/icons/calendar.png" />
         </view>
       </picker>
@@ -39,6 +43,10 @@
         </view>
       </picker>
     </view>
+    <view class="field-error" wx:if="{{formErrors.time}}">
+      <image class="field-error-icon" src="/assets/icons/time.png" />
+      <text>{{formErrors.time}}</text>
+    </view>
     <view class="time-tip">请至少提前30分钟预约，服务时间以人员安排为准。</view>
   </view>
 
@@ -47,27 +55,37 @@
     <view class="form-title flex-between">
       <view><text class="section-number">03</text>上门地址与联系信息</view>
       <view class="map-picker-btn" bindtap="onChooseLocation" hover-class="spring-in">
-        <text class="map-icon">📍</text>
+        <image class="map-picker-icon" src="/assets/icons/location.png" />
         <text class="map-text">地图选址</text>
       </view>
     </view>
-    <view class="form-item flex-row">
-      <text class="form-label">服务地址</text>
-      <input class="form-input" placeholder="详细居住地址" value="{{address}}" bindinput="onInputAddress" />
+    <view class="form-item">
+      <text class="form-label">服务详细地址</text>
+      <textarea class="form-textarea" auto-height placeholder="详细居住地址（如楼幢、单元、门牌号）" value="{{address}}" bindinput="onInputAddress" />
+      <view class="coord-badge flex-row" wx:if="{{latitude != null && longitude != null}}">
+        <image class="coord-check-icon" src="/assets/icons/check.png" />
+        <text class="badge-text">已标记上门精准位置</text>
+      </view>
+      <view class="field-error" wx:if="{{formErrors.address}}">
+        <image class="field-error-icon" src="/assets/icons/location.png" />
+        <text>{{formErrors.address}}</text>
+      </view>
     </view>
-    <view class="coord-badge flex-row" wx:if="{{latitude != null && longitude != null}}">
-      <text class="badge-icon">✓</text>
-      <text class="badge-text">已设定精准坐标: ({{longitude}}, {{latitude}})</text>
+    <view class="form-item">
+      <text class="form-label">联系人姓名</text>
+      <input class="form-input" placeholder="请输入联系人姓名" value="{{contactName}}" bindinput="onInputContactName" />
+      <view class="field-error" wx:if="{{formErrors.contactName}}">
+        <text>{{formErrors.contactName}}</text>
+      </view>
     </view>
-    <view class="form-item flex-row">
-      <text class="form-label">联系人</text>
-      <input class="form-input" placeholder="姓名" value="{{contactName}}" bindinput="onInputContactName" />
-    </view>
-    <view class="form-item flex-row">
+    <view class="form-item">
       <text class="form-label">联系电话</text>
-      <input class="form-input" type="number" placeholder="手机号" value="{{contactPhone}}" bindinput="onInputContactPhone" />
+      <input class="form-input" type="number" placeholder="请输入手机号码" value="{{contactPhone}}" bindinput="onInputContactPhone" />
+      <view class="field-error" wx:if="{{formErrors.contactPhone}}">
+        <text>{{formErrors.contactPhone}}</text>
+      </view>
     </view>
-    <view class="form-item flex-row">
+    <view class="form-item">
       <text class="form-label">特殊备注</text>
       <input class="form-input" placeholder="上门联系方法、需要留意的事项（选填）" value="{{remark}}" bindinput="onInputRemark" />
     </view>
@@ -80,8 +98,10 @@
       <view>¥{{service.price}}<text> / 次</text></view>
     </view>
     <button class="btn-primary btn-submit-order {{submitPhase === 'done' ? 'is-done' : ''}} {{isElderMode ? 'btn-large' : ''}}" hover-class="spring-in" loading="{{submitting && submitPhase !== 'done'}}" disabled="{{submitting}}" bindtap="submitOrder">
-      <text wx:if="{{submitPhase !== 'done'}}">确认提交预约</text>
-      <view wx:else class="done-check"></view>
+      <text wx:if="{{submitPhase === 'done'}}"></text>
+      <text wx:elif="{{submitting}}">正在提交…</text>
+      <text wx:else>确认提交预约</text>
+      <view wx:if="{{submitPhase === 'done'}}" class="done-check"></view>
     </button>
   </view>
 </view>

@@ -10,7 +10,7 @@
         <view class="picker-box flex-between">
           <text wx:if="{{targetElder && selectedElderIndex >= 0}}">{{targetElder.name}} ({{targetElder.address}})</text>
           <text wx:else class="placeholder">从我的档案中选择 ›</text>
-          <text class="arrow">▼</text>
+          <image class="ui-icon-small" src="/assets/icons/arrow.png" />
         </view>
       </picker>
     </view>
@@ -21,8 +21,9 @@
         <input class="input-box" type="number" placeholder="输入老人预留手机号" value="{{searchPhone}}" bindinput="onInputSearchPhone" />
         <button class="search-button" bindtap="searchElder" loading="{{searching}}" disabled="{{searching}}">查找</button>
       </view>
-      <view wx:if="{{targetElder}}" class="search-result">
-        ✓ 已定位老人：{{targetElder.name}} ({{targetElder.community || targetElder.address}})
+      <view wx:if="{{targetElder}}" class="search-result flex-row">
+        <image class="ui-icon-small" src="/assets/icons/check.png" />
+        <text>已定位老人：{{targetElder.name}} ({{targetElder.community || targetElder.address}})</text>
       </view>
     </view>
 
@@ -36,7 +37,10 @@
       <input class="input-box" placeholder="简述亲属证明或户籍关系" value="{{proofMaterials}}" bindinput="onInputProof" />
     </view>
 
-    <button class="btn-primary btn-apply {{isElderMode ? 'btn-large' : ''}}" bindtap="submitApply" loading="{{applying}}" disabled="{{applying || searching}}">提交绑定申请</button>
+    <button class="btn-primary btn-apply {{isElderMode ? 'btn-large' : ''}}" bindtap="submitApply" loading="{{applying}}" disabled="{{applying || searching}}">
+      <text wx:if="{{applying}}">正在提交申请…</text>
+      <text wx:else>提交绑定申请</text>
+    </button>
   </view>
 
   <view class="section-title">我的家属绑定记录</view>

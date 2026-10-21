@@ -225,7 +225,7 @@ Page({
   },
 
   goToElderList() {
-    navigation.navigateTo({ url: '/pages/user/elder-form' });
+    navigation.navigateTo({ url: '/pages/user/elder-list' });
   },
 
   goToFamily() {

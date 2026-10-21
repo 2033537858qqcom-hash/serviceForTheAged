@@ -25,6 +25,7 @@ const app = new Proxy({}, {
 
 Page({
   data: {
+    id: null,
     name: '',
     gender: 'MALE',
     age: '',
@@ -34,8 +35,33 @@ Page({
     emergencyContact: '',
     emergencyPhone: '',
     healthNote: '',
+    careLevel: 'NORMAL',
     submitting: false,
     isElderMode: false
+  },
+
+  onLoad(options) {
+    if (options && options.id) {
+      this.setData({ id: options.id });
+      if (typeof wx !== 'undefined' && wx.setNavigationBarTitle) {
+        wx.setNavigationBarTitle({ title: '编辑老人档案' });
+      }
+      request.get(`/elders/${options.id}`).then(data => {
+        if (this._disposed || !data) return;
+        this.setData({
+          name: data.name || '',
+          gender: data.gender || 'MALE',
+          age: data.age != null ? String(data.age) : '',
+          address: data.address || '',
+          latitude: data.latitude ?? null,
+          longitude: data.longitude ?? null,
+          emergencyContact: data.emergencyContact || '',
+          emergencyPhone: data.emergencyPhone || '',
+          healthNote: data.healthNote || '',
+          careLevel: data.careLevel || 'NORMAL'
+        });
+      }).catch(() => {});
+    }
   },
 
   onShow() {
@@ -77,7 +103,7 @@ Page({
   saveElder() {
     if (this.data.submitting) return;
     if (this._saved) { this.returnToPrevious(); return; }
-    const { name, gender, age, address, latitude, longitude, emergencyContact, emergencyPhone, healthNote } = this.data;
+    const { id, name, gender, age, address, latitude, longitude, emergencyContact, emergencyPhone, healthNote, careLevel } = this.data;
     if (!name.trim()) {
       wx.showToast({ title: '请填写老人姓名', icon: 'none' });
       return;
@@ -89,6 +115,7 @@ Page({
 
     this.setData({ submitting: true });
     return request.post('/elders/save', {
+      id: id || undefined,
       name,
       gender,
       age: age ? parseInt(age, 10) : null,
@@ -99,7 +126,7 @@ Page({
       emergencyContact,
       emergencyPhone,
       healthNote,
-      careLevel: 'NORMAL'
+      careLevel: careLevel || 'NORMAL'
     }).then(() => {
       this._saved = true;
       if (this._disposed) return;

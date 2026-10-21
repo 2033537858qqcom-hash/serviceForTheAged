@@ -10,7 +10,18 @@
 .care-mode-control { display: flex; flex: 0 0 188rpx; width: 188rpx; align-items: center; justify-content: center; gap: 9rpx; margin: 0; padding: 12rpx 24rpx; min-height: 88rpx; line-height: 1.3; border-radius: 44rpx; background: #fff; border: 1rpx solid #e0e7da; color: var(--primary-color); font-size: var(--font-caption); white-space: nowrap; transition: transform 200ms var(--motion-ease), background-color 120ms ease; }
 .care-mode-control image { flex-shrink: 0; width: 30rpx; height: 30rpx; }
 .care-mode-control.care-mode-pressed { transform: scale(.96); background: var(--primary-soft); }
-.welcome-panel { position: relative; padding: 34rpx 34rpx 0; background: #e9efdf; border: 1rpx solid #dce5d3; border-radius: 28rpx; overflow: hidden; }
+
+/* 进行中的服务（置顶卡片） */
+.active-order-card { position: relative; margin-top: 8rpx; margin-bottom: 30rpx; border: 2rpx solid #b8ded0; box-shadow: 0 6rpx 18rpx rgba(23,107,93,.06); }
+.service-name { font-size: var(--font-section); font-weight: 600; color: var(--text-main); }
+.active-order-badge { font-size: var(--font-meta); color: var(--primary-color); background: var(--primary-soft); padding: 6rpx 16rpx; border-radius: 10rpx; font-weight: 600; }
+.active-order-meta { display: flex; align-items: flex-start; gap: 14rpx; font-size: var(--font-caption); color: var(--text-secondary); margin-top: 18rpx; }
+.active-order-meta > image { width: 32rpx; height: 32rpx; flex-shrink: 0; margin-top: 4rpx; }
+.order-footer { padding-top: 22rpx; margin-top: 24rpx; border-top: 1rpx solid var(--border-color); color: var(--primary-color); font-size: var(--font-caption); }
+.order-footer-text { font-weight: 550; }
+
+/* 欢迎面板 */
+.welcome-panel { position: relative; padding: 34rpx 34rpx 0; background: #e9efdf; border: 1rpx solid #dce5d3; border-radius: 28rpx; overflow: hidden; margin-bottom: 24rpx; }
 .welcome-panel::after { content: ''; width: 320rpx; height: 320rpx; border: 1rpx solid #cedbc0; border-radius: 50%; position: absolute; top: -160rpx; right: -170rpx; pointer-events: none; }
 .welcome-kicker { color: #5f7351; font-size: var(--font-meta); letter-spacing: 2rpx; }
 .welcome-title { font-size: 50rpx; font-weight: 600; line-height: 1.65; letter-spacing: 1rpx; color: #2e4c35; margin: 18rpx 0; }
@@ -19,31 +30,27 @@
 .welcome-contact image { width: 32rpx; height: 32rpx; }
 .contact-hours { margin-left: auto; color: #617458; font-size: var(--font-meta); }
 .welcome-contact .contact-arrow { width: 23rpx; height: 23rpx; }
-.home-section-heading { display: flex; justify-content: space-between; align-items: center; gap: 15rpx; margin-top: 40rpx; }
+
+.home-section-heading { display: flex; justify-content: space-between; align-items: center; gap: 15rpx; margin-top: 36rpx; }
 .section-note { font-size: var(--font-meta); font-weight: 400; color: var(--text-secondary); white-space: nowrap; }
-.service-stage { display: flex; align-items: stretch; gap: 16rpx; }
-.service-entry-main { flex: 7; min-height: 360rpx; }
-.service-stack { flex: 3; display: flex; flex-direction: column; gap: 12rpx; min-width: 0; }
-.service-stack .service-entry { flex: 1; min-height: 0; padding: 16rpx; }
-.service-stack .service-entry-icon { width: 52rpx; height: 52rpx; margin-bottom: 8rpx; border-radius: 14rpx; }
-.service-stack .grid-name { font-size: var(--font-caption); }
-.service-entry { position: relative; padding: 28rpx; border: 1rpx solid var(--border-color); border-radius: 22rpx; background: #fff; min-height: 236rpx; }
-.service-entry-icon { display: flex; align-items: center; justify-content: center; width: 72rpx; height: 72rpx; background: #eef3e8; border-radius: 20rpx; margin-bottom: 20rpx; }
-.service-entry-icon image { height: 40rpx; width: 40rpx; }
-.meal-icon { background: #f7efdf; }
-.grid-name { color: var(--text-main); font-size: var(--font-section); font-weight: 600; }
-.grid-desc { font-size: var(--font-caption); color: var(--text-secondary); margin-top: 5rpx; }
+
+/* 2x2 平衡四宫格服务入口 */
+.service-grid-2x2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18rpx; margin-top: 10rpx; }
+.service-entry-card { display: flex; flex-direction: column; justify-content: space-between; padding: 26rpx; background: #fff; border: 1rpx solid var(--border-color); border-radius: 22rpx; min-height: 200rpx; }
+.service-icon-box { width: 76rpx; height: 76rpx; border-radius: 20rpx; display: flex; align-items: center; justify-content: center; margin-bottom: 18rpx; }
+.service-icon-box image { width: 44rpx; height: 44rpx; }
+.meal-box { background: #fdf3e5; }
+.cleaning-box { background: #eaf3ee; }
+.errand-box { background: #eef1f8; }
+.escort-box { background: #f6ecf3; }
+.service-card-info .grid-name { font-size: var(--font-section); font-weight: 600; color: var(--text-main); line-height: 1.35; }
+.service-card-info .grid-desc { font-size: var(--font-caption); color: var(--text-secondary); margin-top: 6rpx; line-height: 1.3; }
+
 .staff-banner { margin-top: 28rpx; background: #eef4e9; }
 .staff-banner > .flex-row { gap: 18rpx; }
 .staff-title { font-size: var(--font-body); font-weight: 550; }
 .staff-sub { color: var(--text-secondary); font-size: var(--font-meta); margin-top: 5rpx; }
-.progress-overlap { position: relative; margin-bottom: 8rpx; }
-.order-status-tag { position: absolute; top: 18rpx; right: 12rpx; z-index: 0; }
-.active-order-card { position: relative; z-index: 1; margin-right: 36rpx; }
-.service-name { font-size: var(--font-section); font-weight: 550; }
-.active-order-meta { display: flex; align-items: flex-start; gap: 13rpx; font-size: var(--font-caption); color: var(--text-secondary); margin-top: 21rpx; }
-.active-order-meta > image { width: 31rpx; height: 31rpx; flex-shrink: 0; margin-top: 5rpx; }
-.order-footer { padding-top: 23rpx; margin-top: 25rpx; border-top: 1rpx solid var(--border-color); color: var(--primary-color); font-size: var(--font-caption); }
+
 .more-link { display: flex; align-items: center; min-height: 64rpx; gap: 8rpx; font-size: var(--font-meta); font-weight: 400; color: var(--text-secondary); }
 .more-link image { height: 23rpx; width: 23rpx; }
 .home-service-card { display: flex; gap: 21rpx; align-items: center; padding: 27rpx; }
@@ -55,11 +62,15 @@
 .item-meta { margin-top: 12rpx; line-height: 1.5; }
 .price { color: #ad652f; font-size: var(--font-section); font-weight: 600; }
 .duration { color: var(--text-secondary); font-size: var(--font-meta); }
-.home-footer { padding: 22rpx 0 10rpx; text-align: center; font-size: var(--font-meta); color: #6a7a63; letter-spacing: 2rpx; }
+.home-footer { padding: 26rpx 0 16rpx; text-align: center; font-size: var(--font-meta); color: #6a7a63; letter-spacing: 2rpx; }
 .service-empty { text-align: center; color: var(--text-secondary); font-size: var(--font-caption); padding: 45rpx 25rpx; }
 .retry-button { margin-top: 20rpx; background: var(--primary-soft); color: var(--primary-color); font-size: var(--font-caption); width: fit-content; padding: 12rpx 30rpx; }
-.elder-mode .service-stage, .elder-mode .service-stack { flex-direction: column; }
-.elder-mode .service-entry-main, .elder-mode .service-stack { flex: none; width: 100%; }
+
+/* 适老化大字模式样式覆盖 */
+.elder-mode .service-grid-2x2 { grid-template-columns: 1fr; gap: 18rpx; }
+.elder-mode .service-entry-card { flex-direction: row; align-items: center; justify-content: flex-start; gap: 24rpx; min-height: 140rpx; }
+.elder-mode .service-icon-box { margin-bottom: 0; width: 88rpx; height: 88rpx; flex-shrink: 0; }
+.elder-mode .service-icon-box image { width: 50rpx; height: 50rpx; }
 .elder-mode .welcome-title { font-size: 58rpx; }
 .elder-mode .home-section-heading { flex-wrap: wrap; }
 .elder-mode .care-mode-control { flex-basis: 210rpx; width: 210rpx; min-height: 96rpx; }
