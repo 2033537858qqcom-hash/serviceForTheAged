@@ -5,7 +5,6 @@ import com.agedcare.common.security.LoginUser;
 import com.agedcare.common.security.UserContext;
 import com.agedcare.modules.auth.dto.AuthResponse;
 import com.agedcare.modules.auth.dto.LoginRequest;
-import com.agedcare.modules.auth.dto.RegisterRequest;
 import com.agedcare.modules.auth.dto.WechatLoginRequest;
 import com.agedcare.modules.auth.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -26,12 +25,6 @@ public class AuthController {
     @PostMapping("/login")
     public Result<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         return Result.success(authService.login(request));
-    }
-
-    @Operation(summary = "居民快速注册")
-    @PostMapping("/register")
-    public Result<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
-        return Result.success(authService.register(request));
     }
 
     @Operation(summary = "微信小程序一键授权登录")
