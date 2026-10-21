@@ -13,6 +13,11 @@ public class OrderCreateDTO {
     @NotNull(message = "服务对象老人ID不能为空")
     private Long elderId;
 
+    /**
+     * 预约类型: SELF-老人本人自约, FAMILY-家属代约 (为空时后端自动推断)
+     */
+    private String requesterType;
+
     @NotNull(message = "服务项目ID不能为空")
     private Long serviceItemId;
 

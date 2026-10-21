@@ -34,6 +34,8 @@ import com.agedcare.modules.staff.dto.StaffDetailVO;
 import com.agedcare.modules.staff.entity.StaffProfile;
 import com.agedcare.modules.staff.mapper.StaffProfileMapper;
 import com.agedcare.modules.staff.service.StaffService;
+import com.agedcare.modules.user.entity.SysUser;
+import com.agedcare.modules.user.mapper.SysUserMapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
@@ -67,6 +69,7 @@ public class OrderService {
     private final ServiceRecordMapper serviceRecordMapper;
     private final ServiceReviewMapper serviceReviewMapper;
     private final DispatchService dispatchService;
+    private final SysUserMapper sysUserMapper;
 
     @Transactional(rollbackFor = Exception.class)
     public ServiceOrder createOrder(OrderCreateDTO dto) {
@@ -141,10 +144,19 @@ public class OrderService {
             longitude = elder.getLongitude();
         }
 
-        // 5. 保存快照并创建订单实体
+        // 5. 推断预约身份类型 (本人自约 / 家属代约)
+        String inferredType = "SELF";
+        if (StringUtils.hasText(dto.getRequesterType())) {
+            inferredType = dto.getRequesterType().trim().toUpperCase();
+        } else if (elder.getUserId() == null || !elder.getUserId().equals(currentUser.getId())) {
+            inferredType = "FAMILY";
+        }
+
+        // 保存快照并创建订单实体
         ServiceOrder order = ServiceOrder.builder()
                 .orderNo(OrderNoGenerator.generateOrderNo())
                 .requesterUserId(currentUser.getId())
+                .requesterType(inferredType)
                 .elderId(elder.getId())
                 .serviceItemId(item.getId())
                 .serviceNameSnapshot(item.getName())
@@ -172,13 +184,17 @@ public class OrderService {
         serviceOrderMapper.insert(order);
 
         // 记录状态初始日志
+        String createDesc = "SELF".equalsIgnoreCase(inferredType)
+                ? "老人本人提交居家照护预约"
+                : "家属代为提交照护预约(服务对象: " + elder.getName() + ")";
+
         OrderStatusLog logEntity = OrderStatusLog.builder()
                 .orderId(order.getId())
                 .fromStatus(null)
                 .toStatus(OrderStatus.WAIT_DISPATCH.getCode())
                 .operatorId(currentUser.getId())
                 .operatorRole(currentUser.getRole())
-                .reason("居民提交服务预约订单")
+                .reason(createDesc)
                 .createdAt(LocalDateTime.now())
                 .build();
         orderStatusLogMapper.insert(logEntity);
@@ -363,6 +379,16 @@ public class OrderService {
         OrderVO vo = new OrderVO();
         vo.setOrder(order);
         vo.setElder(elderProfileMapper.selectById(order.getElderId()));
+
+        String type = order.getRequesterType() != null ? order.getRequesterType() : "SELF";
+        vo.setRequesterType(type);
+        vo.setRequesterTypeDesc("FAMILY".equalsIgnoreCase(type) ? "家属代约" : "老人自约");
+        if (order.getRequesterUserId() != null) {
+            SysUser requester = sysUserMapper.selectById(order.getRequesterUserId());
+            if (requester != null) {
+                vo.setRequesterName(StringUtils.hasText(requester.getRealName()) ? requester.getRealName() : requester.getUsername());
+            }
+        }
 
         if (order.getCurrentDispatchId() != null) {
             DispatchAttempt attempt = dispatchAttemptMapper.selectById(order.getCurrentDispatchId());

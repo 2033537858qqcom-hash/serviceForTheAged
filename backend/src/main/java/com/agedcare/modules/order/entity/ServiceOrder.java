@@ -23,6 +23,7 @@ public class ServiceOrder implements Serializable {
     private Long id;
     private String orderNo;
     private Long requesterUserId;
+    private String requesterType; // SELF, FAMILY
     private Long elderId;
     private Long serviceItemId;
     private String serviceNameSnapshot;

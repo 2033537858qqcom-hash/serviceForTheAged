@@ -17,6 +17,7 @@ import com.agedcare.modules.serviceitem.entity.ServiceItem;
 import com.agedcare.modules.serviceitem.mapper.ServiceItemMapper;
 import com.agedcare.modules.staff.mapper.StaffProfileMapper;
 import com.agedcare.modules.staff.service.StaffService;
+import com.agedcare.modules.user.mapper.SysUserMapper;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
@@ -41,6 +42,7 @@ class OrderAddressSnapshotTest {
     @Mock ServiceRecordMapper records;
     @Mock ServiceReviewMapper reviews;
     @Mock DispatchService dispatch;
+    @Mock SysUserMapper users;
     @InjectMocks OrderService service;
 
     @BeforeEach void init() {

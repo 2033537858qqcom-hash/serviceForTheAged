@@ -155,6 +155,7 @@ CREATE TABLE `service_order` (
     `id` BIGINT NOT NULL COMMENT '主键ID',
     `order_no` VARCHAR(32) NOT NULL COMMENT '对外业务订单编号',
     `requester_user_id` BIGINT NOT NULL COMMENT '实际下单人账号ID(sys_user)',
+    `requester_type` VARCHAR(20) NOT NULL DEFAULT 'SELF' COMMENT '预约人类型: SELF-老人本人自约, FAMILY-家属代约',
     `elder_id` BIGINT NOT NULL COMMENT '被服务老人档案ID(elder_profile)',
     `service_item_id` BIGINT NOT NULL COMMENT '服务项目ID(service_item)',
     `service_name_snapshot` VARCHAR(64) NOT NULL COMMENT '下单时服务名称快照',

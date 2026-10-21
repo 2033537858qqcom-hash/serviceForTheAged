@@ -14,6 +14,9 @@ import java.util.List;
 @Data
 public class OrderVO {
     private ServiceOrder order;
+    private String requesterType; // SELF, FAMILY
+    private String requesterTypeDesc; // 老人自约, 家属代约
+    private String requesterName; // 下单人真实姓名或用户名
     private ElderProfile elder;
     private DispatchAttempt currentDispatch;
     private StaffDetailVO currentStaff;

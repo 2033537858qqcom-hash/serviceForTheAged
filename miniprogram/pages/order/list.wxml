@@ -74,7 +74,10 @@
             data-id="{{item.order.id}}"
           >
             <view class="flex-between card-top">
-              <text class="order-no">订单号：{{item.order.orderNo}}</text>
+              <view class="flex-row items-center order-no-group">
+                <text class="order-no">订单号：{{item.order.orderNo}}</text>
+                <text class="tag tag-sm {{item.order.requesterType === 'FAMILY' ? 'tag-info' : 'tag-neutral'}}" style="margin-left: 12rpx;">{{item.order.requesterType === 'FAMILY' ? '家属代约' : '老人自约'}}</text>
+              </view>
               <text class="tag {{statusTagMap[item.order.status] || 'tag-info'}}">{{statusTextMap[item.order.status] || item.order.status}}</text>
             </view>
 
@@ -83,7 +86,10 @@
               <text class="service-price">¥{{item.order.priceSnapshot}}</text>
             </view>
 
-            <view class="order-row">服务对象：{{item.elder ? item.elder.name : '老人'}}</view>
+            <view class="order-row">
+              <text>服务对象：{{item.elder ? item.elder.name : '老人'}}</text>
+              <text wx:if="{{item.order.requesterType === 'FAMILY' && item.requesterName}}" class="requester-hint">（家属 {{item.requesterName}} 代约）</text>
+            </view>
             <view class="order-row">预约时间：{{item.order.plannedStartAt}}</view>
 
             <view class="card-bottom flex-between" catchtap="noAction">

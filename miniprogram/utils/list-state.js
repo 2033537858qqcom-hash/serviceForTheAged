@@ -7,13 +7,18 @@ function serviceCard(item) {
 }
 function orderCard(item) {
   const order = item.order;
+  const requesterType = order.requesterType || item.requesterType || 'SELF';
   return {
     viewId: String(order.id),
     order: {
       id: order.id, orderNo: order.orderNo, status: order.status,
       serviceNameSnapshot: order.serviceNameSnapshot,
-      priceSnapshot: order.priceSnapshot, plannedStartAt: order.plannedStartAt
+      priceSnapshot: order.priceSnapshot, plannedStartAt: order.plannedStartAt,
+      requesterType
     },
+    requesterType,
+    requesterTypeDesc: item.requesterTypeDesc || (requesterType === 'FAMILY' ? '家属代约' : '老人自约'),
+    requesterName: item.requesterName || '',
     elder: item.elder ? { name: item.elder.name } : null,
     currentStaff: item.currentStaff ? { user: {
       realName: item.currentStaff.user.realName, phone: item.currentStaff.user.phone

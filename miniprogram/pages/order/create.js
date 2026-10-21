@@ -144,7 +144,11 @@ Page({
     this.setData({ eldersLoadError: false });
     const task = request.get('/elders/my-list').then(data => {
       if (!valid()) return;
-      const elders = data || [];
+      const rawElders = data || [];
+      const elders = rawElders.map(elder => ({
+        ...elder,
+        pickerLabel: `${elder.name || '老人'} · ${elder.relationDesc || (elder.isSelf ? '本人' : '家属代约')}${elder.community ? ` (${elder.community})` : ''}`
+      }));
       this.setData({ elders });
       const selected = this.data.selectedElder;
       if (selected && !elders.some(elder => String(elder.id) === String(selected.id))) {

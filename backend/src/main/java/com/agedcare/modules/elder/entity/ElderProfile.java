@@ -36,4 +36,10 @@ public class ElderProfile implements Serializable {
     private Integer status; // 1-正常 0-注销
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    @com.baomidou.mybatisplus.annotation.TableField(exist = false)
+    private Boolean isSelf;
+
+    @com.baomidou.mybatisplus.annotation.TableField(exist = false)
+    private String relationDesc; // "本人", "家属代约"
 }

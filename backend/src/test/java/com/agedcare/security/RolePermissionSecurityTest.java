@@ -109,6 +109,46 @@ public class RolePermissionSecurityTest {
     }
 
     @Test
+    @DisplayName("P10代约模型: 验证老人自约与家属代约身份类型自动推断与快照记录")
+    public void testOrderRequesterTypeInference() {
+        UserContext.setUser(LoginUser.builder().id(10L).role(UserRole.RESIDENT.getCode()).build());
+
+        // 1. 本人自约 (elder.userId == currentUser.id)
+        ElderProfile selfElder = ElderProfile.builder().id(101L).userId(10L).name("赵大爷").address("幸福里1号").build();
+        when(elderProfileMapper.selectById(101L)).thenReturn(selfElder);
+        when(serviceItemMapper.selectById(1L)).thenReturn(com.agedcare.modules.serviceitem.entity.ServiceItem.builder()
+                .id(1L).name("助餐").status("ON_SHELF").durationMinutes(60).price(new java.math.BigDecimal("15.00")).build());
+
+        OrderCreateDTO dtoSelf = new OrderCreateDTO();
+        dtoSelf.setElderId(101L);
+        dtoSelf.setServiceItemId(1L);
+        dtoSelf.setPlannedStartAt(LocalDateTime.now().plusDays(1));
+        dtoSelf.setAddress("幸福里1号");
+        dtoSelf.setContactName("赵大爷");
+        dtoSelf.setContactPhone("13800000001");
+
+        orderService.createOrder(dtoSelf);
+
+        verify(serviceOrderMapper).insert((ServiceOrder) argThat(b -> "SELF".equals(((ServiceOrder) b).getRequesterType())));
+
+        // 2. 家属代约 (elder.userId != currentUser.id)
+        ElderProfile otherElder = ElderProfile.builder().id(102L).userId(99L).name("钱大妈").address("幸福里2号").build();
+        when(elderProfileMapper.selectById(102L)).thenReturn(otherElder);
+
+        OrderCreateDTO dtoFamily = new OrderCreateDTO();
+        dtoFamily.setElderId(102L);
+        dtoFamily.setServiceItemId(1L);
+        dtoFamily.setPlannedStartAt(LocalDateTime.now().plusDays(1));
+        dtoFamily.setAddress("幸福里2号");
+        dtoFamily.setContactName("赵志强");
+        dtoFamily.setContactPhone("13800000002");
+
+        orderService.createOrder(dtoFamily);
+
+        verify(serviceOrderMapper).insert((ServiceOrder) argThat(b -> "FAMILY".equals(((ServiceOrder) b).getRequesterType())));
+    }
+
+    @Test
     @DisplayName("P3职责隔离: 服务人员(STAFF)禁止新建或修改老人档案")
     public void testStaffCannotSaveElderProfile() {
         UserContext.setUser(LoginUser.builder().id(2L).role(UserRole.STAFF.getCode()).build());

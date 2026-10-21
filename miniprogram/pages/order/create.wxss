@@ -56,6 +56,7 @@
 }
 
 .picker-box { background: #f6f8f1; border: 1rpx solid #e0e7d9; padding: 24rpx; border-radius: 16rpx; font-size: var(--font-body); min-height: 96rpx; }
+.elder-name-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .placeholder { color: var(--text-secondary); }
 .picker-arrow-icon { width: 26rpx; height: 26rpx; flex-shrink: 0; transform: rotate(90deg); opacity: 0.6; }
 .add-elder-link { font-size: var(--font-caption); color: var(--primary-color); text-align: right; padding: 21rpx 0 0; min-height: 75rpx; font-weight: 550; }

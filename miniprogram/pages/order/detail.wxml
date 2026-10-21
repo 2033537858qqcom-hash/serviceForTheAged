@@ -110,6 +110,13 @@
   <view class="card info-card">
     <view class="card-title">服务基本信息</view>
     <view class="info-item flex-between">
+      <text class="label">预约类型</text>
+      <view class="flex-row items-center">
+        <text class="tag tag-sm {{orderVO.order.requesterType === 'FAMILY' ? 'tag-info' : 'tag-success'}}">{{orderVO.requesterTypeDesc || (orderVO.order.requesterType === 'FAMILY' ? '家属代约' : '老人自约')}}</text>
+        <text class="value" wx:if="{{orderVO.order.requesterType === 'FAMILY' && orderVO.requesterName}}" style="margin-left: 12rpx; font-size: 26rpx; color: #64748B;">(代约人: {{orderVO.requesterName}})</text>
+      </view>
+    </view>
+    <view class="info-item flex-between">
       <text class="label">服务项目</text>
       <text class="value bold">{{orderVO.order.serviceNameSnapshot}}</text>
     </view>

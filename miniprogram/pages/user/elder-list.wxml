@@ -33,6 +33,7 @@
       <view class="card-top flex-between">
         <view class="elder-identity flex-row">
           <text class="elder-name">{{item.name}}</text>
+          <text class="tag tag-sm {{item.isSelf ? 'tag-success' : 'tag-info'}}" style="margin-right: 12rpx;">{{item.relationDesc || (item.isSelf ? '本人' : '家属代约')}}</text>
           <text class="tag tag-info gender-tag">{{item.gender === 'FEMALE' ? '女' : '男'}}</text>
           <text class="elder-age" wx:if="{{item.age}}">{{item.age}}岁</text>
         </view>

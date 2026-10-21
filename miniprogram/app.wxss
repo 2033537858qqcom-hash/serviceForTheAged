@@ -194,6 +194,19 @@ input, textarea { color: var(--text-main); }
   color: #176b5d;
   border: 1rpx solid #d0e7dc;
 }
+.tag-neutral {
+  background: #f1f4f2;
+  color: #55655e;
+  border: 1rpx solid #d8e0db;
+}
+.tag-sm {
+  height: 36rpx;
+  min-height: 36rpx;
+  line-height: 1;
+  padding: 0 12rpx;
+  font-size: 20rpx;
+  border-radius: 6rpx;
+}
 .elder-mode .tag {
   height: 56rpx;
   min-height: 56rpx;

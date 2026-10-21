@@ -22,7 +22,10 @@
     </view>
     <view class="card active-order-card spring" hover-class="spring-in" hover-stay-time="80" bindtap="goToOrderDetail" data-id="{{activeOrder.order.id}}">
       <view class="flex-between">
-        <view class="service-name">{{activeOrder.order.serviceNameSnapshot}}</view>
+        <view class="flex-row items-center">
+          <view class="service-name">{{activeOrder.order.serviceNameSnapshot}}</view>
+          <text class="tag tag-sm {{activeOrder.order.requesterType === 'FAMILY' ? 'tag-info' : 'tag-neutral'}}" style="margin-left: 12rpx;">{{activeOrder.order.requesterType === 'FAMILY' ? '家属代约' : '老人自约'}}</text>
+        </view>
         <view class="active-order-badge">{{statusTextMap[activeOrder.order.status]}}</view>
       </view>
       <view class="active-order-meta">
@@ -31,7 +34,7 @@
       </view>
       <view class="active-order-meta">
         <image src="/assets/icons/user.png"/>
-        <text>{{activeOrder.elder ? activeOrder.elder.name : '服务对象'}}<text wx:if="{{activeOrder.currentStaff}}"> · 服务人员 {{activeOrder.currentStaff.user.realName}}</text></text>
+        <text>{{activeOrder.elder ? activeOrder.elder.name : '服务对象'}}<text wx:if="{{activeOrder.order.requesterType === 'FAMILY' && activeOrder.requesterName}}">（由 {{activeOrder.requesterName}} 代约）</text><text wx:if="{{activeOrder.currentStaff}}"> · 服务人员 {{activeOrder.currentStaff.user.realName}}</text></text>
       </view>
       <view class="order-footer flex-between">
         <text class="order-footer-text">查看服务进度与实时路线</text>

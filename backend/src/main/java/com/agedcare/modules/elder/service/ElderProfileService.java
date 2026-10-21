@@ -61,6 +61,10 @@ public class ElderProfileService {
         List<ElderProfile> selfProfiles = elderProfileMapper.selectList(new LambdaQueryWrapper<ElderProfile>()
                 .eq(ElderProfile::getUserId, currentUser.getId())
                 .eq(ElderProfile::getStatus, 1));
+        for (ElderProfile p : selfProfiles) {
+            p.setIsSelf(true);
+            p.setRelationDesc("本人");
+        }
 
         // 2. 作为已审核通过家属绑定的老人档案
         List<FamilyBinding> approvedBindings = familyBindingMapper.selectList(new LambdaQueryWrapper<FamilyBinding>()
@@ -74,6 +78,10 @@ public class ElderProfileService {
         List<ElderProfile> boundProfiles = Collections.emptyList();
         if (!CollectionUtils.isEmpty(elderIds)) {
             boundProfiles = elderProfileMapper.selectBatchIds(elderIds);
+            for (ElderProfile p : boundProfiles) {
+                p.setIsSelf(false);
+                p.setRelationDesc("家属代约");
+            }
         }
 
         List<ElderProfile> result = new ArrayList<>(selfProfiles);
