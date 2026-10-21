@@ -97,7 +97,7 @@
   <!-- 提交下单按钮 -->
   <view class="submit-box">
     <view class="submit-price" wx:if="{{service}}">
-      <text class="submit-price-label">服务费用</text>
+      <text class="submit-price-label">预计费用 · 下单人协调线下结算</text>
       <view>¥{{service.price}}<text> / 次</text></view>
     </view>
     <button class="btn-primary btn-submit-order {{submitPhase === 'done' ? 'is-done' : ''}} {{isElderMode ? 'btn-large' : ''}}" hover-class="spring-in" loading="{{submitting && submitPhase !== 'done'}}" disabled="{{submitting}}" bindtap="submitOrder">

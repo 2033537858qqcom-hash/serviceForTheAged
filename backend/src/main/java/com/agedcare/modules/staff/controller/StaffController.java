@@ -21,6 +21,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Tag(name = "服务人员与排班管理")
+@org.springframework.validation.annotation.Validated
 @RestController
 @RequestMapping("/staff")
 @RequiredArgsConstructor
@@ -30,16 +31,24 @@ public class StaffController {
 
     @Data
     public static class AuditStaffDTO {
+        @jakarta.validation.constraints.NotNull @jakarta.validation.constraints.Positive
         private Long staffId;
         private boolean approve;
+        @jakarta.validation.constraints.Size(max=200)
         private String reason;
     }
 
     @Data
     public static class AddSkillDTO {
+        @jakarta.validation.constraints.NotNull @jakarta.validation.constraints.Positive
         private Long staffId;
+        @jakarta.validation.constraints.Size(max=32)
+        @jakarta.validation.constraints.NotBlank
         private String skillCode;
+        @jakarta.validation.constraints.Size(max=64)
+        @jakarta.validation.constraints.NotBlank
         private String skillName;
+        @jakarta.validation.constraints.Size(max=64)
         private String certificateNo;
     }
 
@@ -47,8 +56,8 @@ public class StaffController {
     @GetMapping("/page")
     @RequireRole(UserRole.ADMIN)
     public Result<Page<StaffDetailVO>> page(
-            @RequestParam(defaultValue = "1") int pageNum,
-            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(defaultValue = "1") @jakarta.validation.constraints.Min(1) int pageNum,
+            @RequestParam(defaultValue = "10") @jakarta.validation.constraints.Min(1) @jakarta.validation.constraints.Max(100) int pageSize,
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String auditStatus,
             @RequestParam(required = false) String currentStatus
@@ -81,7 +90,7 @@ public class StaffController {
     @Operation(summary = "管理员审核服务人员")
     @PostMapping("/audit")
     @RequireRole(UserRole.ADMIN)
-    public Result<Void> audit(@RequestBody AuditStaffDTO dto) {
+    public Result<Void> audit(@jakarta.validation.Valid @RequestBody AuditStaffDTO dto) {
         staffService.auditStaff(dto.getStaffId(), dto.isApprove(), dto.getReason());
         return Result.success();
     }
@@ -89,7 +98,7 @@ public class StaffController {
     @Operation(summary = "录入人员技能资质")
     @PostMapping("/skill/add")
     @RequireRole(UserRole.ADMIN)
-    public Result<Void> addSkill(@RequestBody AddSkillDTO dto) {
+    public Result<Void> addSkill(@jakarta.validation.Valid @RequestBody AddSkillDTO dto) {
         staffService.addSkill(dto.getStaffId(), dto.getSkillCode(), dto.getSkillName(), dto.getCertificateNo());
         return Result.success();
     }
@@ -105,7 +114,7 @@ public class StaffController {
     @Operation(summary = "录入排班班次")
     @PostMapping("/shift/add")
     @RequireRole(UserRole.ADMIN)
-    public Result<Void> addShift(@RequestBody StaffShift shift) {
+    public Result<Void> addShift(@jakarta.validation.Valid @RequestBody StaffShift shift) {
         staffService.addShift(shift);
         return Result.success();
     }

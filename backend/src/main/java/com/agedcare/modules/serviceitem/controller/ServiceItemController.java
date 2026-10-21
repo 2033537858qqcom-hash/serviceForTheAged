@@ -4,6 +4,9 @@ import com.agedcare.common.api.Result;
 import com.agedcare.common.enums.UserRole;
 import com.agedcare.common.security.RequireRole;
 import com.agedcare.modules.serviceitem.entity.ServiceItem;
+import com.agedcare.modules.serviceitem.dto.ServiceItemSaveDTO;
+import jakarta.validation.Valid;
+import org.springframework.beans.BeanUtils;
 import com.agedcare.modules.serviceitem.service.ServiceItemService;
 import com.agedcare.modules.serviceitem.service.ServiceImageStorage;
 import org.springframework.web.multipart.MultipartFile;
@@ -16,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @Tag(name = "养老服务项目")
+@org.springframework.validation.annotation.Validated
 @RestController
 @RequestMapping("/service-items")
 @RequiredArgsConstructor
@@ -40,8 +44,8 @@ public class ServiceItemController {
     @GetMapping("/page")
     @RequireRole(UserRole.ADMIN)
     public Result<Page<ServiceItem>> page(
-            @RequestParam(defaultValue = "1") int pageNum,
-            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(defaultValue = "1") @jakarta.validation.constraints.Min(1) int pageNum,
+            @RequestParam(defaultValue = "10") @jakarta.validation.constraints.Min(1) @jakarta.validation.constraints.Max(100) int pageSize,
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String status
@@ -58,7 +62,9 @@ public class ServiceItemController {
     @Operation(summary = "新增或编辑服务项目")
     @PostMapping("/save")
     @RequireRole(UserRole.ADMIN)
-    public Result<ServiceItem> saveOrUpdate(@RequestBody ServiceItem item) {
+    public Result<ServiceItem> saveOrUpdate(@Valid @RequestBody ServiceItemSaveDTO dto) {
+        ServiceItem item = new ServiceItem();
+        BeanUtils.copyProperties(dto, item);
         return Result.success(serviceItemService.saveOrUpdate(item));
     }
 

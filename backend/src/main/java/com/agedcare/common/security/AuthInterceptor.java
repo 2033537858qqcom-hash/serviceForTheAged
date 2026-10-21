@@ -23,16 +23,16 @@ public class AuthInterceptor implements HandlerInterceptor {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final SysUserMapper sysUserMapper;
+    private final UploadRateLimiter uploadRateLimiter;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+        UserContext.clear();
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             return true;
         }
 
-        if (!(handler instanceof HandlerMethod handlerMethod)) {
-            return true;
-        }
+        HandlerMethod handlerMethod = handler instanceof HandlerMethod method ? method : null;
 
         String authHeader = request.getHeader("Authorization");
         String token = null;
@@ -67,11 +67,16 @@ public class AuthInterceptor implements HandlerInterceptor {
         user.setPhone(dbUser.getPhone());
         user.setOpenid(dbUser.getOpenid());
         user.setAvatar(dbUser.getAvatar());
-        UserContext.setUser(user);
+        if (!Arrays.asList("ADMIN", "STAFF", "RESIDENT").contains(dbUser.getRole()))
+            throw new BusinessException(ResultCode.FORBIDDEN);
+        user.setRole(dbUser.getRole());
+        if ("POST".equals(request.getMethod()) && (uri.endsWith("/upload/image") || uri.endsWith("/service-items/image"))) {
+            uploadRateLimiter.check(user.getId());
+        }
 
         // 检查方法或类上的角色权限约束
-        RequireRole requireRole = handlerMethod.getMethodAnnotation(RequireRole.class);
-        if (requireRole == null) {
+        RequireRole requireRole = handlerMethod == null ? null : handlerMethod.getMethodAnnotation(RequireRole.class);
+        if (requireRole == null && handlerMethod != null) {
             requireRole = handlerMethod.getBeanType().getAnnotation(RequireRole.class);
         }
 
@@ -87,6 +92,7 @@ public class AuthInterceptor implements HandlerInterceptor {
             }
         }
 
+        UserContext.setUser(user);
         return true;
     }
 

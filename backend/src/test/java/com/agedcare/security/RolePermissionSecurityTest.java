@@ -128,7 +128,7 @@ public class RolePermissionSecurityTest {
         OrderCreateDTO dtoSelf = new OrderCreateDTO();
         dtoSelf.setElderId(101L);
         dtoSelf.setServiceItemId(1L);
-        dtoSelf.setPlannedStartAt(LocalDateTime.now().plusDays(1));
+        dtoSelf.setPlannedStartAt(java.time.LocalDate.now().plusDays(1).atTime(10, 0));
         dtoSelf.setAddress("幸福里1号");
         dtoSelf.setContactName("赵大爷");
         dtoSelf.setContactPhone("13800000001");
@@ -144,7 +144,7 @@ public class RolePermissionSecurityTest {
         OrderCreateDTO dtoFamily = new OrderCreateDTO();
         dtoFamily.setElderId(102L);
         dtoFamily.setServiceItemId(1L);
-        dtoFamily.setPlannedStartAt(LocalDateTime.now().plusDays(1));
+        dtoFamily.setPlannedStartAt(java.time.LocalDate.now().plusDays(1).atTime(10, 0));
         dtoFamily.setAddress("幸福里2号");
         dtoFamily.setContactName("赵志强");
         dtoFamily.setContactPhone("13800000002");

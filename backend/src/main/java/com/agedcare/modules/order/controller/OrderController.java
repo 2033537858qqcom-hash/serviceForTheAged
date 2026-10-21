@@ -33,7 +33,7 @@ public class OrderController {
 
     @Operation(summary = "分页查询订单列表(按当前角色权限范围过滤)")
     @GetMapping("/page")
-    public Result<Page<OrderVO>> pageOrders(OrderQueryDTO query) {
+    public Result<Page<OrderVO>> pageOrders(@Valid OrderQueryDTO query) {
         return Result.success(orderService.pageOrders(query));
     }
 

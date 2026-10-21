@@ -71,8 +71,11 @@ public class DispatchService {
 
         // 检查预约服务时段是否已经结束，若已结束则转入 WAIT_MANUAL 人工处理，不再对外派发
         if (order.getPlannedEndAt() != null && LocalDateTime.now().isAfter(order.getPlannedEndAt())) {
-            markOrderWaitManual(order, "预约服务时段已过，自动转入人工调度协助");
-            throw new BusinessException("预约服务时段已过，无法继续自动派单");
+            if (!OrderStatus.WAIT_MANUAL.getCode().equals(oldStatus)) {
+                markOrderWaitManual(order, "预约服务时段已过，自动转入人工调度协助");
+            }
+            // 正常结束以提交状态与日志；抛异常会导致此事务整体回滚。
+            return null;
         }
 
         int currentRound = order.getDispatchRound() != null ? order.getDispatchRound() : 1;

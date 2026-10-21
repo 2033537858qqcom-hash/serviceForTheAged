@@ -21,9 +21,14 @@
         <jjwt.version>0.12.5</jjwt.version>
         <okhttp.version>4.12.0</okhttp.version>
         <springdoc.version>2.6.0</springdoc.version>
+        <api.version>1.44</api.version>
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
         <!-- Web & Validation -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -103,6 +108,11 @@
 
         <!-- Test -->
         <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>mysql</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
@@ -110,7 +120,16 @@
     </dependencies>
 
     <build>
+        <testResources>
+            <testResource><directory>src/test/resources</directory></testResource>
+            <testResource><directory>../sql</directory><includes><include>schema.sql</include><include>data.sql</include></includes></testResource>
+        </testResources>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration><systemPropertyVariables><api.version>${api.version}</api.version></systemPropertyVariables></configuration>
+            </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>

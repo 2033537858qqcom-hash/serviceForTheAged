@@ -27,27 +27,32 @@ public class DispatchController {
 
     @Data
     public static class ManualDispatchDTO {
+        @jakarta.validation.constraints.NotNull @jakarta.validation.constraints.Positive
         private Long orderId;
+        @jakarta.validation.constraints.Positive
         private Long staffId; // 为空表示触发自动派单，有值表示管理员人工指定派单
     }
 
     @Data
     public static class ReassignDTO {
+        @jakarta.validation.constraints.NotNull @jakarta.validation.constraints.Positive
         private Long orderId;
         private Long newStaffId;
+        @jakarta.validation.constraints.Size(max=200)
         private String reason;
     }
 
     @Data
     public static class RejectDTO {
         private Long dispatchId;
+        @jakarta.validation.constraints.Size(max=200)
         private String reason;
     }
 
     @Operation(summary = "发起派单(管理员可指定人员，也可触发自动算法派单)")
     @PostMapping("/assign")
     @RequireRole(UserRole.ADMIN)
-    public Result<DispatchAttempt> assign(@RequestBody ManualDispatchDTO dto) {
+    public Result<DispatchAttempt> assign(@jakarta.validation.Valid @RequestBody ManualDispatchDTO dto) {
         String dispatchType = dto.getStaffId() != null ? "MANUAL" : "AUTO";
         return Result.success(dispatchService.dispatchOrder(dto.getOrderId(), dto.getStaffId(), dispatchType));
     }
@@ -63,7 +68,7 @@ public class DispatchController {
     @Operation(summary = "服务人员拒单(释放并自动重派)")
     @PostMapping("/reject")
     @RequireRole(UserRole.STAFF)
-    public Result<Void> reject(@RequestBody RejectDTO dto) {
+    public Result<Void> reject(@jakarta.validation.Valid @RequestBody RejectDTO dto) {
         dispatchService.rejectDispatch(dto.getDispatchId(), dto.getReason());
         return Result.success();
     }
@@ -71,7 +76,7 @@ public class DispatchController {
     @Operation(summary = "管理员人工改派调度")
     @PostMapping("/reassign")
     @RequireRole(UserRole.ADMIN)
-    public Result<Void> reassign(@RequestBody ReassignDTO dto) {
+    public Result<Void> reassign(@jakarta.validation.Valid @RequestBody ReassignDTO dto) {
         dispatchService.manualReassign(dto.getOrderId(), dto.getNewStaffId(), dto.getReason());
         return Result.success();
     }

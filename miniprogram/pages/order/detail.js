@@ -1,5 +1,6 @@
 const navigation = require('../../utils/navigation.js');
 const request = require('../../utils/request.js');
+const { loadMedia } = require('../../utils/media-url.js');
 const { hasCoordinates } = require('../../utils/coordinates.js');
 const { lightTap } = require('../../utils/feedback.js');
 const { markOrdersChanged, sessionKey } = require('../../utils/list-state.js');
@@ -138,7 +139,7 @@ Page({
     this._requestVersion = version;
     this.setData({ loading: true, loadError: false });
     const valid = () => !this._disposed && this._context === context && sessionKey(getAppSafe()) === context;
-    const task = request.get(`/orders/${id}`).then(data => {
+    const task = request.get(`/orders/${id}`).then(async data => {
       if (!valid()) return;
       const curApp = getAppSafe();
       if (version !== (curApp.globalData?.ordersVersion || 0)) {
@@ -147,15 +148,19 @@ Page({
       }
       const canCancel = ['WAIT_DISPATCH', 'WAIT_ACCEPT', 'WAIT_VISIT', 'WAIT_MANUAL'].includes(data?.order?.status);
       let fulfillmentPhotos = [];
+      let unavailablePhotos = 0;
       if (data?.serviceRecord?.attachmentsJson) {
         try {
           const parsed = JSON.parse(data.serviceRecord.attachmentsJson);
           if (Array.isArray(parsed)) {
-            fulfillmentPhotos = parsed;
+            const images = await Promise.allSettled(parsed.map(loadMedia));
+            fulfillmentPhotos = images.filter(image => image.status === 'fulfilled').map(image => image.value);
+            unavailablePhotos = images.length - fulfillmentPhotos.length;
           }
         } catch (_) {}
       }
-      this.setData({ orderVO: data, canCancel, fulfillmentPhotos });
+      if (!valid()) return;
+      this.setData({ orderVO: data, canCancel, fulfillmentPhotos, unavailablePhotos });
       this._version = version;
       this._updatedAt = Date.now();
       this.updateMapState(data?.tracking || null);

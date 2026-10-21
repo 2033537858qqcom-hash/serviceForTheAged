@@ -9,12 +9,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-@Profile({"dev", "test"})
+@Profile("(dev | test) & !prod")
+@ConditionalOnProperty(name = "app.dev-mode", havingValue = "true")
 @Tag(name = "演示环境模拟鉴权中心")
 @RestController
 @RequestMapping("/auth")

@@ -66,11 +66,11 @@ class ServiceImageStorageTest {
         SysUserMapper users = mock(SysUserMapper.class);
         if (token != null) {
             when(jwt.parseToken(token)).thenReturn(LoginUser.builder().id(1L).role(role).build());
-            when(users.selectById(1L)).thenReturn(SysUser.builder().id(1L).status(1).build());
+            when(users.selectById(1L)).thenReturn(SysUser.builder().id(1L).status(1).role(role).build());
         }
         var controller = new ServiceItemController(mock(ServiceItemService.class), new ServiceImageStorage(directory.toString()));
         return MockMvcBuilders.standaloneSetup(controller)
-                .addInterceptors(new AuthInterceptor(jwt, users))
+                .addInterceptors(new AuthInterceptor(jwt, users, new UploadRateLimiter()))
                 .setControllerAdvice(new GlobalExceptionHandler()).build();
     }
     @Test void anonymousCannotUpload() throws Exception {
@@ -97,7 +97,7 @@ class ServiceImageStorageTest {
             return new ServiceImageStorage(directory);
         }
         @Bean AuthInterceptor auth() {
-            return new AuthInterceptor(mock(JwtTokenProvider.class), mock(SysUserMapper.class));
+            return new AuthInterceptor(mock(JwtTokenProvider.class), mock(SysUserMapper.class), new UploadRateLimiter());
         }
     }
 

@@ -121,9 +121,10 @@
       <text class="value bold">{{orderVO.order.serviceNameSnapshot}}</text>
     </view>
     <view class="info-item flex-between">
-      <text class="label">服务费用</text>
+      <text class="label">预计费用</text>
       <text class="value price">¥{{orderVO.order.priceSnapshot}}</text>
     </view>
+    <view class="info-item"><text class="label">费用说明</text><text class="value">由{{orderVO.payerName || '下单人'}}协调线下结算，平台不扣款</text></view>
     <view class="info-item flex-between">
       <text class="label">预计时长</text>
       <text class="value">{{orderVO.order.durationMinutesSnapshot}} 分钟</text>
@@ -160,6 +161,7 @@
     <view class="record-line">实际服务时间：{{orderVO.serviceRecord.actualStartAt}} ~ {{orderVO.serviceRecord.actualEndAt}}</view>
     <view class="record-summary">工作总结：{{orderVO.serviceRecord.serviceSummary}}</view>
 
+    <view wx:if="{{unavailablePhotos}}" class="record-photos-label">{{unavailablePhotos}}张凭证暂时无法加载，请稍后重试</view>
     <!-- 服务人员现场拍摄照片凭证 -->
     <view class="record-photos-wrap" wx:if="{{fulfillmentPhotos && fulfillmentPhotos.length > 0}}">
       <view class="record-photos-label">服务人员拍摄凭证 (共{{fulfillmentPhotos.length}}张)：</view>

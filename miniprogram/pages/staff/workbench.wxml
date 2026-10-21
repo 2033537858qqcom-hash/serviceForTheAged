@@ -140,7 +140,7 @@
         </view>
         <view class="record-photos-grid">
           <view class="photo-thumb-item" wx:for="{{recordPhotos}}" wx:key="*this">
-            <image class="photo-img" src="{{item}}" mode="aspectFill" bindtap="previewRecordPhoto" data-url="{{item}}" />
+              <image class="photo-img" src="{{recordPhotoSources[index]}}" mode="aspectFill" bindtap="previewRecordPhoto" data-url="{{item}}" />
             <view class="photo-delete-btn" catchtap="deleteRecordPhoto" data-index="{{index}}" aria-label="删除此照片">✕</view>
           </view>
           <view class="photo-add-btn flex-column items-center justify-center" wx:if="{{recordPhotos.length < 4}}" bindtap="chooseRecordPhoto" hover-class="spring-in" hover-stay-time="80" aria-label="拍照或上传完成图片">

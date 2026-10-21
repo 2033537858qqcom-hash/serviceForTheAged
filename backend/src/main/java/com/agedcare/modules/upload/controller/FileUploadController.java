@@ -7,6 +7,7 @@ import com.agedcare.common.exception.BusinessException;
 import com.agedcare.common.security.LoginUser;
 import com.agedcare.common.security.UserContext;
 import com.agedcare.common.storage.CosService;
+import com.agedcare.common.storage.PrivateMediaService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -22,12 +23,15 @@ import java.util.Map;
 public class FileUploadController {
 
     private final CosService cosService;
+    private final PrivateMediaService privateMedia;
+    private final com.agedcare.modules.serviceitem.service.ServiceImageStorage serviceImages;
 
     @Operation(summary = "上传图片到腾讯云COS对象存储")
     @PostMapping("/image")
     public Result<Map<String, String>> uploadImage(
             @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "type", defaultValue = "general") String type
+            @RequestParam(value = "type", defaultValue = "general") String type,
+            @RequestParam(value = "orderId", required = false) Long orderId
     ) {
         LoginUser currentUser = UserContext.getUser();
         if (currentUser == null) {
@@ -44,24 +48,18 @@ public class FileUploadController {
             case "fulfillment":
             case "record":
                 // 仅服务人员及代办管理员允许上传履约凭证照片
-                if (!UserRole.STAFF.getCode().equalsIgnoreCase(role) && !UserRole.ADMIN.getCode().equalsIgnoreCase(role)) {
+                if (!UserRole.STAFF.getCode().equalsIgnoreCase(role)) {
                     throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "只有服务人员才能上传现场服务履约照片凭证");
                 }
-                subDir = "fulfillment";
-                break;
+                return Result.success(Map.of("url", privateMedia.upload(file, orderId)));
             case "service":
                 // 仅管理员允许上传养老服务项目展示图
                 if (!UserRole.ADMIN.getCode().equalsIgnoreCase(role)) {
                     throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "只有管理员才能上传服务项目展示封面图");
                 }
-                subDir = "services";
-                break;
+                return Result.success(Map.of("url", serviceImages.store(file)));
             default:
-                if (!UserRole.ADMIN.getCode().equalsIgnoreCase(role) && !UserRole.STAFF.getCode().equalsIgnoreCase(role)) {
-                    throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "无权上传通用文件");
-                }
-                subDir = "images";
-                break;
+                throw new BusinessException(400, "请明确指定avatar、fulfillment或service图片用途");
         }
 
         String url = cosService.uploadImage(file, subDir);

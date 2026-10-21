@@ -92,6 +92,8 @@
           </el-descriptions-item>
           <el-descriptions-item label="服务项目">{{ detailData.order.serviceNameSnapshot }}</el-descriptions-item>
           <el-descriptions-item label="预计费用">¥{{ detailData.order.priceSnapshot }}</el-descriptions-item>
+          <el-descriptions-item label="费用协调人">{{ detailData.payerName || '下单人' }}</el-descriptions-item>
+          <el-descriptions-item label="结算说明" :span="2">{{ detailData.settlementNote }}</el-descriptions-item>
           <el-descriptions-item label="服务对象">{{ detailData.elder ? detailData.elder.name : '' }}</el-descriptions-item>
           <el-descriptions-item label="预约开始">{{ detailData.order.plannedStartAt }}</el-descriptions-item>
           <el-descriptions-item label="上门地址" :span="2">{{ detailData.order.addressSnapshot }}</el-descriptions-item>
@@ -108,6 +110,7 @@
             <el-descriptions-item label="现场工作总结">
               {{ detailData.serviceRecord.serviceSummary }}
             </el-descriptions-item>
+            <el-descriptions-item v-if="photoPaths.length" label="现场照片"><PrivatePhoto v-for="source in photoPaths" :key="source" :source="source" /></el-descriptions-item>
           </el-descriptions>
         </div>
 
@@ -167,7 +170,8 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
+import PrivatePhoto from '../../components/PrivatePhoto.vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '../../utils/request'
@@ -178,6 +182,12 @@ const tableData = ref([])
 const total = ref(0)
 const drawerVisible = ref(false)
 const detailData = ref(null)
+const photoPaths = computed(() => {
+  try {
+    const values = JSON.parse(detailData.value?.serviceRecord?.attachmentsJson || '[]')
+    return Array.isArray(values) ? values.filter(value => typeof value === 'string').slice(0, 4) : []
+  } catch { return [] }
+})
 const reassignVisible = ref(false)
 const staffList = ref([])
 
@@ -278,7 +288,9 @@ const adminConfirm = (orderId) => {
   ElMessageBox.prompt('请输入管理员代为确认的依据与情况说明', '管理员代确认服务完成', {
     confirmButtonText: '确认完成',
     cancelButtonText: '取消',
-    inputValue: '经社区电话回访核验，老人确认服务已标准完成'
+    inputValue: '',
+    inputPlaceholder: '填写实际核验方式、结果及代确认原因（10至220字）',
+    inputValidator: value => Boolean(value && value.trim().length >= 10 && value.length <= 220) || '请填写10至220字的真实核验依据'
   }).then(({ value }) => {
     request.post('/fulfillment/confirm', { orderId, note: value }).then(() => {
       ElMessage.success('代确认完成成功')

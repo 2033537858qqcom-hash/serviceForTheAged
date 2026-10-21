@@ -315,6 +315,7 @@ Page({
   },
 
   logout() {
+    require('../../utils/media-url.js').clearPrivateMedia();
     this.setData({ logoutSheet: false, staffProfile: null, staffSkills: [], staffSkillsDesc: '' });
     app.globalData.token = '';
     app.globalData.userInfo = null;

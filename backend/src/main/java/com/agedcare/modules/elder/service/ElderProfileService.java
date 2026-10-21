@@ -105,10 +105,15 @@ public class ElderProfileService {
     @Transactional(rollbackFor = Exception.class)
     public ElderProfile saveOrUpdate(ElderProfile profile) {
         LoginUser currentUser = UserContext.getUser();
+        if (currentUser == null) throw new BusinessException(401, "请先登录");
+        if ((!"ADMIN".equals(currentUser.getRole()) && !"RESIDENT".equals(currentUser.getRole()))) throw new BusinessException(403, "服务人员无权新建或修改老人档案");
+        if (profile.getId() == null && !"ADMIN".equals(currentUser.getRole()) && profile.getUserId() != null && !profile.getUserId().equals(currentUser.getId()))
+            throw new BusinessException(403, "居民不得关联其他人的登录账号");
         if (currentUser != null && UserRole.STAFF.getCode().equalsIgnoreCase(currentUser.getRole())) {
             throw new BusinessException(403, "服务人员无权新建或修改老人档案");
         }
         if (profile.getId() == null) {
+            if ("RESIDENT".equals(currentUser.getRole())) profile.setUserId(null);
             profile.setStatus(1);
             profile.setCreatedAt(LocalDateTime.now());
             profile.setUpdatedAt(LocalDateTime.now());
@@ -149,6 +154,11 @@ public class ElderProfileService {
                 throw new BusinessException("老人档案不存在");
             }
             checkAccessPermission(existing);
+            if (!"ADMIN".equals(currentUser.getRole())) {
+                profile.setUserId(existing.getUserId());
+                profile.setStatus(existing.getStatus());
+            }
+            profile.setCreatedAt(existing.getCreatedAt());
             profile.setUpdatedAt(LocalDateTime.now());
             elderProfileMapper.updateById(profile);
         }
@@ -156,6 +166,7 @@ public class ElderProfileService {
     }
 
     public void checkAccessPermission(ElderProfile profile) {
+        if (profile == null) throw new BusinessException(403, "无权访问该老人档案");
         LoginUser currentUser = UserContext.getUser();
         if (currentUser == null) {
             throw new BusinessException("未登录");
@@ -181,6 +192,7 @@ public class ElderProfileService {
             throw new BusinessException(403, "服务人员无权查看非指派任务范围内的老人档案");
         }
 
+        if (!"RESIDENT".equals(currentUser.getRole())) throw new BusinessException(403, "无权访问老人档案");
         if (profile.getUserId() != null && profile.getUserId().equals(currentUser.getId())) {
             return;
         }
@@ -190,7 +202,7 @@ public class ElderProfileService {
                 .eq(FamilyBinding::getElderId, profile.getId())
                 .eq(FamilyBinding::getStatus, FamilyBindingStatus.APPROVED.getCode()));
 
-        if (count == 0) {
+        if (count == null || count == 0) {
             throw new BusinessException(403, "您未获得该老人的委托授权或授权已被撤销");
         }
     }

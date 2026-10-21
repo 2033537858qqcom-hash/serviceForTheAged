@@ -3,6 +3,7 @@ package com.agedcare.modules.user.controller;
 import com.agedcare.common.api.Result;
 import com.agedcare.common.enums.UserRole;
 import com.agedcare.common.exception.BusinessException;
+import com.agedcare.common.storage.ImageUrlPolicy;
 import com.agedcare.common.security.LoginUser;
 import com.agedcare.common.security.RequireRole;
 import com.agedcare.common.security.UserContext;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 
 @Tag(name = "系统用户管理")
+@org.springframework.validation.annotation.Validated
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
@@ -32,6 +34,7 @@ public class UserController {
 
     private final SysUserMapper sysUserMapper;
     private final PasswordEncoder passwordEncoder;
+    private final ImageUrlPolicy imageUrlPolicy;
 
     @Data
     public static class UpdatePwdDTO {
@@ -56,20 +59,12 @@ public class UserController {
         private String avatar;
     }
 
-    public static boolean isValidImageUrl(String url) {
-        if (!StringUtils.hasText(url)) return false;
-        String trimmed = url.trim();
-        return (trimmed.startsWith("https://") && (trimmed.contains(".myqcloud.com/") || trimmed.contains(".cos.")))
-                || trimmed.startsWith("/media/")
-                || ((trimmed.startsWith("http://") || trimmed.startsWith("https://")) && trimmed.contains("/media/"));
-    }
-
     @Operation(summary = "分页查询系统用户(管理员)")
     @GetMapping("/page")
     @RequireRole(UserRole.ADMIN)
     public Result<Page<SysUser>> page(
-            @RequestParam(defaultValue = "1") int pageNum,
-            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(defaultValue = "1") @jakarta.validation.constraints.Min(1) int pageNum,
+            @RequestParam(defaultValue = "10") @jakarta.validation.constraints.Min(1) @jakarta.validation.constraints.Max(100) int pageSize,
             @RequestParam(required = false) String username,
             @RequestParam(required = false) String role
     ) {
@@ -89,6 +84,7 @@ public class UserController {
     @PostMapping("/{id}/status")
     @RequireRole(UserRole.ADMIN)
     public Result<Void> updateStatus(@PathVariable Long id, @RequestParam Integer status) {
+        if (status == null || (status != 0 && status != 1)) throw new BusinessException("账号状态仅支持0或1");
         SysUser user = sysUserMapper.selectById(id);
         if (user == null) {
             throw new BusinessException("用户不存在");
@@ -134,7 +130,7 @@ public class UserController {
     @Operation(summary = "修改当前登录用户的个人头像")
     @PostMapping("/avatar")
     public Result<String> updateAvatar(@Valid @RequestBody UpdateAvatarDTO dto) {
-        if (!isValidImageUrl(dto.getAvatar())) {
+        if (!imageUrlPolicy.allowsAvatarFor(dto.getAvatar(), UserContext.getUser().getId())) {
             throw new BusinessException("头像图片地址格式不合法，仅支持本系统及受信任的存储源");
         }
         LoginUser currentUser = UserContext.getUser();
@@ -160,7 +156,7 @@ public class UserController {
             user.setRealName(dto.getRealName().trim());
         }
         if (StringUtils.hasText(dto.getAvatar())) {
-            if (!isValidImageUrl(dto.getAvatar())) {
+            if (!dto.getAvatar().equals(user.getAvatar()) && !imageUrlPolicy.allowsAvatarFor(dto.getAvatar(), currentUser.getId())) {
                 throw new BusinessException("头像图片地址格式不合法，仅支持本系统及受信任的存储源");
             }
             user.setAvatar(dto.getAvatar().trim());

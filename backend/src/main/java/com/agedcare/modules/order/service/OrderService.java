@@ -6,6 +6,7 @@ import com.agedcare.common.enums.OrderStatus;
 import com.agedcare.common.enums.UserRole;
 import com.agedcare.common.exception.BusinessException;
 import com.agedcare.common.security.LoginUser;
+import com.agedcare.common.security.OrderAccessPolicy;
 import com.agedcare.common.security.UserContext;
 import com.agedcare.common.utils.OrderNoGenerator;
 import com.agedcare.modules.dispatch.entity.DispatchAttempt;
@@ -228,13 +229,7 @@ public class OrderService {
             throw new BusinessException("订单当前状态处于[" + (currentStatus != null ? currentStatus.getDesc() : order.getStatus()) + "]，服务已开始或已结束，无法取消");
         }
 
-        // 权限校验
-        if (!UserRole.ADMIN.getCode().equalsIgnoreCase(currentUser.getRole())
-                && !order.getRequesterUserId().equals(currentUser.getId())) {
-            // 家属也可以取消其授权老人的订单
-            ElderProfile elder = elderProfileMapper.selectById(order.getElderId());
-            elderProfileService.checkAccessPermission(elder);
-        }
+        OrderAccessPolicy.customer(order, elderProfileMapper, elderProfileService, true);
 
         // 撤销生效中的派单及预留
         if (order.getCurrentDispatchId() != null) {
@@ -346,31 +341,7 @@ public class OrderService {
             throw new BusinessException("订单不存在");
         }
 
-        // 对象级访问权限校验 (修复 B2)
-        if (!UserRole.ADMIN.getCode().equalsIgnoreCase(currentUser.getRole())) {
-            if (UserRole.RESIDENT.getCode().equalsIgnoreCase(currentUser.getRole())) {
-                boolean isRequester = order.getRequesterUserId().equals(currentUser.getId());
-                if (!isRequester) {
-                    ElderProfile elder = elderProfileMapper.selectById(order.getElderId());
-                    if (elder == null) {
-                        throw new BusinessException(403, "无权查看该订单详情");
-                    }
-                    elderProfileService.checkAccessPermission(elder);
-                }
-            } else if (UserRole.STAFF.getCode().equalsIgnoreCase(currentUser.getRole())) {
-                StaffProfile staff = staffProfileMapper.selectOne(new LambdaQueryWrapper<StaffProfile>()
-                        .eq(StaffProfile::getUserId, currentUser.getId()));
-                if (staff == null) {
-                    throw new BusinessException(403, "未找到关联服务人员档案");
-                }
-                Long assignedCount = dispatchAttemptMapper.selectCount(new LambdaQueryWrapper<DispatchAttempt>()
-                        .eq(DispatchAttempt::getOrderId, order.getId())
-                        .eq(DispatchAttempt::getStaffId, staff.getId()));
-                if (assignedCount == null || assignedCount == 0) {
-                    throw new BusinessException(403, "服务人员无权查看非指派给本人的订单详情");
-                }
-            }
-        }
+        OrderAccessPolicy.view(order, elderProfileMapper, elderProfileService, staffProfileMapper, dispatchAttemptMapper);
 
         return assembleOrderVO(order);
     }
@@ -378,6 +349,8 @@ public class OrderService {
     private OrderVO assembleOrderVO(ServiceOrder order) {
         OrderVO vo = new OrderVO();
         vo.setOrder(order);
+        vo.setPayerUserId(order.getRequesterUserId());
+        vo.setSettlementNote("由下单人协调线下结算；页面金额为预约时的预计费用，本系统不发起支付或扣款");
         vo.setElder(elderProfileMapper.selectById(order.getElderId()));
 
         String type = order.getRequesterType() != null ? order.getRequesterType() : "SELF";
@@ -387,6 +360,7 @@ public class OrderService {
             SysUser requester = sysUserMapper.selectById(order.getRequesterUserId());
             if (requester != null) {
                 vo.setRequesterName(StringUtils.hasText(requester.getRealName()) ? requester.getRealName() : requester.getUsername());
+                vo.setPayerName(vo.getRequesterName());
             }
         }
 
@@ -420,31 +394,7 @@ public class OrderService {
             throw new BusinessException("订单不存在");
         }
 
-        // 对象级访问权限校验
-        if (!UserRole.ADMIN.getCode().equalsIgnoreCase(currentUser.getRole())) {
-            if (UserRole.RESIDENT.getCode().equalsIgnoreCase(currentUser.getRole())) {
-                boolean isRequester = order.getRequesterUserId().equals(currentUser.getId());
-                if (!isRequester) {
-                    ElderProfile elder = elderProfileMapper.selectById(order.getElderId());
-                    if (elder == null) {
-                        throw new BusinessException(403, "无权查看该订单轨迹");
-                    }
-                    elderProfileService.checkAccessPermission(elder);
-                }
-            } else if (UserRole.STAFF.getCode().equalsIgnoreCase(currentUser.getRole())) {
-                StaffProfile staff = staffProfileMapper.selectOne(new LambdaQueryWrapper<StaffProfile>()
-                        .eq(StaffProfile::getUserId, currentUser.getId()));
-                if (staff == null) {
-                    throw new BusinessException(403, "未找到关联服务人员档案");
-                }
-                Long assignedCount = dispatchAttemptMapper.selectCount(new LambdaQueryWrapper<DispatchAttempt>()
-                        .eq(DispatchAttempt::getOrderId, order.getId())
-                        .eq(DispatchAttempt::getStaffId, staff.getId()));
-                if (assignedCount == null || assignedCount == 0) {
-                    throw new BusinessException(403, "服务人员无权查看非指派给本人的订单轨迹");
-                }
-            }
-        }
+        OrderAccessPolicy.view(order, elderProfileMapper, elderProfileService, staffProfileMapper, dispatchAttemptMapper);
 
         return buildTrackingVO(order);
     }

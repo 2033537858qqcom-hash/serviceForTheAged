@@ -15,9 +15,9 @@
 
 ---
 
-## 二、默认测试演示账号 (统一初始密码: `123456`)
+## 二、本地测试演示账号
 
-系统支持在微信小程序及 Web 后台通过测试面板**一键免密切换角色**，极为方便答辩演示：
+以下账号来自本地演示数据，仅用于开发和答辩。模拟登录接口仅在显式启用 dev/test 环境且设置 `APP_DEV_MODE=true` 时提供；生产环境不注册该接口。正式部署前需重设账号凭据，不能直接使用演示数据库。
 
 | 身份角色 | 登录用户名 | 姓名 | 职责与测试场景 |
 | :--- | :--- | :--- | :--- |
@@ -37,15 +37,22 @@
 数据库 `aged_care_db` 已完成建表和基础数据导入：
 ```bash
 # 如需重置数据库：
-mysql -u root -p123456 --default-character-set=utf8mb4 < sql/schema.sql
-mysql -u root -p123456 --default-character-set=utf8mb4 < sql/data.sql
+mysql -u root -p --default-character-set=utf8mb4 < sql/schema.sql
+mysql -u root -p --default-character-set=utf8mb4 < sql/data.sql
 ```
 
 ### 2. 启动 Java 后端
-```bash
+```powershell
 cd backend
+$env:SPRING_PROFILES_ACTIVE = 'dev'
+$env:DB_USER = Read-Host '数据库账号'
+$databasePassword = Read-Host '数据库密码' -AsSecureString
+$env:DB_PASSWORD = [Net.NetworkCredential]::new('', $databasePassword).Password
+$env:JWT_SECRET = [Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
 mvn spring-boot:run
 ```
+- 默认启动环境为 `prod`，本地 IDEA 运行配置也需显式指定 `dev`。开发模式下 `APP_DEV_MODE` 默认仍为 `false`，正常微信登录无需开启模拟登录。
+- 上述临时 JWT 密钥更换后需重新登录。持续联调请在本机安全保存固定的随机密钥。
 - 微信本地配置：`backend/config/wechat-local.properties`（已忽略 Git 提交）。开发配置会自动加载此文件；也可通过 `WECHAT_APPID` / `WECHAT_SECRET` 环境变量覆盖。
 - 后端服务端口：`http://localhost:8080/api`
 - Swagger / OpenAPI 在线接口文档：`http://localhost:8080/api/swagger-ui.html`
@@ -56,7 +63,7 @@ cd admin-web
 npm run dev
 ```
 - 管理后台访问地址：`http://localhost:3000`
-- 支持一键快速登录。
+- 管理员使用账号密码登录；模拟登录须按上述条件单独启用。
 
 ### 4. 运行微信小程序
 1. 打开**微信开发者工具**。

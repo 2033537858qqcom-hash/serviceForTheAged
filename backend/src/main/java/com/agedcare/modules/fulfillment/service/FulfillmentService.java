@@ -5,6 +5,9 @@ import com.agedcare.common.enums.BookingStatus;
 import com.agedcare.common.enums.OrderStatus;
 import com.agedcare.common.enums.UserRole;
 import com.agedcare.common.exception.BusinessException;
+import com.agedcare.common.storage.ImageUrlPolicy;
+import com.agedcare.common.storage.PrivateMediaService;
+import com.agedcare.common.security.OrderAccessPolicy;
 import com.agedcare.common.security.LoginUser;
 import com.agedcare.common.security.UserContext;
 import com.agedcare.modules.dispatch.entity.DispatchAttempt;
@@ -58,6 +61,8 @@ public class FulfillmentService {
     private final ServiceReviewMapper serviceReviewMapper;
     private final ServiceComplaintMapper serviceComplaintMapper;
     private final ObjectMapper objectMapper;
+    private final ImageUrlPolicy imageUrlPolicy;
+    private final PrivateMediaService privateMedia;
 
     /**
      * 服务人员开始上门服务
@@ -105,14 +110,14 @@ public class FulfillmentService {
             ServiceRecord newRecord = ServiceRecord.builder()
                     .orderId(order.getId())
                     .staffId(attempt.getStaffId())
-                    .actualStartAt(LocalDateTime.now())
+                    .actualStartAt(LocalDateTime.now().withNano(0))
                     .createdAt(LocalDateTime.now())
                     .updatedAt(LocalDateTime.now())
                     .build();
             serviceRecordMapper.insert(newRecord);
         } else {
             existingRecord.setStaffId(attempt.getStaffId());
-            existingRecord.setActualStartAt(LocalDateTime.now());
+            existingRecord.setActualStartAt(LocalDateTime.now().withNano(0));
             existingRecord.setUpdatedAt(LocalDateTime.now());
             serviceRecordMapper.updateById(existingRecord);
         }
@@ -162,18 +167,9 @@ public class FulfillmentService {
         ServiceRecord existing = serviceRecordMapper.selectOne(new LambdaQueryWrapper<ServiceRecord>()
                 .eq(ServiceRecord::getOrderId, order.getId()));
 
-        // 如果前端未传 actualStartAt，从已有记录获取，或兜底推断
-        if (record.getActualStartAt() == null) {
-            if (existing != null && existing.getActualStartAt() != null) {
-                record.setActualStartAt(existing.getActualStartAt());
-            } else {
-                record.setActualStartAt(LocalDateTime.now().minusMinutes(30));
-            }
-        }
-
-        if (record.getActualEndAt() == null) {
-            record.setActualEndAt(LocalDateTime.now());
-        }
+        if (existing == null || existing.getActualStartAt() == null) throw new BusinessException("请先签到开始服务");
+        record.setActualStartAt(existing.getActualStartAt());
+        record.setActualEndAt(LocalDateTime.now().withNano(0));
 
         if (record.getActualEndAt().isBefore(record.getActualStartAt())) {
             throw new BusinessException("实际结束时间不能早于开始时间");
@@ -195,9 +191,8 @@ public class FulfillmentService {
                 }
                 for (JsonNode item : arrayNode) {
                     String imgUrl = item.asText();
-                    if (!isValidAttachmentUrl(imgUrl)) {
-                        throw new BusinessException("现场凭证包含未受信任或非法的图片地址");
-                    }
+                    if (!item.isTextual()) throw new BusinessException("照片地址必须为字符串");
+                    privateMedia.requireOwned(imgUrl, order.getId(), currentUser.getId());
                 }
             } catch (IOException e) {
                 throw new BusinessException("现场照片凭证格式无效");
@@ -251,13 +246,11 @@ public class FulfillmentService {
         if (!OrderStatus.WAIT_CONFIRM.getCode().equals(order.getStatus())) {
             throw new BusinessException("订单非待确认状态");
         }
-
-        // 权限校验：非管理员只能由下单人或已绑定的老人/家属确认
-        if (!UserRole.ADMIN.getCode().equalsIgnoreCase(currentUser.getRole())
-                && !order.getRequesterUserId().equals(currentUser.getId())) {
-            ElderProfile elder = elderProfileMapper.selectById(order.getElderId());
-            elderProfileService.checkAccessPermission(elder);
+        if ("ADMIN".equals(currentUser.getRole()) && (note == null || note.trim().length() < 10 || note.length() > 220)) {
+            throw new BusinessException("管理员代确认必须填写10至220字的核验依据及代办原因");
         }
+
+        OrderAccessPolicy.customer(order, elderProfileMapper, elderProfileService, true);
 
         order.setStatus(OrderStatus.COMPLETED.getCode());
         order.setConfirmedByUserId(currentUser.getId());
@@ -304,14 +297,7 @@ public class FulfillmentService {
             throw new BusinessException("订单尚未完成，暂无法评价");
         }
 
-        // 权限校验：管理员不得代客评价（防止人为干预服务质量指标）；非下单人需校验老人关联授权
-        if (UserRole.ADMIN.getCode().equalsIgnoreCase(currentUser.getRole())) {
-            throw new BusinessException(403, "管理员不得代用户评价，以确保履约质量与派单数据客观真实");
-        }
-        if (!order.getRequesterUserId().equals(currentUser.getId())) {
-            ElderProfile elder = elderProfileMapper.selectById(order.getElderId());
-            elderProfileService.checkAccessPermission(elder);
-        }
+        OrderAccessPolicy.customer(order, elderProfileMapper, elderProfileService, false);
 
         Long existingCount = serviceReviewMapper.selectCount(new LambdaQueryWrapper<ServiceReview>()
                 .eq(ServiceReview::getOrderId, order.getId()));
@@ -371,11 +357,7 @@ public class FulfillmentService {
         if (order == null) {
             throw new BusinessException("目标订单不存在");
         }
-        // 权限校验：仅下单人或关联老人/家属可以发起投诉
-        if (!order.getRequesterUserId().equals(currentUser.getId())) {
-            ElderProfile elder = elderProfileMapper.selectById(order.getElderId());
-            elderProfileService.checkAccessPermission(elder);
-        }
+        OrderAccessPolicy.customer(order, elderProfileMapper, elderProfileService, false);
 
         complaint.setComplainantId(currentUser.getId());
         complaint.setStatus("PENDING");
@@ -426,11 +408,4 @@ public class FulfillmentService {
         orderStatusLogMapper.insert(logEntity);
     }
 
-    private boolean isValidAttachmentUrl(String url) {
-        if (!StringUtils.hasText(url)) return false;
-        String trimmed = url.trim();
-        return (trimmed.startsWith("https://") && (trimmed.contains(".myqcloud.com/") || trimmed.contains(".cos.")))
-                || trimmed.startsWith("/media/")
-                || ((trimmed.startsWith("http://") || trimmed.startsWith("https://")) && trimmed.contains("/media/"));
-    }
 }

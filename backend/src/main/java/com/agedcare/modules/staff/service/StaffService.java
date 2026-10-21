@@ -167,7 +167,7 @@ public class StaffService {
 
     @Transactional(rollbackFor = Exception.class)
     public void addShift(StaffShift shift) {
-        if (shift.getEndTime().isBefore(shift.getStartTime())) {
+        if (!shift.getEndTime().isAfter(shift.getStartTime())) {
             throw new BusinessException("排班结束时间不能早于开始时间");
         }
         shift.setStatus("ACTIVE");

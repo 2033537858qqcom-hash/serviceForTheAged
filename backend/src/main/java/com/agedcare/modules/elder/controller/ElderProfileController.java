@@ -4,6 +4,9 @@ import com.agedcare.common.api.Result;
 import com.agedcare.common.enums.UserRole;
 import com.agedcare.common.security.RequireRole;
 import com.agedcare.modules.elder.entity.ElderProfile;
+import com.agedcare.modules.elder.dto.ElderSaveDTO;
+import jakarta.validation.Valid;
+import org.springframework.beans.BeanUtils;
 import com.agedcare.modules.elder.service.ElderProfileService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.v3.oas.annotations.Operation;
@@ -14,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @Tag(name = "老人档案管理")
+@org.springframework.validation.annotation.Validated
 @RestController
 @RequestMapping("/elders")
 @RequiredArgsConstructor
@@ -25,8 +29,8 @@ public class ElderProfileController {
     @GetMapping("/page")
     @RequireRole(UserRole.ADMIN)
     public Result<Page<ElderProfile>> page(
-            @RequestParam(defaultValue = "1") int pageNum,
-            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(defaultValue = "1") @jakarta.validation.constraints.Min(1) int pageNum,
+            @RequestParam(defaultValue = "10") @jakarta.validation.constraints.Min(1) @jakarta.validation.constraints.Max(100) int pageSize,
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String community
     ) {
@@ -49,7 +53,9 @@ public class ElderProfileController {
     @Operation(summary = "新增或编辑老人档案")
     @PostMapping("/save")
     @RequireRole({UserRole.RESIDENT, UserRole.ADMIN})
-    public Result<ElderProfile> saveOrUpdate(@RequestBody ElderProfile profile) {
+    public Result<ElderProfile> saveOrUpdate(@Valid @RequestBody ElderSaveDTO dto) {
+        ElderProfile profile = new ElderProfile();
+        BeanUtils.copyProperties(dto, profile);
         return Result.success(elderProfileService.saveOrUpdate(profile));
     }
 }

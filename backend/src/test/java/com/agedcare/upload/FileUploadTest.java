@@ -5,6 +5,7 @@ import com.agedcare.common.exception.BusinessException;
 import com.agedcare.common.security.LoginUser;
 import com.agedcare.common.security.UserContext;
 import com.agedcare.common.storage.CosService;
+import com.agedcare.common.storage.ImageUrlPolicy;
 import com.agedcare.modules.upload.controller.FileUploadController;
 import com.agedcare.modules.user.controller.UserController;
 import com.agedcare.modules.user.dto.UserSummaryVO;
@@ -21,6 +22,9 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.nio.file.Path;
 import java.util.Map;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import javax.imageio.ImageIO;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -40,18 +44,19 @@ class FileUploadTest {
     @BeforeEach
     void setUp() {
         cosService = new CosService();
-        ReflectionTestUtils.setField(cosService, "secretId", "mock-test-secret-id");
-        ReflectionTestUtils.setField(cosService, "secretKey", "mock-test-secret-key");
+        // 本地存储测试禁止向真实 COS 发出网络请求。
+        ReflectionTestUtils.setField(cosService, "secretId", "");
+        ReflectionTestUtils.setField(cosService, "secretKey", "");
         ReflectionTestUtils.setField(cosService, "bucket", "test-bucket");
         ReflectionTestUtils.setField(cosService, "region", "ap-guangzhou");
         ReflectionTestUtils.setField(cosService, "fallbackDir", tempDir.toString());
         cosService.init();
 
-        fileUploadController = new FileUploadController(cosService);
+        fileUploadController = new FileUploadController(cosService, mock(com.agedcare.common.storage.PrivateMediaService.class), mock(com.agedcare.modules.serviceitem.service.ServiceImageStorage.class));
 
         sysUserMapper = mock(SysUserMapper.class);
         passwordEncoder = mock(PasswordEncoder.class);
-        userController = new UserController(sysUserMapper, passwordEncoder);
+        userController = new UserController(sysUserMapper, passwordEncoder, new ImageUrlPolicy());
 
         UserContext.setUser(LoginUser.builder()
                 .id(1001L)
@@ -71,19 +76,19 @@ class FileUploadTest {
     @Test
     void testUploadEmptyFileThrowsException() {
         MockMultipartFile emptyFile = new MockMultipartFile("file", "empty.jpg", "image/jpeg", new byte[0]);
-        assertThrows(BusinessException.class, () -> fileUploadController.uploadImage(emptyFile, "avatar"));
+        assertThrows(BusinessException.class, () -> fileUploadController.uploadImage(emptyFile, "avatar", null));
     }
 
     @Test
     void testUploadInvalidExtensionThrowsException() {
         MockMultipartFile txtFile = new MockMultipartFile("file", "test.txt", "text/plain", "hello".getBytes());
-        assertThrows(BusinessException.class, () -> fileUploadController.uploadImage(txtFile, "avatar"));
+        assertThrows(BusinessException.class, () -> fileUploadController.uploadImage(txtFile, "avatar", null));
     }
 
     @Test
     void testUploadAvatarSuccess() {
-        MockMultipartFile validImage = new MockMultipartFile("file", "my-avatar.png", "image/png", new byte[]{1, 2, 3, 4});
-        Result<Map<String, String>> result = fileUploadController.uploadImage(validImage, "avatar");
+        MockMultipartFile validImage = picture("png");
+        Result<Map<String, String>> result = fileUploadController.uploadImage(validImage, "avatar", null);
         assertNotNull(result);
         assertEquals(200, result.getCode());
         assertNotNull(result.getData());
@@ -94,25 +99,8 @@ class FileUploadTest {
 
     @Test
     void testResidentUploadFulfillmentForbidden() {
-        MockMultipartFile validImage = new MockMultipartFile("file", "done.jpg", "image/jpeg", new byte[]{1, 2, 3});
-        assertThrows(BusinessException.class, () -> fileUploadController.uploadImage(validImage, "fulfillment"));
-    }
-
-    @Test
-    void testStaffUploadFulfillmentSuccess() {
-        UserContext.setUser(LoginUser.builder()
-                .id(2001L)
-                .username("staff01")
-                .role("STAFF")
-                .build());
-        MockMultipartFile validImage = new MockMultipartFile("file", "done.jpg", "image/jpeg", new byte[]{1, 2, 3});
-        Result<Map<String, String>> result = fileUploadController.uploadImage(validImage, "fulfillment");
-        assertNotNull(result);
-        assertEquals(200, result.getCode());
-        assertNotNull(result.getData());
-        String url = result.getData().get("url");
-        assertNotNull(url);
-        assertTrue(url.contains("fulfillment") || url.contains("fallback"));
+        MockMultipartFile validImage = picture("jpg");
+        assertThrows(BusinessException.class, () -> fileUploadController.uploadImage(validImage, "fulfillment", 1L));
     }
 
     @Test
@@ -132,11 +120,46 @@ class FileUploadTest {
         assertEquals("http://cos.myqcloud.com/old.jpg", profileResult.getData().getAvatar());
 
         UserController.UpdateAvatarDTO dto = new UserController.UpdateAvatarDTO();
-        dto.setAvatar("https://shiyan-bbs-01-1429420924.cos.ap-guangzhou.myqcloud.com/avatars/new.jpg");
+        dto.setAvatar("/media/fallback/avatars/1001/20261021/0123456789abcdef0123456789abcdef.jpg");
 
         Result<String> avatarResult = userController.updateAvatar(dto);
         assertEquals(200, avatarResult.getCode());
         assertEquals(dto.getAvatar(), avatarResult.getData());
         verify(sysUserMapper, atLeastOnce()).updateById(any(SysUser.class));
+    }
+
+    @Test void rejectsShortAndMismatchedImageSignatures() {
+        for (byte[] bytes : new byte[][]{{1}, {1, 2}, {1, 2, 3}, {1, 2, 3, 4}, {(byte) 0x89, 80, 78, 71, 0, 0, 0, 0}}) {
+            assertThrows(BusinessException.class, () -> cosService.uploadImage(
+                    new MockMultipartFile("file", "fake.png", "image/png", bytes), "avatars"));
+        }
+        assertThrows(BusinessException.class, () -> cosService.uploadImage(new MockMultipartFile(
+                "file", "disguised.jpg", "image/jpeg", picture("png").getBytes()), "avatars"));
+    }
+
+    @Test void fallbackDoesNotUseRequestHost() {
+        var request = new org.springframework.mock.web.MockHttpServletRequest();
+        request.setServerName("evil.example");
+        org.springframework.web.context.request.RequestContextHolder.setRequestAttributes(
+                new org.springframework.web.context.request.ServletRequestAttributes(request));
+        try {
+            String relative = cosService.uploadImage(picture("png"), "avatars");
+            assertTrue(relative.startsWith("/media/fallback/avatars/"));
+            ReflectionTestUtils.setField(cosService, "publicBaseUrl", "https://care.example/api/");
+            assertTrue(cosService.uploadImage(picture("png"), "avatars").startsWith("https://care.example/api/media/"));
+        } finally {
+            org.springframework.web.context.request.RequestContextHolder.resetRequestAttributes();
+        }
+    }
+
+    private MockMultipartFile picture(String format) {
+        try {
+            var out = new ByteArrayOutputStream();
+            ImageIO.write(new BufferedImage(2, 2, BufferedImage.TYPE_INT_RGB), format, out);
+            return new MockMultipartFile("file", "picture." + format,
+                    "png".equals(format) ? "image/png" : "image/jpeg", out.toByteArray());
+        } catch (java.io.IOException e) {
+            throw new AssertionError(e);
+        }
     }
 }

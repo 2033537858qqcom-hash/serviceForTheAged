@@ -42,6 +42,7 @@ const route = useRoute()
 const router = useRouter()
 const sidebarOpen = ref(false)
 const navigation = [
+  { path: '/operation-logs', label: '操作日志', icon: 'Document' },
   { path: '/dashboard', label: '工作台', icon: 'Odometer' },
   { path: '/orders', label: '服务订单', icon: 'Document' },
   { path: '/dispatch', label: '智能派单', icon: 'Connection' },

@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @Tag(name = "家属绑定与授权")
+@org.springframework.validation.annotation.Validated
 @RestController
 @RequestMapping("/family-bindings")
 @RequiredArgsConstructor
@@ -27,16 +28,22 @@ public class FamilyBindingController {
     @Data
     public static class ApplyDTO {
         private Long elderId;
+        @jakarta.validation.constraints.Size(max=20)
         private String elderPhone;
+        @jakarta.validation.constraints.Size(max=64)
         private String elderName;
+        @jakarta.validation.constraints.Size(max=32)
         private String relation;
+        @jakarta.validation.constraints.Size(max=1000)
         private String proofMaterials;
     }
 
     @Data
     public static class AuditDTO {
+        @jakarta.validation.constraints.NotNull @jakarta.validation.constraints.Positive
         private Long bindingId;
         private boolean approve;
+        @jakarta.validation.constraints.Size(max=200)
         private String reason;
     }
 
@@ -50,7 +57,7 @@ public class FamilyBindingController {
     @Operation(summary = "提交家属代约/监护绑定申请")
     @PostMapping("/apply")
     @RequireRole(UserRole.RESIDENT)
-    public Result<FamilyBinding> apply(@RequestBody ApplyDTO dto) {
+    public Result<FamilyBinding> apply(@jakarta.validation.Valid @RequestBody ApplyDTO dto) {
         return Result.success(familyBindingService.applyBinding(dto.getElderId(), dto.getElderPhone(), dto.getElderName(), dto.getRelation(), dto.getProofMaterials()));
     }
 
@@ -65,8 +72,8 @@ public class FamilyBindingController {
     @GetMapping("/page")
     @RequireRole(UserRole.ADMIN)
     public Result<Page<FamilyBindingVO>> page(
-            @RequestParam(defaultValue = "1") int pageNum,
-            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(defaultValue = "1") @jakarta.validation.constraints.Min(1) int pageNum,
+            @RequestParam(defaultValue = "10") @jakarta.validation.constraints.Min(1) @jakarta.validation.constraints.Max(100) int pageSize,
             @RequestParam(required = false) String status
     ) {
         return Result.success(familyBindingService.pageBindings(pageNum, pageSize, status));
@@ -75,7 +82,7 @@ public class FamilyBindingController {
     @Operation(summary = "管理员审核绑定申请")
     @PostMapping("/audit")
     @RequireRole(UserRole.ADMIN)
-    public Result<Void> audit(@RequestBody AuditDTO dto) {
+    public Result<Void> audit(@jakarta.validation.Valid @RequestBody AuditDTO dto) {
         familyBindingService.auditBinding(dto.getBindingId(), dto.isApprove(), dto.getReason());
         return Result.success();
     }

@@ -17,6 +17,9 @@ public class OrderVO {
     private String requesterType; // SELF, FAMILY
     private String requesterTypeDesc; // 老人自约, 家属代约
     private String requesterName; // 下单人真实姓名或用户名
+    private Long payerUserId; // 下单人为费用协调责任人；平台不发起支付扣款
+    private String payerName;
+    private String settlementNote;
     private ElderProfile elder;
     private DispatchAttempt currentDispatch;
     private StaffDetailVO currentStaff;

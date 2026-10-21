@@ -44,4 +44,7 @@ uploads/
 # WeChat DevTools Private Config
 project.private.config.json
 **/project.private.config.json
+.env
+.env.*
+!.env.example
 

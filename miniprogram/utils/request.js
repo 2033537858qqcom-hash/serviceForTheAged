@@ -5,6 +5,7 @@ function expireSession(app, token, baseUrl) {
   const state = app.globalData;
   // A late response from a previous account/server must not log out the current account.
   if (state.token !== token || state.baseUrl !== baseUrl) return;
+  require('./media-url.js').clearPrivateMedia();
   state.token = '';
   state.userInfo = null;
   state.role = 'RESIDENT';

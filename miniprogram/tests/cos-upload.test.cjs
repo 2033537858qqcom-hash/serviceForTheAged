@@ -25,7 +25,7 @@ test('user profile avatar upload triggers chooseMedia, wx.uploadFile and updates
     uploadFile(opts) {
       uploadHeader = opts.header;
       // 模拟后台返回腾讯云 COS 上传成功响应
-      const cosUrl = 'https://shiyan-bbs-01-1429420924.cos.ap-guangzhou.myqcloud.com/avatars/avatar_123.png';
+      const cosUrl = 'https://test-bucket-1234567890.cos.ap-guangzhou.myqcloud.com/avatars/avatar_123.png';
       uploadedUrl = cosUrl;
       opts.success({
         statusCode: 200,
@@ -65,7 +65,7 @@ test('user profile avatar upload triggers chooseMedia, wx.uploadFile and updates
   page.chooseAndUploadAvatar();
 
   assert.equal(uploadHeader?.Authorization, 'Bearer jwt-token-123');
-  assert.equal(uploadedUrl, 'https://shiyan-bbs-01-1429420924.cos.ap-guangzhou.myqcloud.com/avatars/avatar_123.png');
+  assert.equal(uploadedUrl, 'https://test-bucket-1234567890.cos.ap-guangzhou.myqcloud.com/avatars/avatar_123.png');
   assert.equal(postedAvatar, uploadedUrl);
   // 等待 microtask 触发 promise 回调
   await new Promise(r => setTimeout(r, 10));
@@ -96,7 +96,7 @@ test('staff workbench fulfillment photos upload, preview, delete and submit atta
       });
     },
     uploadFile(opts) {
-      const cosUrl = `https://shiyan-bbs-01-1429420924.cos.ap-guangzhou.myqcloud.com/fulfillment/${opts.filePath.replace('wxfile://', '')}`;
+      const cosUrl = `https://test-bucket-1234567890.cos.ap-guangzhou.myqcloud.com/fulfillment/${opts.filePath.replace('wxfile://', '')}`;
       opts.success({
         statusCode: 200,
         data: JSON.stringify({
@@ -176,8 +176,8 @@ test('order detail correctly parses attachmentsJson and binds preview for fulfil
       actualEndAt: '2026-10-21 15:00:00',
       serviceSummary: '助餐照护完成',
       attachmentsJson: JSON.stringify([
-        'https://shiyan-bbs-01-1429420924.cos.ap-guangzhou.myqcloud.com/fulfillment/p1.jpg',
-        'https://shiyan-bbs-01-1429420924.cos.ap-guangzhou.myqcloud.com/fulfillment/p2.jpg'
+        'https://test-bucket-1234567890.cos.ap-guangzhou.myqcloud.com/fulfillment/p1.jpg',
+        'https://test-bucket-1234567890.cos.ap-guangzhou.myqcloud.com/fulfillment/p2.jpg'
       ])
     }
   };
@@ -204,9 +204,9 @@ test('order detail correctly parses attachmentsJson and binds preview for fulfil
   await page.loadDetail(666, true);
 
   assert.equal(page.data.fulfillmentPhotos.length, 2);
-  assert.equal(page.data.fulfillmentPhotos[0], 'https://shiyan-bbs-01-1429420924.cos.ap-guangzhou.myqcloud.com/fulfillment/p1.jpg');
+  assert.equal(page.data.fulfillmentPhotos[0], 'https://test-bucket-1234567890.cos.ap-guangzhou.myqcloud.com/fulfillment/p1.jpg');
 
   // 点击查看大图
   page.previewFulfillmentPhoto({ currentTarget: { dataset: { url: page.data.fulfillmentPhotos[1] } } });
-  assert.equal(previewCurrent, 'https://shiyan-bbs-01-1429420924.cos.ap-guangzhou.myqcloud.com/fulfillment/p2.jpg');
+  assert.equal(previewCurrent, 'https://test-bucket-1234567890.cos.ap-guangzhou.myqcloud.com/fulfillment/p2.jpg');
 });

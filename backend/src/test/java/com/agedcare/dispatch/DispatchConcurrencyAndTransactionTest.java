@@ -49,7 +49,7 @@ import static org.mockito.Mockito.reset;
  * 5. 写入后事务回滚 (验证数据写入 dispatch_attempt/staff_booking 后发生异常，全部原子回滚)
  */
 @SpringBootTest
-public class DispatchConcurrencyAndTransactionTest {
+public class DispatchConcurrencyAndTransactionTest extends com.agedcare.IsolatedIntegrationTest {
 
     @Autowired
     private DispatchService dispatchService;
@@ -72,6 +72,8 @@ public class DispatchConcurrencyAndTransactionTest {
     @SpyBean
     private OrderStatusLogMapper orderStatusLogMapper;
 
+    @SpyBean private com.agedcare.modules.dispatch.service.DispatchScoreEngine engine;
+
     private final List<Long> createdOrderIds = new ArrayList<>();
     private final List<Long> createdAttemptIds = new ArrayList<>();
     private final List<Long> createdBookingIds = new ArrayList<>();
@@ -80,7 +82,7 @@ public class DispatchConcurrencyAndTransactionTest {
     @AfterEach
     void tearDown() {
         UserContext.clear();
-        reset(orderStatusLogMapper);
+        reset(orderStatusLogMapper, engine);
 
         for (Long bId : createdBookingIds) {
             staffBookingMapper.deleteById(bId);
@@ -90,6 +92,7 @@ public class DispatchConcurrencyAndTransactionTest {
         }
         for (Long oId : createdOrderIds) {
             dispatchScoreMapper.delete(new LambdaQueryWrapper<DispatchScore>().eq(DispatchScore::getOrderId, oId));
+            orderStatusLogMapper.delete(new LambdaQueryWrapper<OrderStatusLog>().eq(OrderStatusLog::getOrderId, oId));
             serviceOrderMapper.deleteById(oId);
         }
         for (Long sId : createdStaffIds) {
@@ -315,13 +318,26 @@ public class DispatchConcurrencyAndTransactionTest {
         StaffProfile staff = createIsolatedTestStaff();
         ServiceOrder order = createTestOrder("ORD_WRITE_ROLLBACK_" + System.currentTimeMillis(), OrderStatus.WAIT_DISPATCH.getCode());
 
-        // 使用 SpyBean 模拟在排班预留插入完成后，记录状态转换日志时发生数据库/磁盘写入异常
-        doThrow(new RuntimeException("Simulated status log disk write failure")).when(orderStatusLogMapper).insert(any(OrderStatusLog.class));
+        var candidate = com.agedcare.modules.dispatch.dto.CandidateEvaluationResult.builder()
+                .staffId(staff.getId()).qualified(true).metricD(BigDecimal.ONE).metricQ(BigDecimal.ONE)
+                .metricL(BigDecimal.ONE).metricF(BigDecimal.ZERO).totalScore(BigDecimal.ONE).detailsJson("{}").build();
+        org.mockito.Mockito.doReturn(List.of(candidate)).when(engine).evaluateAllCandidates(any(ServiceOrder.class));
+        org.mockito.Mockito.doReturn(candidate).when(engine).evaluateSingleCandidate(any(StaffProfile.class), any(ServiceOrder.class));
+        AtomicInteger observedWrites = new AtomicInteger();
+        org.mockito.Mockito.doAnswer(invocation -> {
+            assertTrue(dispatchAttemptMapper.selectCount(new LambdaQueryWrapper<DispatchAttempt>().eq(DispatchAttempt::getOrderId, order.getId())) > 0);
+            assertTrue(staffBookingMapper.selectCount(new LambdaQueryWrapper<StaffBooking>().eq(StaffBooking::getOrderId, order.getId())) > 0);
+            assertTrue(dispatchScoreMapper.selectCount(new LambdaQueryWrapper<DispatchScore>().eq(DispatchScore::getOrderId, order.getId())) > 0);
+            observedWrites.incrementAndGet();
+            throw new RuntimeException("Simulated status log disk write failure");
+        }).when(orderStatusLogMapper).insert(any(OrderStatusLog.class));
 
         // 发起人工指派派单，在写入 dispatch_attempt 和 staff_booking 之后，因状态日志异常触发整体事务回滚
         assertThrows(RuntimeException.class, () -> {
             dispatchService.dispatchOrder(order.getId(), staff.getId(), "MANUAL");
         });
+
+        assertEquals(1, observedWrites.get(), "必须先看到三类实际写入，才能验证回滚");
 
         // 彻底验证数据库持久化层事务回滚:
         // 1. 尝试记录必须回滚为 0 条
@@ -344,4 +360,15 @@ public class DispatchConcurrencyAndTransactionTest {
         assertEquals(OrderStatus.WAIT_DISPATCH.getCode(), dbOrder.getStatus(), "订单状态必须保持原有 WAIT_DISPATCH");
         assertNull(dbOrder.getCurrentDispatchId(), "订单当前派单关联必须保持为 NULL");
     }
+    @Test void expiredDispatchCommitsManualQueueAndLogInMysql() {
+        ServiceOrder order = createTestOrder("EXPIRED_" + System.nanoTime(), "WAIT_DISPATCH");
+        order.setPlannedEndAt(LocalDateTime.now().minusMinutes(1));
+        serviceOrderMapper.updateById(order);
+        assertNull(dispatchService.dispatchOrder(order.getId(), null, "AUTO"));
+        assertEquals("WAIT_MANUAL", serviceOrderMapper.selectById(order.getId()).getStatus());
+        assertEquals(1L, orderStatusLogMapper.selectCount(new LambdaQueryWrapper<OrderStatusLog>().eq(OrderStatusLog::getOrderId, order.getId()).eq(OrderStatusLog::getToStatus, "WAIT_MANUAL")));
+        assertNull(dispatchService.dispatchOrder(order.getId(), null, "AUTO"));
+        assertEquals(1L, orderStatusLogMapper.selectCount(new LambdaQueryWrapper<OrderStatusLog>().eq(OrderStatusLog::getOrderId, order.getId())));
+    }
+
 }

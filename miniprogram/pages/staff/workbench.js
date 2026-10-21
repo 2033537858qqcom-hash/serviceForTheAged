@@ -1,5 +1,6 @@
 const navigation = require('../../utils/navigation.js');
 const request = require('../../utils/request.js');
+const { mediaUrl, loadMedia } = require('../../utils/media-url.js');
 const { lightTap } = require('../../utils/feedback.js');
 const { syncTabBar } = require('../../utils/tab-bar.js');
 const { hasCoordinates } = require('../../utils/coordinates.js');
@@ -46,7 +47,8 @@ Page({
     showRecordModal: false,
     currentOrderId: null,
     recordSummary: '',
-    recordPhotos: [],
+    recordPhotos: [], recordPhotoSources: [],
+    mediaBaseUrl: '',
     photoUploading: false,
     actionLoading: false,
     actionId: null,
@@ -76,6 +78,7 @@ Page({
     this._hidden = false;
     syncTabBar(this, 0);
     const app = getAppSafe();
+    this.setData({ mediaBaseUrl: (app.globalData?.baseUrl || '').replace(/\/$/, '') });
     const isDev = /^https?:\/\/(localhost|127\.0\.0\.1|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01]))/i.test(app.globalData?.baseUrl || '');
     if (this.data.isDevMode !== isDev) this.setData({ isDevMode: isDev });
     const context = sessionKey(app);
@@ -301,7 +304,7 @@ Page({
       showRecordModal: true,
       currentOrderId: orderId,
       recordSummary: '',
-      recordPhotos: [],
+      recordPhotos: [], recordPhotoSources: [],
       photoUploading: false
     });
   },
@@ -321,7 +324,7 @@ Page({
           success(res) {
             if (res.confirm) {
               that._recordSummary = '';
-              that.setData({ showRecordModal: false, recordSummary: '', recordPhotos: [], photoUploading: false });
+              that.setData({ showRecordModal: false, recordSummary: '', recordPhotos: [], recordPhotoSources: [], photoUploading: false });
             }
           }
         });
@@ -329,7 +332,7 @@ Page({
       }
     }
     this._recordSummary = '';
-    this.setData({ showRecordModal: false, recordSummary: '', recordPhotos: [], photoUploading: false });
+    this.setData({ showRecordModal: false, recordSummary: '', recordPhotos: [], recordPhotoSources: [], photoUploading: false });
   },
 
   onInputSummary(e) {
@@ -359,7 +362,7 @@ Page({
           return;
         }
         wx.uploadFile({
-          url: `${baseUrl}/upload/image?type=fulfillment`,
+          url: `${baseUrl}/upload/image?type=fulfillment&orderId=${encodeURIComponent(that.data.currentOrderId)}`,
           filePath: filePath,
           name: 'file',
           header: {
@@ -374,7 +377,7 @@ Page({
               return;
             }
             if (data && (data.code === 200 || data.code === 0) && data.data && data.data.url) {
-              resolve(data.data.url);
+              loadMedia(data.data.url).then(preview => resolve({ url: data.data.url, preview }), reject);
             } else {
               reject(new Error(data?.message || '上传失败'));
             }
@@ -392,7 +395,10 @@ Page({
       }
 
       const uploadTasks = filePaths.slice(0, remaining).map(p => uploadFilePromise(p));
+      const context = sessionKey(getAppSafe());
+      const orderId = that.data.currentOrderId;
       Promise.allSettled(uploadTasks).then(results => {
+        if (context !== sessionKey(getAppSafe()) || orderId !== that.data.currentOrderId || !that.data.showRecordModal) return;
         if (typeof wx !== 'undefined' && typeof wx.hideLoading === 'function') {
           wx.hideLoading();
         }
@@ -407,8 +413,8 @@ Page({
           }
         });
         if (newUrls.length > 0) {
-          const updated = [...(that.data.recordPhotos || []), ...newUrls];
-          that.setData({ recordPhotos: updated });
+          const updated = [...(that.data.recordPhotos || []), ...newUrls.map(item => item.url)];
+          that.setData({ recordPhotos: updated, recordPhotoSources: [...(that.data.recordPhotoSources || []), ...newUrls.map(item => item.preview)] });
         }
         if (failCount > 0 && typeof wx !== 'undefined' && typeof wx.showToast === 'function') {
           wx.showToast({ title: `${failCount}张图片上传失败，请重试`, icon: 'none' });
@@ -443,15 +449,17 @@ Page({
     const idx = e.currentTarget.dataset.index;
     const photos = [...(this.data.recordPhotos || [])];
     photos.splice(idx, 1);
-    this.setData({ recordPhotos: photos });
+    const previews = [...(this.data.recordPhotoSources || [])];
+    previews.splice(idx, 1);
+    this.setData({ recordPhotos: photos, recordPhotoSources: previews });
   },
 
   previewRecordPhoto(e) {
     const url = e.currentTarget.dataset.url;
     if (!url || typeof wx === 'undefined' || typeof wx.previewImage !== 'function') return;
     wx.previewImage({
-      current: url,
-      urls: this.data.recordPhotos || [url]
+      current: this.data.recordPhotoSources[this.data.recordPhotos.indexOf(url)] || mediaUrl(url),
+      urls: this.data.recordPhotoSources.length ? this.data.recordPhotoSources : (this.data.recordPhotos || [url]).map(mediaUrl)
     });
   },
 

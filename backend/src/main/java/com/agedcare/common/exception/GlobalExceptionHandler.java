@@ -18,7 +18,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public Result<Void> handleUploadSizeException(MaxUploadSizeExceededException e) {
-        return Result.error(ResultCode.BAD_REQUEST.getCode(), "图片不能超过2MB，请压缩后上传");
+        return Result.error(ResultCode.BAD_REQUEST.getCode(), "单个文件不能超过5MB；服务项目图片不能超过2MB，请压缩后上传");
     }
 
     @ExceptionHandler(BusinessException.class)
@@ -51,9 +51,19 @@ public class GlobalExceptionHandler {
         return Result.error(ResultCode.BAD_REQUEST.getCode(), e.getMessage());
     }
 
+    @ExceptionHandler({jakarta.validation.ConstraintViolationException.class, org.springframework.web.method.annotation.HandlerMethodValidationException.class})
+    public Result<Void> handleConstraintException(Exception e) {
+        return Result.error(400, "请求参数不合法，请检查页码、数量及必填字段");
+    }
+
     @ExceptionHandler(Exception.class)
     public Result<Void> handleException(Exception e) {
         log.error("系统未知异常: ", e);
         return Result.error(ResultCode.INTERNAL_SERVER_ERROR.getCode(), "系统处理繁忙，请稍后再试");
+    }
+
+    @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+    public Result<Void> handleNotFound(org.springframework.web.servlet.resource.NoResourceFoundException e) {
+        return Result.error(404,"请求的资源不存在");
     }
 }
