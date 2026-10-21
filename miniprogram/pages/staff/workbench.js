@@ -229,10 +229,18 @@ Page({
 
   changeStatus(e) {
     if (!this.data.staffProfile?.profile) return;
-    const val = e.detail.value;
+    const val = e?.detail?.value != null ? String(e.detail.value) : (e?.currentTarget?.dataset?.status === 'RESTING' ? '1' : '0');
     const newStatus = val === '1' ? 'RESTING' : 'AVAILABLE';
     const staffId = this.data.staffProfile.profile.id;
     return this.performAction(`/staff/${staffId}/status?status=${newStatus}`, undefined, '工作状态已更新', false);
+  },
+
+  changeStatusTo(e) {
+    const targetStatus = e?.currentTarget?.dataset?.status;
+    if (!targetStatus || targetStatus === this.data.staffProfile?.profile?.currentStatus) return;
+    const staffId = this.data.staffProfile?.profile?.id;
+    if (!staffId) return;
+    return this.performAction(`/staff/${staffId}/status?status=${targetStatus}`, undefined, '工作状态已更新', false);
   },
 
   acceptDispatch(e) {
@@ -241,7 +249,7 @@ Page({
   },
 
   openRejectSheet(e) {
-    const dispatchId = e.currentTarget.dataset.id;
+    const dispatchId = e?.currentTarget?.dataset?.id || e;
     this.setData({ showRejectSheet: true, rejectDispatchId: dispatchId });
   },
 
@@ -256,26 +264,11 @@ Page({
   },
 
   rejectDispatch(e) {
-    const dispatchId = e?.currentTarget?.dataset?.id || e;
-    const that = this;
-    if (typeof wx !== 'undefined' && typeof wx.showModal === 'function') {
-      wx.showModal({
-        title: '拒绝接单',
-        content: '确认无法接单吗？系统将自动释放并重派其他人员。',
-        confirmColor: '#b83a3a',
-        success(res) {
-          if (res.confirm) {
-            that.performAction('/dispatch/reject', { dispatchId, reason: '人员当前工作安排冲突' }, '已拒单并释放预留', true, dispatchId);
-          }
-        }
-      });
-    } else {
-      return this.performAction('/dispatch/reject', { dispatchId, reason: '人员当前工作安排冲突' }, '已拒单并释放预留', true, dispatchId);
-    }
+    return this.openRejectSheet(e);
   },
 
   openStartService(e) {
-    const orderId = e.currentTarget.dataset.id;
+    const orderId = e?.currentTarget?.dataset?.id || e;
     const task = (this.data.filteredTasks || []).find(t => String(t.order.id) === String(orderId));
     const addr = task?.order?.addressSnapshot || '老人居住住址';
     this.setData({
@@ -296,13 +289,11 @@ Page({
   },
 
   startService(e) {
-    const orderId = e?.currentTarget?.dataset?.id || e;
-    if (!orderId) return;
-    return this.performAction(`/fulfillment/start/${orderId}`, undefined, '已签到，开始服务', true, orderId);
+    return this.openStartService(e);
   },
 
   openSubmitRecordModal(e) {
-    const orderId = e.currentTarget.dataset.id;
+    const orderId = e?.currentTarget?.dataset?.id || e;
     this._recordSummary = '';
     this.setData({
       showRecordModal: true,
@@ -312,7 +303,28 @@ Page({
   },
 
   closeRecordModal() {
-    this.setData({ showRecordModal: false });
+    const summary = this._recordSummary || this.data.recordSummary;
+    if (summary && summary.trim()) {
+      const that = this;
+      if (typeof wx !== 'undefined' && typeof wx.showModal === 'function') {
+        wx.showModal({
+          title: '放弃编辑',
+          content: '已输入的服务记录尚未提交，确定要放弃吗？',
+          confirmText: '放弃',
+          cancelText: '继续写',
+          confirmColor: '#b83a3a',
+          success(res) {
+            if (res.confirm) {
+              that._recordSummary = '';
+              that.setData({ showRecordModal: false, recordSummary: '' });
+            }
+          }
+        });
+        return;
+      }
+    }
+    this._recordSummary = '';
+    this.setData({ showRecordModal: false, recordSummary: '' });
   },
 
   onInputSummary(e) {
@@ -335,7 +347,7 @@ Page({
       orderId: currentOrderId,
       actualEndAt: formatTime(now),
       serviceSummary: recordSummary
-    }, '服务记录已提交');
+    }, '服务记录已提交', true, currentOrderId);
   },
 
   dialPhone(e) {

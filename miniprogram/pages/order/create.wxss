@@ -75,7 +75,7 @@
 .submit-box { position: fixed; z-index: 15; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1rpx solid var(--border-color); padding: 23rpx 32rpx; padding-bottom: calc(23rpx + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 28rpx; box-shadow: 0 -4rpx 16rpx rgba(0,0,0,.03); }
 .submit-price { min-width: 160rpx; }
 .submit-price-label { display: block; color: var(--text-secondary); font-size: var(--font-meta); }
-.submit-price > view { color: #ad652f; font-size: var(--font-section); font-weight: 600; margin-top: 4rpx; }
+.submit-price > view { color: var(--price-color, #ad652f); font-size: var(--font-section); font-weight: 600; margin-top: 4rpx; }
 .submit-price > view > text { color: var(--text-secondary); font-size: var(--font-meta); font-weight: 400; }
 .btn-submit-order { flex: 1; min-height: var(--control-height); height: auto; line-height: 1.5; padding: 22rpx 20rpx; font-size: var(--font-body); border-radius: 16rpx; }
 .btn-submit-order.is-done { flex: 0 0 96rpx; width: 96rpx; min-width: 96rpx; height: 96rpx; min-height: 96rpx; padding: 0; border-radius: 50%; animation: booking-squeeze 180ms ease forwards; }

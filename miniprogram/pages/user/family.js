@@ -165,25 +165,32 @@ Page({
     });
   },
 
-  revokeBinding(e) {
-    if (this._revoking || this._disposed) return;
-    const id = e.currentTarget.dataset.id;
+  openRevokeSheet(e) {
+    const id = e?.currentTarget?.dataset?.id || e;
+    this.setData({ showRevokeSheet: true, revokeTargetId: id });
+  },
+
+  closeRevokeSheet() {
+    this.setData({ showRevokeSheet: false, revokeTargetId: null });
+  },
+
+  confirmRevokeBinding() {
+    if (this.data.revoking || this._disposed) return Promise.resolve();
+    const id = this.data.revokeTargetId;
+    if (!id) return Promise.resolve();
     const context = sessionKey(getAppSafe());
-    const that = this;
-    wx.showModal({
-      title: '撤销授权',
-      content: '确定撤销与该老人的绑定代约关系吗？',
-      confirmColor: '#b83a3a',
-      success(res) {
-        if (res.confirm && !that._revoking && !that._disposed && sessionKey(getAppSafe()) === context) {
-          that._revoking = true;
-          request.post(`/family-bindings/${id}/revoke`).then(() => {
-            if (that._disposed || sessionKey(getAppSafe()) !== context) return;
-            wx.showToast({ title: '已撤销绑定', icon: 'success' });
-            return that.loadData();
-          }).catch(() => {}).finally(() => { that._revoking = false; });
-        }
-      }
+    this.setData({ revoking: true });
+    return request.post(`/family-bindings/${id}/revoke`).then(() => {
+      if (this._disposed || sessionKey(getAppSafe()) !== context) return;
+      this.setData({ showRevokeSheet: false, revokeTargetId: null });
+      wx.showToast({ title: '已撤销绑定', icon: 'success' });
+      return this.loadData();
+    }).catch(() => {}).finally(() => {
+      if (!this._disposed && sessionKey(getAppSafe()) === context) this.setData({ revoking: false });
     });
+  },
+
+  revokeBinding(e) {
+    return this.openRevokeSheet(e);
   }
 });

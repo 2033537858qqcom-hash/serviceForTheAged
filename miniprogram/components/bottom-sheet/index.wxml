@@ -12,7 +12,10 @@
     <view class="sheet-title" wx:if="{{title}}">{{title}}</view>
     <view class="sheet-body" wx:if="{{content}}">{{content}}</view>
     <slot></slot>
-    <button wx:if="{{confirmText}}" class="btn-primary sheet-confirm {{tone === 'danger' ? 'is-danger' : ''}}" hover-class="spring-in" bindtap="onConfirm">{{confirmText}}</button>
-    <button class="sheet-dismiss" hover-class="spring-in" bindtap="onMask">{{dismissText}}</button>
+    <button wx:if="{{confirmText}}" class="btn-primary sheet-confirm {{tone === 'danger' ? 'is-danger' : ''}} {{success ? 'is-success' : ''}}" hover-class="spring-in" bindtap="onConfirm" loading="{{loading}}" disabled="{{loading || success}}">
+      <text wx:if="{{success}}">✓ 操作已完成</text>
+      <text wx:else>{{confirmText}}</text>
+    </button>
+    <button class="sheet-dismiss" hover-class="spring-in" bindtap="onMask" disabled="{{loading}}">{{dismissText}}</button>
   </view>
 </view>

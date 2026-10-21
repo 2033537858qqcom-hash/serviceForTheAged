@@ -294,6 +294,10 @@ Page({
     navigation.navigateTo({ url: `/pages/order/detail?id=${e.currentTarget.dataset.id}` });
   },
 
+  goToServices() {
+    wx.switchTab({ url: '/pages/service/list' });
+  },
+
   goToLogin() {
     navigation.navigateTo({ url: '/pages/auth/login?redirect=/pages/order/list' });
   },

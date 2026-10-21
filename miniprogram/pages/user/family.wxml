@@ -53,9 +53,22 @@
       </view>
       <view>
         <text class="tag {{statusTagMap[item.status] || 'tag-info'}}">{{statusTextMap[item.status] || item.status}}</text>
-        <view class="revoke-btn" wx:if="{{item.status === 'APPROVED'}}" bindtap="revokeBinding" data-id="{{item.id}}">撤销</view>
+        <view class="revoke-btn" wx:if="{{item.status === 'APPROVED'}}" bindtap="openRevokeSheet" data-id="{{item.id}}">撤销</view>
       </view>
     </view>
     <view class="empty-tip" wx:if="{{bindings.length === 0 && !loading && !loadError}}">暂无家属绑定记录</view>
   </view>
+
+  <!-- 二次确认撤销授权弹层 -->
+  <bottom-sheet
+    show="{{showRevokeSheet}}"
+    title="确认撤销家属授权"
+    content="确定要解除与该老人的绑定代约关系吗？撤销后将无法继续代老人预约各项居家养老服务。"
+    confirm-text="确认撤销"
+    tone="danger"
+    dismiss-text="再想想"
+    loading="{{revoking}}"
+    bind:close="closeRevokeSheet"
+    bind:confirm="confirmRevokeBinding"
+  ></bottom-sheet>
 </view>

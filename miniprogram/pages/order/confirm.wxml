@@ -1,4 +1,4 @@
-<view class="container {{isElderMode ? 'elder-mode' : ''}}">
+<view class="container scroll-content-with-bottom {{isElderMode ? 'elder-mode' : ''}}">
   <view class="card rating-card">
     <view class="rating-title">服务满意度评分</view>
     <view class="stars-box flex-row">
@@ -11,11 +11,15 @@
 
   <view class="card comment-card">
     <view class="rating-title">评语或建议</view>
-    <textarea class="comment-input" placeholder="请记录您对服务态度、准时程度、操作规范等方面的意见..." value="{{content}}" bindinput="onInputContent" maxlength="200" />
+    <textarea class="comment-input" placeholder="请记录您对服务态度、准时程度、操作规范等方面的意见..." value="{{content}}" bindinput="onInputContent" maxlength="200" cursor-spacing="140" />
   </view>
 
-  <button class="btn-primary btn-submit {{isElderMode ? 'btn-large' : ''}}" loading="{{submitting}}" disabled="{{submitting}}" bindtap="submitReview">
-    <text wx:if="{{submitting}}">正在提交评价…</text>
-    <text wx:else>提交评价</text>
-  </button>
+  <!-- 底部固定吸底操作栏 -->
+  <view class="confirm-bottom-bar safe-bottom">
+    <button class="btn-primary btn-submit {{isElderMode ? 'btn-large' : ''}} {{submitSuccess ? 'is-success' : ''}}" loading="{{submitting}}" disabled="{{submitting || submitSuccess}}" bindtap="submitReview">
+      <text wx:if="{{submitSuccess}}">✓ 评价已完成</text>
+      <text wx:elif="{{submitting}}">正在提交评价…</text>
+      <text wx:else>提交评价</text>
+    </button>
+  </view>
 </view>

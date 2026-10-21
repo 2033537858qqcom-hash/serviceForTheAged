@@ -170,11 +170,11 @@ page {
 
 .btn-action, .btn-primary.btn-action {
   margin: 0;
-  height: 56rpx;
-  min-height: 56rpx;
-  line-height: 54rpx;
-  padding: 0 24rpx;
-  font-size: 25rpx;
+  height: auto;
+  min-height: 88rpx;
+  line-height: 1.4;
+  padding: 16rpx 28rpx;
+  font-size: var(--font-body);
   font-weight: 500;
   letter-spacing: 0.5rpx;
   border-radius: 12rpx;
@@ -220,9 +220,20 @@ page {
   color: var(--text-secondary);
 }
 
+.empty-action-btn {
+  margin-top: 28rpx;
+  min-height: 88rpx;
+  padding: 0 44rpx;
+  font-size: var(--font-body);
+  border-radius: var(--radius-pill, 999rpx);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .loading-more, .no-more {
   text-align: center;
-  font-size: 24rpx;
+  font-size: var(--font-meta);
   color: var(--text-secondary);
   padding: 32rpx 0;
 }
@@ -235,12 +246,11 @@ page {
   gap: 16rpx;
 }
 .elder-mode .btn-action, .elder-mode .btn-primary.btn-action {
-  height: 76rpx;
-  min-height: 76rpx;
-  line-height: 74rpx;
-  padding: 0 32rpx;
-  font-size: 30rpx;
-  border-radius: 14rpx;
+  min-height: var(--control-height, 112rpx);
+  line-height: 1.4;
+  padding: 0 36rpx;
+  font-size: var(--font-body, 36rpx);
+  border-radius: var(--radius-md, 20rpx);
 }
 
 .tab-nav-item { font-size: var(--font-caption); }

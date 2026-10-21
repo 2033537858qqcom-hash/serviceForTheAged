@@ -89,5 +89,5 @@ test('status tags and card action buttons adopt refined centered geometry', () =
   assert.equal(/\.tag\s*\{[^}]*border-radius:\s*8rpx/.test(appWxss), true);
   // Order card action button should be structured rounded rectangle with centered height
   assert.equal(/\.btn-action[^{]*\{[^}]*border-radius:\s*12rpx/.test(orderListWxss), true);
-  assert.equal(/\.btn-action[^{]*\{[^}]*height:\s*56rpx/.test(orderListWxss), true);
+  assert.equal(/\.btn-action[^{]*\{[^}]*min-height:\s*88rpx/.test(orderListWxss), true);
 });

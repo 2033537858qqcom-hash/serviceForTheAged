@@ -82,6 +82,7 @@ Page({
       markOrdersChanged();
       this._submitted = true;
       if (this._disposed) return;
+      this.setData({ submitSuccess: true });
       try { lightTap(); } catch (_) {}
       wx.showToast({ title: '评价成功，感谢反馈', icon: 'success' });
       this.returnToOrder();

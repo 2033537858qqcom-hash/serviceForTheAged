@@ -151,4 +151,22 @@ test('accessibility touch target and workbench tab-bar bottom padding standards 
   // P1: Profile does not display hardcoded fake statistics when profile data is empty
   assert.equal(profileWxml.includes("'4.8'"), false);
   assert.equal(profileWxml.includes("'31'"), false);
+
+  // N1: Order list action button strictly enforces >=88rpx touch height without mini override
+  const orderListWxss = fs.readFileSync(path.join(__dirname, '../pages/order/list.wxss'), 'utf8');
+  const orderListWxml = fs.readFileSync(path.join(__dirname, '../pages/order/list.wxml'), 'utf8');
+  assert.equal(/\.btn-action[^{]*\{[^}]*min-height:\s*88rpx/.test(orderListWxss), true);
+  assert.equal(orderListWxml.includes('btn-action" size="mini"'), false);
+
+  // N2: Workbench head card does not display fabricated '5.0' rating
+  assert.equal(workbenchWxml.includes("'5.0'"), false);
+
+  // G4: Critical small font size cleanup (no 22rpx font size in profile or workbench)
+  const profileWxss = fs.readFileSync(path.join(__dirname, '../pages/user/profile.wxss'), 'utf8');
+  assert.equal(/font-size:\s*22rpx/.test(profileWxss), false);
+  assert.equal(/font-size:\s*22rpx/.test(workbenchWxss), false);
+
+  // N3: Bottom-sheet component supports button-level loading feedback
+  const bottomSheetJs = fs.readFileSync(path.join(__dirname, '../components/bottom-sheet/index.js'), 'utf8');
+  assert.equal(bottomSheetJs.includes('loading:'), true);
 });

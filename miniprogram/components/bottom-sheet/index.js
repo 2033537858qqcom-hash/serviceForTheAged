@@ -8,7 +8,9 @@ Component({
     content: { type: String, value: '' },
     confirmText: { type: String, value: '' },
     dismissText: { type: String, value: '再想想' },
-    tone: { type: String, value: '' }
+    tone: { type: String, value: '' },
+    loading: { type: Boolean, value: false },
+    success: { type: Boolean, value: false }
   },
   data: { rendered: false, drag: 0, dragging: false },
   lifetimes: {
@@ -33,6 +35,9 @@ Component({
     onStart(event) {
       const touch = event.touches && event.touches[0];
       if (!touch) return;
+      const target = event.target || {};
+      if (target.dataset && (target.dataset.noDrag || target.dataset.noDrag === '')) return;
+      if (target.id === 'record-textarea' || target.type === 'textarea') return;
       this._startY = touch.clientY;
       this._startAt = Date.now();
       this.setData({ dragging: true });

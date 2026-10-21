@@ -23,21 +23,21 @@
     </view>
   </view>
 
-  <!-- 服务人员档案顶栏 -->
-  <view class="staff-header-card card flex-between" wx:if="{{staffProfile}}">
-    <view class="flex-row">
-      <view class="staff-avatar"><image src="/assets/icons/staff.png" /></view>
-      <view>
-        <view class="staff-name">{{staffProfile.user.realName}} <text class="tag tag-success">认证上岗</text></view>
-        <view class="staff-meta">服务评分： {{staffProfile.profile.priorRating != null ? staffProfile.profile.priorRating : '5.0'}}分 · 已完成： {{staffProfile.profile.totalOrders != null ? staffProfile.profile.totalOrders : '0'}}单</view>
-      </view>
-    </view>
-    <view class="status-toggle">
-      <picker range="{{['可接单', '休息中']}}" value="{{staffProfile.profile.currentStatus === 'RESTING' ? 1 : 0}}" bindchange="changeStatus">
-        <view class="status-pill {{staffProfile.profile.currentStatus === 'AVAILABLE' ? 'pill-online' : 'pill-offline'}}">
-          {{staffProfile.profile.currentStatus === 'AVAILABLE' ? '● 在岗接单' : '○ 休息中'}}
+  <!-- 服务人员档案顶栏 (紧凑横排布局 + 分段状态切换) -->
+  <view class="staff-header-card card" wx:if="{{staffProfile}}">
+    <view class="staff-header-top flex-between">
+      <view class="flex-row items-center" style="gap: 16rpx;">
+        <view class="staff-avatar"><image src="/assets/icons/staff.png" /></view>
+        <view>
+          <view class="staff-name">{{staffProfile.user.realName}} <text class="tag tag-success">认证上岗</text></view>
+          <view class="staff-meta">服务评分：{{staffProfile.profile.priorRating != null ? staffProfile.profile.priorRating + '分' : '—'}} · 已完成：{{staffProfile.profile.totalOrders != null ? staffProfile.profile.totalOrders : '0'}}单</view>
         </view>
-      </picker>
+      </view>
+      <!-- 分段状态控制器 -->
+      <view class="status-segmented flex-row">
+        <view class="seg-btn {{staffProfile.profile.currentStatus === 'AVAILABLE' ? 'seg-active-online' : ''}}" bindtap="changeStatusTo" data-status="AVAILABLE">在岗接单</view>
+        <view class="seg-btn {{staffProfile.profile.currentStatus === 'RESTING' ? 'seg-active-offline' : ''}}" bindtap="changeStatusTo" data-status="RESTING">休息中</view>
+      </view>
     </view>
   </view>
 
@@ -64,25 +64,38 @@
 
   <!-- 任务列表 (平滑淡入滑入效果) -->
   <view class="task-list">
+    <!-- 骨架屏加载态 -->
+    <view class="workbench-skeleton-list" wx:if="{{tasksLoading && (!filteredTasks || filteredTasks.length === 0)}}">
+      <view class="card task-card skeleton-card" wx:for="{{[1, 2]}}" wx:key="*this">
+        <view class="flex-between">
+          <view class="skeleton-block skeleton-title" style="width: 48%;"></view>
+          <view class="skeleton-block skeleton-tag" style="width: 22%; margin: 0;"></view>
+        </view>
+        <view class="skeleton-block skeleton-body" style="width: 75%; margin-top: 18rpx;"></view>
+        <view class="skeleton-block skeleton-body" style="width: 60%; margin-top: 12rpx;"></view>
+        <view class="flex-between" style="margin-top: 24rpx; gap: 16rpx;">
+          <view class="skeleton-block" style="flex: 1; height: 88rpx; border-radius: 20rpx;"></view>
+          <view class="skeleton-block" style="flex: 1; height: 88rpx; border-radius: 20rpx;"></view>
+        </view>
+      </view>
+    </view>
+
     <view class="card task-card" wx:for="{{filteredTasks}}" wx:key="viewId">
       <view class="flex-between">
         <text class="task-name">{{item.order.serviceNameSnapshot}}</text>
         <text class="tag {{statusTagMap[item.order.status] || 'tag-info'}}">{{statusTextMap[item.order.status] || item.order.status}}</text>
       </view>
-      <view class="task-line">老人姓名：{{item.elder ? item.elder.name : '老人'}} ({{item.order.contactPhoneSnapshot}})</view>
+      <view class="task-line">老人姓名：{{item.elder ? item.elder.name : '老人'}}</view>
       <view class="task-line">上门地址：{{item.order.addressSnapshot}}</view>
       <view class="task-line">预约时段：{{item.order.plannedStartAt}} ~ {{item.order.plannedEndAt}}</view>
 
       <!-- 配送与导航动作条 (待上门状态下展示) -->
-      <view class="task-lbs-bar flex-between" wx:if="{{item.order.status === 'WAIT_VISIT'}}">
-        <view class="lbs-hint flex-row">
-          <image class="ui-icon-small" src="/assets/icons/location.png" />
-          <text class="lbs-text">地址导航与轨迹</text>
-        </view>
-        <view class="lbs-actions flex-row">
-          <button class="btn-nav" bindtap="openNavigation" data-id="{{item.order.id}}">路线导航</button>
-          <button wx:if="{{isDevMode}}" class="btn-mock" bindtap="mockMoveStep" data-id="{{item.order.id}}">模拟移动</button>
-        </view>
+      <view class="task-lbs-bar flex-row" wx:if="{{item.order.status === 'WAIT_VISIT'}}">
+        <button class="btn-nav flex-row items-center" bindtap="openNavigation" data-id="{{item.order.id}}">
+          <image class="ui-icon-small" src="/assets/icons/location.png" style="margin-right: 8rpx;" />
+          <text>路线导航与轨迹</text>
+        </button>
+        <button wx:if="{{isDevMode}}" class="btn-mock" bindtap="mockMoveStep" data-id="{{item.order.id}}">模拟移动</button>
       </view>
 
       <!-- 操作按钮流 (去除 mini 属性，保持适老 88rpx 触控高度) -->
@@ -108,16 +121,16 @@
   </view>
 
   <!-- 二次确认弹层：确认开始服务 -->
-  <bottom-sheet show="{{showStartSheet}}" title="确认开始服务" content="{{startServiceAddress}}" confirm-text="确认到达并开始" dismiss-text="再等等" bind:close="closeStartSheet" bind:confirm="confirmStartService"></bottom-sheet>
+  <bottom-sheet show="{{showStartSheet}}" title="确认开始服务" content="{{startServiceAddress}}" confirm-text="确认到达并开始" dismiss-text="再等等" loading="{{actionLoading}}" bind:close="closeStartSheet" bind:confirm="confirmStartService"></bottom-sheet>
 
   <!-- 二次确认弹层：确认拒绝接单 -->
-  <bottom-sheet show="{{showRejectSheet}}" title="确认拒绝接单" content="确认无法接单吗？系统将自动释放并重派给其他服务人员。" confirm-text="确认拒绝" tone="danger" dismiss-text="再想想" bind:close="closeRejectSheet" bind:confirm="confirmRejectDispatch"></bottom-sheet>
+  <bottom-sheet show="{{showRejectSheet}}" title="确认拒绝接单" content="确认无法接单吗？系统将自动释放并重派给其他服务人员。" confirm-text="确认拒绝" tone="danger" dismiss-text="再想想" loading="{{actionLoading}}" bind:close="closeRejectSheet" bind:confirm="confirmRejectDispatch"></bottom-sheet>
 
   <!-- 提交履约记录抽屉 -->
-  <bottom-sheet show="{{showRecordModal}}" title="提交上门服务记录" confirm-text="确认提交" dismiss-text="取消" bind:close="closeRecordModal" bind:confirm="submitRecord">
+  <bottom-sheet show="{{showRecordModal}}" title="提交上门服务记录" confirm-text="确认提交" dismiss-text="取消" loading="{{actionLoading}}" bind:close="closeRecordModal" bind:confirm="submitRecord">
     <view class="record-sheet-body">
       <view class="modal-tip">请真实填写现场服务情况，以便老人与社区审核留档</view>
-      <textarea class="modal-textarea" placeholder="填写服务工作总结，如老人饮食情况、日常保洁清洁部位、陪同就医事项等..." value="{{recordSummary}}" bindinput="onInputSummary" cursor-spacing="140" />
+      <textarea id="record-textarea" data-no-drag="true" class="record-textarea" placeholder="填写服务工作总结，如老人饮食情况、日常保洁清洁部位、陪同就医事项等..." value="{{recordSummary}}" bindinput="onInputSummary" cursor-spacing="140" />
     </view>
   </bottom-sheet>
 </view>

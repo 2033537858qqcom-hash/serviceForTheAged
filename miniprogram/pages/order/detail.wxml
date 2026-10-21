@@ -63,7 +63,7 @@
         <view class="staff-sub">服务评分： {{orderVO.currentStaff.profile.priorRating}}分 | 累计完成: {{orderVO.currentStaff.profile.totalOrders}}单</view>
       </view>
     </view>
-    <button class="btn-dial" size="mini" bindtap="callStaff">拨打电话</button>
+    <button class="btn-dial" bindtap="callStaff">联系服务人员</button>
   </view>
 
   <!-- 地图与实时轨迹卡片 (待上门/服务中 展示) -->
@@ -175,9 +175,9 @@
     <view class="card-title">状态流转记录</view>
     <view class="timeline">
       <view class="timeline-node" wx:for="{{orderVO.logs}}" wx:key="id">
-        <view class="timeline-line" style="animation-delay: {{280 + index * 80}}ms"></view>
-        <view class="dot" style="animation-delay: {{280 + index * 80}}ms"></view>
-        <view class="node-content" style="animation-delay: {{280 + index * 80}}ms">
+        <view class="timeline-line" style="animation-delay: {{index < 3 ? 280 + index * 50 : 420}}ms"></view>
+        <view class="dot" style="animation-delay: {{index < 3 ? 280 + index * 50 : 420}}ms"></view>
+        <view class="node-content" style="animation-delay: {{index < 3 ? 280 + index * 50 : 420}}ms">
           <view class="node-time">{{item.createdAt}}</view>
           <view class="node-text">{{statusTextMap[item.toStatus] || item.toStatus}}：{{item.reason}}</view>
         </view>

@@ -6,4 +6,17 @@
 .star-item.active { color: #ad732e; transform: scale(1.08); }
 .score-desc { color: var(--text-secondary); font-size: var(--font-caption); }
 .comment-input { width: 100%; min-height: 300rpx; padding: 26rpx; background: #f6f8f3; border: 1rpx solid var(--border-color); border-radius: 16rpx; margin-top: 28rpx; font-size: var(--font-body); line-height: 1.8; }
-.btn-submit { margin-top: 34rpx; width: 100%; }
+.confirm-bottom-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(20px);
+  padding: 20rpx 32rpx;
+  box-shadow: 0 -4rpx 16rpx rgba(36, 52, 46, 0.06);
+  z-index: 50;
+  border-top: 1rpx solid var(--border-color);
+}
+.btn-submit { width: 100%; margin: 0; }
+.btn-submit.is-success { background: #1f8a5b !important; color: #fff !important; }

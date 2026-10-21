@@ -1,3 +1,6 @@
 {
-  "navigationBarTitleText": "家属代约绑定"
+  "navigationBarTitleText": "家属代约绑定",
+  "usingComponents": {
+    "bottom-sheet": "/components/bottom-sheet/index"
+  }
 }

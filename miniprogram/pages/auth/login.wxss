@@ -26,9 +26,9 @@ page { background: #263f32; color: #fff; }
 .custom-checkbox.is-checked .check-stroke { transform: rotate(-45deg) scale(1); transition: transform 160ms ease; }
 .agreement-label { font-size: 28rpx; line-height: 1.9; color: #f4f2e9; }
 .doc-link { color: #fff; text-decoration: underline; }
-.login-footer { padding-top: 18rpx; text-align: center; font-size: 26rpx; color: #e2e6dc; letter-spacing: 2rpx; }
+.login-footer { padding-top: 18rpx; text-align: center; font-size: 28rpx; color: #e2e6dc; letter-spacing: 2rpx; }
 .doc-scroll-content { height: 42vh; padding: 10rpx 0; }
-.doc-text { font-size: 27rpx; color: #46574e; line-height: 1.8; white-space: pre-wrap; }
+.doc-text { font-size: 28rpx; color: #46574e; line-height: 1.8; white-space: pre-wrap; }
 @media (max-height: 650px) {
   .login-content { padding-top: calc(96rpx + env(safe-area-inset-top)); }
   .login-spacer { min-height: 60rpx; }
