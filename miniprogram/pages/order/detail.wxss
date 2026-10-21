@@ -41,7 +41,8 @@
 .staff-name { font-size: var(--font-body); font-weight: 600; }
 .staff-name .tag { display: block; width: fit-content; margin: 8rpx 0; }
 .staff-sub { font-size: var(--font-caption); color: var(--text-secondary); }
-.btn-dial { width: 100%; min-height: var(--control-height); display: flex; justify-content: center; align-items: center; color: var(--primary-dark); background: var(--primary-soft); font-size: var(--font-body); margin: 12rpx 0 0; border-radius: 14rpx; }
+.btn-dial { width: 100%; min-height: var(--control-height); display: flex; justify-content: center; align-items: center; color: var(--primary-dark); background: #edf5f1; border: 1.5rpx solid #c9e0d4; font-size: var(--font-body); font-weight: 550; margin: 14rpx 0 0; border-radius: 20rpx; transition: transform 200ms cubic-bezier(.25, 1.4, .5, 1), background-color 120ms ease; }
+.btn-dial:active { background: #dbeef3; transform: scale(.98); }
 
 /* 地图轨迹卡片 */
 .map-tracking-card {
@@ -185,9 +186,9 @@
 .node-text { font-size: var(--font-caption); margin-top: 8rpx; color: var(--text-regular); }
 
 /* 底部操作按钮栏 */
-.bottom-actions { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; padding: 24rpx 32rpx calc(24rpx + env(safe-area-inset-bottom)); border-top: 1rpx solid var(--border-color); gap: 20rpx; z-index: 5; box-shadow: 0 -4rpx 14rpx rgba(0,0,0,.03); }
-.bottom-actions button { flex: 1; margin: 0; min-height: var(--control-height); font-size: var(--font-body); display: flex; align-items: center; justify-content: center; border-radius: 16rpx; }
-.btn-cancel { background: #fbf0ee; color: var(--danger-color); border: 1rpx solid #f6d1cd; padding: 20rpx; }
+.bottom-actions { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; padding: 24rpx 32rpx calc(24rpx + env(safe-area-inset-bottom)); border-top: 1rpx solid var(--border-color); gap: 20rpx; z-index: 5; box-shadow: 0 -4rpx 16rpx rgba(0,0,0,.04); }
+.bottom-actions button { flex: 1; margin: 0; min-height: var(--control-height); font-size: var(--font-body); display: flex; align-items: center; justify-content: center; border-radius: 24rpx; font-weight: 550; letter-spacing: 1rpx; }
+.btn-cancel { background: #fdf2f1; color: var(--danger-color); border: 1.5rpx solid #f8d3cf; padding: 20rpx; }
 
 .elder-mode .info-item { flex-direction: column; gap: 10rpx; }
 .elder-mode .label { flex: auto; }

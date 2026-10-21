@@ -115,8 +115,8 @@
 }
 
 .task-actions { flex-wrap: wrap; gap: 20rpx; margin-top: 26rpx; padding-top: 24rpx; border-top: 1rpx solid var(--border-color); }
-.task-actions button { margin: 0; min-height: var(--control-height); padding: 20rpx; font-size: var(--font-caption); flex: 1; border-radius: 14rpx; display: flex; align-items: center; justify-content: center; }
-.btn-call { background: var(--primary-soft); color: var(--primary-dark); }
+.task-actions button { margin: 0; min-height: 84rpx; padding: 18rpx 28rpx; font-size: var(--font-caption); flex: 1; border-radius: 20rpx; font-weight: 550; display: flex; align-items: center; justify-content: center; }
+.btn-call { background: #edf5f1; color: var(--primary-dark); border: 1.5rpx solid #c9e0d4; }
 .completed-hint { font-size: var(--font-caption); color: var(--text-secondary); }
 .modal-mask { position: fixed; inset: 0; background: rgba(28,43,33,.45); display: flex; align-items: center; justify-content: center; z-index: 99; padding: 32rpx; }
 .modal-box { width: 100%; max-height: 85vh; overflow-y: auto; border-radius: 28rpx; background: #fff; padding: 36rpx; }
@@ -124,8 +124,8 @@
 .modal-tip { font-size: var(--font-caption); color: var(--text-secondary); margin: 16rpx 0 26rpx; }
 .modal-textarea { font-size: var(--font-body); line-height: 1.8; width: 100%; min-height: 270rpx; border-radius: 14rpx; padding: 22rpx; border: 1rpx solid var(--border-color); background: #f6f8f3; }
 .modal-btns { gap: 18rpx; margin-top: 28rpx; }
-.modal-btns button { flex: 1; margin: 0; font-size: var(--font-body); min-height: var(--control-height); border-radius: 14rpx; display: flex; align-items: center; justify-content: center; }
-.modal-btn-cancel { color: var(--text-regular); background: #f2f4ef; }
+.modal-btns button { flex: 1; margin: 0; font-size: var(--font-body); min-height: var(--control-height); border-radius: 20rpx; font-weight: 550; display: flex; align-items: center; justify-content: center; }
+.modal-btn-cancel { color: var(--text-regular); background: #f2f4ef; border: 1.5rpx solid #e0e5de; }
 .elder-mode .task-actions { flex-direction: column; align-items: stretch; }
 
 .task-card { box-shadow: none; }

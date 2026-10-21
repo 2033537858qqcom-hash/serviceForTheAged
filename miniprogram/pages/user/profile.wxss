@@ -10,7 +10,27 @@
 .user-name { font-size: var(--font-title); font-weight: 600; line-height: 1.4; color: var(--text-main); }
 .user-sub { color: var(--text-secondary); font-size: var(--font-caption); margin-top: 8rpx; display: flex; align-items: center; }
 .role-badge { display: inline-block; background: var(--primary-soft); color: var(--primary-color); border-radius: 8rpx; padding: 4rpx 14rpx; font-size: 22rpx; font-weight: 550; }
-.btn-logout { background: transparent; color: var(--text-secondary); font-size: var(--font-caption); min-height: 64rpx; padding: 12rpx 16rpx; margin: 0; border: 1rpx solid var(--border-color); border-radius: 12rpx; }
+.btn-logout {
+  background: #fdf1f0;
+  color: #c4403a;
+  font-size: 24rpx;
+  font-weight: 550;
+  height: 60rpx;
+  min-height: 60rpx;
+  line-height: 60rpx;
+  padding: 0 28rpx;
+  margin: 0;
+  border: 1.5rpx solid #fbd2cf;
+  border-radius: 999rpx;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 200ms cubic-bezier(.25, 1.4, .5, 1), background-color 120ms ease;
+}
+.btn-logout:active {
+  background: #fce4e2;
+  transform: scale(.96);
+}
 
 .profile-login { margin-bottom: 28rpx; }
 

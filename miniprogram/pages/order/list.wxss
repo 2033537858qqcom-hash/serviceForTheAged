@@ -104,7 +104,7 @@ page {
 .card-top {
   padding-bottom: 22rpx;
   border-bottom: 1rpx solid var(--border-color);
-  align-items: flex-start;
+  align-items: center;
 }
 
 .order-no {
@@ -141,20 +141,47 @@ page {
   margin-top: 26rpx;
   padding-top: 22rpx;
   border-top: 1rpx solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20rpx;
 }
 
 .staff-hint {
   flex: 1;
+  min-width: 0;
   font-size: var(--font-caption);
   color: var(--text-secondary);
+  line-height: 1.45;
 }
 
-.btn-action {
+.btn-action, .btn-primary.btn-action {
   margin: 0;
-  min-height: 78rpx;
-  font-size: var(--font-caption);
-  padding: 14rpx 24rpx;
+  height: 64rpx;
+  min-height: 64rpx;
+  line-height: 64rpx;
+  padding: 0 32rpx;
+  font-size: 26rpx;
+  font-weight: 550;
+  letter-spacing: 1rpx;
+  border-radius: 999rpx;
+  background: #edf5f1;
+  color: var(--primary-color);
+  border: 1.5rpx solid #c4ded2;
+  box-shadow: 0 2rpx 8rpx rgba(23, 107, 93, 0.08);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+  transition: transform 200ms cubic-bezier(.25, 1.4, .5, 1), background-color 120ms ease, border-color 120ms ease;
+}
+
+.btn-action:active, .btn-action.button-pressed, .btn-action.spring-in {
+  background: #dcece2;
+  color: var(--primary-dark);
+  border-color: #a8cfc0;
+  transform: scale(.96);
+  box-shadow: none;
 }
 
 .empty-tip {
@@ -187,9 +214,15 @@ page {
 
 .elder-mode .card-bottom {
   flex-wrap: wrap;
+  gap: 16rpx;
 }
-.elder-mode .btn-action {
-  min-height: var(--control-height);
+.elder-mode .btn-action, .elder-mode .btn-primary.btn-action {
+  height: 84rpx;
+  min-height: 84rpx;
+  line-height: 84rpx;
+  padding: 0 38rpx;
+  font-size: 32rpx;
+  border-radius: 999rpx;
 }
 
 .tab-nav-item { font-size: var(--font-caption); }

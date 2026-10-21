@@ -26,11 +26,11 @@
 
 .card-actions { border-top: 1rpx solid #edf2ec; margin-top: 24rpx; padding-top: 20rpx; }
 .community-name { font-size: var(--font-meta); color: var(--text-secondary); }
-.btn-edit-card { min-height: 68rpx; padding: 10rpx 28rpx; font-size: var(--font-caption); border-radius: 14rpx; }
+.btn-edit-card { height: 62rpx; min-height: 62rpx; line-height: 62rpx; padding: 0 32rpx; font-size: 26rpx; font-weight: 550; border-radius: 999rpx; border: 1.5rpx solid #c4ded2; background: #edf5f1; color: var(--primary-color); }
 
 .bottom-action-box { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1rpx solid var(--border-color); padding: 20rpx 32rpx; padding-bottom: calc(20rpx + env(safe-area-inset-bottom)); box-shadow: 0 -4rpx 14rpx rgba(0,0,0,.03); z-index: 10; }
 .btn-add-bottom { width: 100%; }
 
 .elder-mode .page-title { font-size: 50rpx; }
 .elder-mode .elder-name { font-size: 42rpx; }
-.elder-mode .btn-edit-card { min-height: 84rpx; padding: 14rpx 32rpx; font-size: var(--font-body); }
+.elder-mode .btn-edit-card { height: 80rpx; min-height: 80rpx; line-height: 80rpx; padding: 0 38rpx; font-size: var(--font-body); border-radius: 999rpx; }
