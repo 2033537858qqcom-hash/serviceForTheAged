@@ -6,6 +6,7 @@ import com.agedcare.common.exception.BusinessException;
 import com.agedcare.common.security.LoginUser;
 import com.agedcare.common.security.RequireRole;
 import com.agedcare.common.security.UserContext;
+import com.agedcare.modules.user.dto.UserSummaryVO;
 import com.agedcare.modules.user.entity.SysUser;
 import com.agedcare.modules.user.mapper.SysUserMapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -33,6 +34,18 @@ public class UserController {
     public static class UpdatePwdDTO {
         private String oldPassword;
         private String newPassword;
+    }
+
+    @Data
+    public static class UpdateAvatarDTO {
+        private String avatar;
+    }
+
+    @Data
+    public static class UpdateProfileDTO {
+        private String realName;
+        private String phone;
+        private String avatar;
     }
 
     @Operation(summary = "分页查询系统用户(管理员)")
@@ -82,5 +95,69 @@ public class UserController {
         user.setUpdatedAt(LocalDateTime.now());
         sysUserMapper.updateById(user);
         return Result.success();
+    }
+
+    @Operation(summary = "获取当前登录用户的个人资料")
+    @GetMapping("/profile")
+    public Result<UserSummaryVO> getProfile() {
+        LoginUser currentUser = UserContext.getUser();
+        SysUser user = sysUserMapper.selectById(currentUser.getId());
+        if (user == null) {
+            throw new BusinessException("用户不存在");
+        }
+        return Result.success(UserSummaryVO.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .realName(user.getRealName())
+                .phone(user.getPhone())
+                .avatar(user.getAvatar())
+                .role(user.getRole())
+                .build());
+    }
+
+    @Operation(summary = "修改当前登录用户的个人头像")
+    @PostMapping("/avatar")
+    public Result<String> updateAvatar(@RequestBody UpdateAvatarDTO dto) {
+        if (!StringUtils.hasText(dto.getAvatar())) {
+            throw new BusinessException("头像URL不能为空");
+        }
+        LoginUser currentUser = UserContext.getUser();
+        SysUser user = sysUserMapper.selectById(currentUser.getId());
+        if (user == null) {
+            throw new BusinessException("用户不存在");
+        }
+        user.setAvatar(dto.getAvatar().trim());
+        user.setUpdatedAt(LocalDateTime.now());
+        sysUserMapper.updateById(user);
+        return Result.success(user.getAvatar());
+    }
+
+    @Operation(summary = "修改当前登录用户的个人资料")
+    @PutMapping("/profile")
+    public Result<UserSummaryVO> updateProfile(@RequestBody UpdateProfileDTO dto) {
+        LoginUser currentUser = UserContext.getUser();
+        SysUser user = sysUserMapper.selectById(currentUser.getId());
+        if (user == null) {
+            throw new BusinessException("用户不存在");
+        }
+        if (StringUtils.hasText(dto.getRealName())) {
+            user.setRealName(dto.getRealName().trim());
+        }
+        if (StringUtils.hasText(dto.getPhone())) {
+            user.setPhone(dto.getPhone().trim());
+        }
+        if (StringUtils.hasText(dto.getAvatar())) {
+            user.setAvatar(dto.getAvatar().trim());
+        }
+        user.setUpdatedAt(LocalDateTime.now());
+        sysUserMapper.updateById(user);
+        return Result.success(UserSummaryVO.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .realName(user.getRealName())
+                .phone(user.getPhone())
+                .avatar(user.getAvatar())
+                .role(user.getRole())
+                .build());
     }
 }

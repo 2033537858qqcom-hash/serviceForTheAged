@@ -209,7 +209,80 @@
 }
 .record-sheet-body { padding: 10rpx 0 20rpx; }
 .record-sheet-body .modal-tip { font-size: var(--font-caption); color: var(--text-secondary); margin-bottom: 20rpx; }
-.record-textarea { font-size: var(--font-body); line-height: 1.8; width: 100%; min-height: 240rpx; border-radius: var(--radius-md, 20rpx); padding: 22rpx; border: 1rpx solid var(--border-color); background: #f6f8f3; box-sizing: border-box; }
+.record-textarea { font-size: var(--font-body); line-height: 1.8; width: 100%; min-height: 200rpx; border-radius: var(--radius-md, 20rpx); padding: 22rpx; border: 1rpx solid var(--border-color); background: #f6f8f3; box-sizing: border-box; }
+
+/* 履约照片上传区域 */
+.record-photos-section {
+  margin-top: 24rpx;
+  padding-top: 20rpx;
+  border-top: 1rpx dashed var(--border-color, #e2e8f0);
+}
+.record-photos-title {
+  margin-bottom: 16rpx;
+}
+.photos-title-text {
+  font-size: var(--font-body);
+  font-weight: 600;
+  color: var(--text-main);
+}
+.photos-tip-text {
+  font-size: var(--font-meta);
+  color: var(--text-secondary);
+}
+.record-photos-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16rpx;
+}
+.photo-thumb-item {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--radius-md, 16rpx);
+  overflow: hidden;
+  background: #edf1eb;
+  border: 1rpx solid var(--border-color);
+}
+.photo-thumb-item .photo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.photo-delete-btn {
+  position: absolute;
+  top: 6rpx;
+  right: 6rpx;
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  color: #ffffff;
+  font-size: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.photo-add-btn {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--radius-md, 16rpx);
+  background: #f6f8f3;
+  border: 2rpx dashed #cbd5e1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+}
+.photo-camera-icon {
+  width: 44rpx;
+  height: 44rpx;
+}
+.photo-add-text {
+  font-size: var(--font-meta);
+  color: var(--text-secondary);
+}
+
 .elder-mode .task-actions { flex-direction: column; align-items: stretch; }
 
 .task-card { box-shadow: none; }

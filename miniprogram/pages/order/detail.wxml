@@ -159,6 +159,16 @@
     <view class="card-title">现场服务履约记录</view>
     <view class="record-line">实际服务时间：{{orderVO.serviceRecord.actualStartAt}} ~ {{orderVO.serviceRecord.actualEndAt}}</view>
     <view class="record-summary">工作总结：{{orderVO.serviceRecord.serviceSummary}}</view>
+
+    <!-- 服务人员现场拍摄照片凭证 -->
+    <view class="record-photos-wrap" wx:if="{{fulfillmentPhotos && fulfillmentPhotos.length > 0}}">
+      <view class="record-photos-label">服务人员拍摄凭证 (共{{fulfillmentPhotos.length}}张)：</view>
+      <view class="record-photos-grid">
+        <view class="record-photo-item" wx:for="{{fulfillmentPhotos}}" wx:key="*this" bindtap="previewFulfillmentPhoto" data-url="{{item}}">
+          <image class="record-photo-img" src="{{item}}" mode="aspectFill" />
+        </view>
+      </view>
+    </view>
   </view>
 
   <!-- 服务评价展示 (评价后展示) -->

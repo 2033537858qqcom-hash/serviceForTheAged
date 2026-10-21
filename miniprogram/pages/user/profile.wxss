@@ -4,9 +4,33 @@
 
 /* 头部身份区 */
 .profile-hero { display: flex; align-items: center; gap: 24rpx; padding: 24rpx 4rpx 36rpx; }
-.profile-avatar { width: 106rpx; height: 112rpx; border-radius: 32rpx 32rpx 32rpx 8rpx; background: #e5edde; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.profile-avatar { width: 106rpx; height: 112rpx; border-radius: 32rpx 32rpx 32rpx 8rpx; background: #e5edde; display: flex; align-items: center; justify-content: center; flex-shrink: 0; position: relative; }
 .profile-avatar.staff-hero-avatar { background: #dcece4; }
-.profile-avatar image { height: 56rpx; width: 56rpx; }
+.profile-avatar .avatar-default-icon { height: 56rpx; width: 56rpx; }
+.profile-avatar .avatar-photo { width: 100%; height: 100%; border-radius: 32rpx 32rpx 32rpx 8rpx; }
+.avatar-edit-badge {
+  position: absolute;
+  right: -6rpx;
+  bottom: -6rpx;
+  width: 38rpx;
+  height: 38rpx;
+  border-radius: 50%;
+  background: var(--primary-color, #176b5d);
+  border: 3rpx solid #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4rpx 10rpx rgba(0, 0, 0, 0.15);
+}
+.avatar-edit-icon {
+  width: 22rpx;
+  height: 22rpx;
+}
+.avatar-tap {
+  opacity: 0.85;
+  transform: scale(0.96);
+  transition: transform 120ms ease;
+}
 .profile-identity { flex: 1; min-width: 0; }
 .user-name { font-size: var(--font-title); font-weight: 600; line-height: 1.4; color: var(--text-main); }
 .user-sub { color: var(--text-secondary); font-size: var(--font-caption); margin-top: 8rpx; display: flex; align-items: center; }

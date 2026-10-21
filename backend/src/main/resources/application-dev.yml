@@ -3,6 +3,8 @@ spring:
     import:
       - optional:file:./config/wechat-local.properties
       - optional:file:./backend/config/wechat-local.properties
+      - optional:file:./config/cos-local.properties
+      - optional:file:./backend/config/cos-local.properties
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/aged_care_db?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true

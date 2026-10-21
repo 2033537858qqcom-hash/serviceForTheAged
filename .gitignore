@@ -37,6 +37,10 @@ uploads/
 # Local WeChat credentials
 /backend/config/wechat-local.properties
 
+# Local Tencent Cloud COS credentials
+/backend/config/cos-local.properties
+/config/cos-local.properties
+
 # AI Assistants
 .agents/
 .grok/

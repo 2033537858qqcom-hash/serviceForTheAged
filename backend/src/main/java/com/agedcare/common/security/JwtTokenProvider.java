@@ -60,6 +60,7 @@ public class JwtTokenProvider {
         claims.put("role", user.getRole());
         claims.put("phone", user.getPhone());
         claims.put("openid", user.getOpenid());
+        claims.put("avatar", user.getAvatar());
 
         return Jwts.builder()
                 .subject(String.valueOf(user.getId()))
@@ -93,6 +94,7 @@ public class JwtTokenProvider {
                     .phone((String) claims.get("phone"))
                     .role((String) claims.get("role"))
                     .openid((String) claims.get("openid"))
+                    .avatar((String) claims.get("avatar"))
                     .build();
         } catch (JwtException | IllegalArgumentException e) {
             log.warn("JWT token 解析失败或已失效: {}", e.getMessage());

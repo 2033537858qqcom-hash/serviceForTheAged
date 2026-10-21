@@ -3,8 +3,12 @@
 
   <!-- 用户头部身份卡片 -->
   <view class="profile-hero">
-    <view class="profile-avatar {{userInfo && userInfo.role === 'STAFF' ? 'staff-hero-avatar' : ''}}">
-      <image src="{{userInfo && userInfo.role === 'STAFF' ? '/assets/icons/staff.png' : '/assets/icons/user.png'}}" />
+    <view class="profile-avatar {{userInfo && userInfo.role === 'STAFF' ? 'staff-hero-avatar' : ''}}" bindtap="chooseAndUploadAvatar" hover-class="avatar-tap" hover-stay-time="80" aria-label="点击更换个人头像">
+      <image wx:if="{{userInfo && userInfo.avatar}}" class="avatar-photo" mode="aspectFill" src="{{userInfo.avatar}}" />
+      <image wx:else class="avatar-default-icon" src="{{userInfo && userInfo.role === 'STAFF' ? '/assets/icons/staff.png' : '/assets/icons/user.png'}}" />
+      <view class="avatar-edit-badge" wx:if="{{userInfo}}">
+        <image class="avatar-edit-icon" src="/assets/icons/camera.png" />
+      </view>
     </view>
     <view class="profile-identity">
       <view class="user-name">{{userInfo ? (userInfo.realName || userInfo.username) : '欢迎来到颐邻社区养老'}}</view>

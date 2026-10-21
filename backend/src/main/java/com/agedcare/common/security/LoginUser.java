@@ -18,4 +18,5 @@ public class LoginUser implements Serializable {
     private String phone;
     private String role;
     private String openid;
+    private String avatar;
 }

@@ -204,6 +204,7 @@ public class AuthService {
                 .phone(user.getPhone())
                 .role(user.getRole())
                 .openid(user.getOpenid())
+                .avatar(user.getAvatar())
                 .build();
 
         String token = jwtTokenProvider.generateToken(loginUser);

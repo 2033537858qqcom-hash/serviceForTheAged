@@ -46,6 +46,8 @@ Page({
     showRecordModal: false,
     currentOrderId: null,
     recordSummary: '',
+    recordPhotos: [],
+    photoUploading: false,
     actionLoading: false,
     actionId: null,
     showStartSheet: false,
@@ -298,25 +300,28 @@ Page({
     this.setData({
       showRecordModal: true,
       currentOrderId: orderId,
-      recordSummary: ''
+      recordSummary: '',
+      recordPhotos: [],
+      photoUploading: false
     });
   },
 
   closeRecordModal() {
     const summary = this._recordSummary || this.data.recordSummary;
-    if (summary && summary.trim()) {
+    const hasPhotos = this.data.recordPhotos && this.data.recordPhotos.length > 0;
+    if ((summary && summary.trim()) || hasPhotos) {
       const that = this;
       if (typeof wx !== 'undefined' && typeof wx.showModal === 'function') {
         wx.showModal({
           title: '放弃编辑',
-          content: '已输入的服务记录尚未提交，确定要放弃吗？',
+          content: '已输入的服务记录与照片凭证尚未提交，确定要放弃吗？',
           confirmText: '放弃',
           cancelText: '继续写',
           confirmColor: '#b83a3a',
           success(res) {
             if (res.confirm) {
               that._recordSummary = '';
-              that.setData({ showRecordModal: false, recordSummary: '' });
+              that.setData({ showRecordModal: false, recordSummary: '', recordPhotos: [], photoUploading: false });
             }
           }
         });
@@ -324,18 +329,139 @@ Page({
       }
     }
     this._recordSummary = '';
-    this.setData({ showRecordModal: false, recordSummary: '' });
+    this.setData({ showRecordModal: false, recordSummary: '', recordPhotos: [], photoUploading: false });
   },
 
   onInputSummary(e) {
     this._recordSummary = e.detail.value;
   },
 
+  chooseRecordPhoto() {
+    if (this.data.photoUploading) return;
+    const currentList = this.data.recordPhotos || [];
+    const remaining = 4 - currentList.length;
+    if (remaining <= 0) {
+      if (typeof wx !== 'undefined' && typeof wx.showToast === 'function') {
+        wx.showToast({ title: '最多上传4张现场照片', icon: 'none' });
+      }
+      return;
+    }
+
+    const that = this;
+    const app = getAppSafe();
+    const baseUrl = app.globalData?.baseUrl || 'http://localhost:8080/api';
+    const token = app.globalData?.token || (typeof wx !== 'undefined' && typeof wx.getStorageSync === 'function' ? wx.getStorageSync('token') : null);
+
+    const uploadFilePromise = (filePath) => {
+      return new Promise((resolve, reject) => {
+        if (typeof wx === 'undefined' || typeof wx.uploadFile !== 'function') {
+          resolve(filePath);
+          return;
+        }
+        wx.uploadFile({
+          url: `${baseUrl}/upload/image?type=fulfillment`,
+          filePath: filePath,
+          name: 'file',
+          header: {
+            'Authorization': token ? `Bearer ${token}` : ''
+          },
+          success(res) {
+            let data;
+            try {
+              data = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
+            } catch (e) {
+              reject(new Error('解析响应失败'));
+              return;
+            }
+            if (data && (data.code === 200 || data.code === 0) && data.data && data.data.url) {
+              resolve(data.data.url);
+            } else {
+              reject(new Error(data?.message || '上传失败'));
+            }
+          },
+          fail: reject
+        });
+      });
+    };
+
+    const processFiles = (filePaths) => {
+      if (!filePaths || filePaths.length === 0) return;
+      that.setData({ photoUploading: true });
+      if (typeof wx !== 'undefined' && typeof wx.showLoading === 'function') {
+        wx.showLoading({ title: '正在上传图片...', mask: true });
+      }
+
+      const uploadTasks = filePaths.slice(0, remaining).map(p => uploadFilePromise(p));
+      Promise.allSettled(uploadTasks).then(results => {
+        if (typeof wx !== 'undefined' && typeof wx.hideLoading === 'function') {
+          wx.hideLoading();
+        }
+        that.setData({ photoUploading: false });
+        const newUrls = [];
+        let failCount = 0;
+        results.forEach(r => {
+          if (r.status === 'fulfilled') {
+            newUrls.push(r.value);
+          } else {
+            failCount++;
+          }
+        });
+        if (newUrls.length > 0) {
+          const updated = [...(that.data.recordPhotos || []), ...newUrls];
+          that.setData({ recordPhotos: updated });
+        }
+        if (failCount > 0 && typeof wx !== 'undefined' && typeof wx.showToast === 'function') {
+          wx.showToast({ title: `${failCount}张图片上传失败，请重试`, icon: 'none' });
+        }
+      });
+    };
+
+    if (typeof wx !== 'undefined' && typeof wx.chooseMedia === 'function') {
+      wx.chooseMedia({
+        count: remaining,
+        mediaType: ['image'],
+        sourceType: ['camera', 'album'],
+        sizeType: ['compressed'],
+        success(res) {
+          const paths = (res.tempFiles || []).map(f => f.tempFilePath);
+          processFiles(paths);
+        }
+      });
+    } else if (typeof wx !== 'undefined' && typeof wx.chooseImage === 'function') {
+      wx.chooseImage({
+        count: remaining,
+        sizeType: ['compressed'],
+        sourceType: ['camera', 'album'],
+        success(res) {
+          processFiles(res.tempFilePaths || []);
+        }
+      });
+    }
+  },
+
+  deleteRecordPhoto(e) {
+    const idx = e.currentTarget.dataset.index;
+    const photos = [...(this.data.recordPhotos || [])];
+    photos.splice(idx, 1);
+    this.setData({ recordPhotos: photos });
+  },
+
+  previewRecordPhoto(e) {
+    const url = e.currentTarget.dataset.url;
+    if (!url || typeof wx === 'undefined' || typeof wx.previewImage !== 'function') return;
+    wx.previewImage({
+      current: url,
+      urls: this.data.recordPhotos || [url]
+    });
+  },
+
   submitRecord() {
     const { currentOrderId } = this.data;
     const recordSummary = this._recordSummary || this.data.recordSummary;
     if (!recordSummary.trim()) {
-      wx.showToast({ title: '请填写服务情况说明', icon: 'none' });
+      if (typeof wx !== 'undefined' && typeof wx.showToast === 'function') {
+        wx.showToast({ title: '请填写服务情况说明', icon: 'none' });
+      }
       return;
     }
 
@@ -343,10 +469,15 @@ Page({
     const now = new Date();
     const formatTime = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 
+    const attachmentsJson = this.data.recordPhotos && this.data.recordPhotos.length > 0
+      ? JSON.stringify(this.data.recordPhotos)
+      : null;
+
     return this.performAction('/fulfillment/submit-record', {
       orderId: currentOrderId,
       actualEndAt: formatTime(now),
-      serviceSummary: recordSummary
+      serviceSummary: recordSummary,
+      attachmentsJson: attachmentsJson
     }, '服务记录已提交', true, currentOrderId);
   },
 

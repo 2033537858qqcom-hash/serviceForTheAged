@@ -129,8 +129,26 @@
   <!-- 提交履约记录抽屉 -->
   <bottom-sheet show="{{showRecordModal}}" title="提交上门服务记录" confirm-text="确认提交" dismiss-text="取消" loading="{{actionLoading}}" bind:close="closeRecordModal" bind:confirm="submitRecord">
     <view class="record-sheet-body">
-      <view class="modal-tip">请真实填写现场服务情况，以便老人与社区审核留档</view>
+      <view class="modal-tip">请真实填写现场服务情况并拍摄或上传完成图片，以便老人与社区审核留档</view>
       <textarea id="record-textarea" data-no-drag="true" class="record-textarea" placeholder="填写服务工作总结，如老人饮食情况、日常保洁清洁部位、陪同就医事项等..." value="{{recordSummary}}" bindinput="onInputSummary" cursor-spacing="140" />
+
+      <!-- 现场服务完成照片拍摄与上传凭证 -->
+      <view class="record-photos-section">
+        <view class="record-photos-title flex-between">
+          <text class="photos-title-text">现场完成照片凭证 ({{recordPhotos.length}}/4)</text>
+          <text class="photos-tip-text">支持拍照或相册选取</text>
+        </view>
+        <view class="record-photos-grid">
+          <view class="photo-thumb-item" wx:for="{{recordPhotos}}" wx:key="*this">
+            <image class="photo-img" src="{{item}}" mode="aspectFill" bindtap="previewRecordPhoto" data-url="{{item}}" />
+            <view class="photo-delete-btn" catchtap="deleteRecordPhoto" data-index="{{index}}" aria-label="删除此照片">✕</view>
+          </view>
+          <view class="photo-add-btn flex-column items-center justify-center" wx:if="{{recordPhotos.length < 4}}" bindtap="chooseRecordPhoto" hover-class="spring-in" hover-stay-time="80" aria-label="拍照或上传完成图片">
+            <image class="photo-camera-icon" src="/assets/icons/camera.png" />
+            <text class="photo-add-text">{{photoUploading ? '上传中...' : '拍摄/上传'}}</text>
+          </view>
+        </view>
+      </view>
     </view>
   </bottom-sheet>
 </view>

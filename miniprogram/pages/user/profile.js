@@ -76,6 +76,88 @@ Page({
     }).catch(() => {});
   },
 
+  chooseAndUploadAvatar() {
+    const app = getAppSafe();
+    if (!this.data.userInfo) {
+      this.goToLogin();
+      return;
+    }
+
+    const that = this;
+    const uploadFile = (filePath) => {
+      wx.showLoading({ title: '正在上传头像...', mask: true });
+      const baseUrl = app.globalData?.baseUrl || 'http://localhost:8080/api';
+      const token = app.globalData?.token || (typeof wx.getStorageSync === 'function' ? wx.getStorageSync('token') : null);
+
+      wx.uploadFile({
+        url: `${baseUrl}/upload/image?type=avatar`,
+        filePath: filePath,
+        name: 'file',
+        header: {
+          'Authorization': token ? `Bearer ${token}` : ''
+        },
+        success(res) {
+          wx.hideLoading();
+          let data;
+          try {
+            data = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
+          } catch (e) {
+            wx.showToast({ title: '上传解析异常', icon: 'none' });
+            return;
+          }
+
+          if (data && (data.code === 200 || data.code === 0) && data.data && data.data.url) {
+            const avatarUrl = data.data.url;
+            request.post('/users/avatar', { avatar: avatarUrl }).then(() => {
+              const updatedUser = { ...(that.data.userInfo || {}), avatar: avatarUrl };
+              if (app.globalData) {
+                app.globalData.userInfo = updatedUser;
+              }
+              if (typeof wx.setStorageSync === 'function') {
+                wx.setStorageSync('userInfo', updatedUser);
+              }
+              that.setData({ userInfo: updatedUser });
+              wx.showToast({ title: '头像更新成功', icon: 'success' });
+            }).catch(err => {
+              wx.showToast({ title: err?.message || '更新头像失败', icon: 'none' });
+            });
+          } else {
+            wx.showToast({ title: data?.message || '图片上传失败', icon: 'none' });
+          }
+        },
+        fail() {
+          wx.hideLoading();
+          wx.showToast({ title: '网络连接失败，请重试', icon: 'none' });
+        }
+      });
+    };
+
+    if (typeof wx.chooseMedia === 'function') {
+      wx.chooseMedia({
+        count: 1,
+        mediaType: ['image'],
+        sourceType: ['album', 'camera'],
+        sizeType: ['compressed'],
+        success(res) {
+          if (res.tempFiles && res.tempFiles.length > 0) {
+            uploadFile(res.tempFiles[0].tempFilePath);
+          }
+        }
+      });
+    } else if (typeof wx.chooseImage === 'function') {
+      wx.chooseImage({
+        count: 1,
+        sizeType: ['compressed'],
+        sourceType: ['album', 'camera'],
+        success(res) {
+          if (res.tempFilePaths && res.tempFilePaths.length > 0) {
+            uploadFile(res.tempFilePaths[0]);
+          }
+        }
+      });
+    }
+  },
+
   onModeChange(e) {
     const isElder = e.detail.value;
     app.toggleElderMode(isElder);

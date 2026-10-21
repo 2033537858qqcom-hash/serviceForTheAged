@@ -37,6 +37,7 @@ Page({
   data: {
     orderId: null,
     orderVO: null,
+    fulfillmentPhotos: [],
     loading: true,
     loadError: false,
     canCancel: false,
@@ -145,7 +146,16 @@ Page({
         return;
       }
       const canCancel = ['WAIT_DISPATCH', 'WAIT_ACCEPT', 'WAIT_VISIT', 'WAIT_MANUAL'].includes(data?.order?.status);
-      this.setData({ orderVO: data, canCancel });
+      let fulfillmentPhotos = [];
+      if (data?.serviceRecord?.attachmentsJson) {
+        try {
+          const parsed = JSON.parse(data.serviceRecord.attachmentsJson);
+          if (Array.isArray(parsed)) {
+            fulfillmentPhotos = parsed;
+          }
+        } catch (_) {}
+      }
+      this.setData({ orderVO: data, canCancel, fulfillmentPhotos });
       this._version = version;
       this._updatedAt = Date.now();
       this.updateMapState(data?.tracking || null);
@@ -331,6 +341,15 @@ Page({
     if (staffPhone) {
       wx.makePhoneCall({ phoneNumber: staffPhone });
     }
+  },
+
+  previewFulfillmentPhoto(e) {
+    const url = e.currentTarget.dataset.url;
+    if (!url || typeof wx === 'undefined' || typeof wx.previewImage !== 'function') return;
+    wx.previewImage({
+      current: url,
+      urls: this.data.fulfillmentPhotos || [url]
+    });
   },
 
   cancelOrder() {
