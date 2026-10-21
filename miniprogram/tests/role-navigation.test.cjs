@@ -136,3 +136,35 @@ test('custom-tab-bar dynamically switches between STAFF and RESIDENT tab menus',
   assert.equal(staffBar.data.list[1].text, '我的');
   assert.equal(staffBar.data.selected, 0);
 });
+
+test('STAFF profile page loads staff stats and switches to workbench', async () => {
+  const staffApp = appData('STAFF');
+  staffApp.globalData.userInfo = { role: 'STAFF', username: 'staff01', realName: '张玉兰' };
+  const calls = [];
+  const rt = createRuntime(staffApp, {
+    switchTab: o => calls.push(o)
+  }, {
+    get(url) {
+      if (url === '/staff/my-profile') {
+        return Promise.resolve({
+          profile: { id: 1, priorRating: 4.95, totalOrders: 42, baseStationName: '阳光助老站', currentStatus: 'AVAILABLE' },
+          skills: [{ skillName: '生活照料', certificateNo: 'CERT-001' }]
+        });
+      }
+      return Promise.resolve({});
+    }
+  });
+
+  const page = rt.page('user/profile');
+  page.onShow();
+  await page.loadStaffProfile();
+
+  assert.equal(page.data.staffProfile.priorRating, 4.95);
+  assert.equal(page.data.staffProfile.totalOrders, 42);
+  assert.equal(page.data.staffSkills.length, 1);
+  assert.equal(page.data.staffSkillsDesc, '生活照料');
+
+  page.goToWorkbench();
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, '/pages/staff/workbench');
+});

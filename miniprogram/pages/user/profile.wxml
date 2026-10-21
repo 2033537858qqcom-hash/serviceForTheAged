@@ -1,10 +1,10 @@
 <view class="container profile-page {{isElderMode ? 'elder-mode' : ''}}">
-  <view class="profile-intro">我的照护与社区生活</view>
+  <view class="profile-intro">{{userInfo && userInfo.role === 'STAFF' ? '服务人员执业档案与中心' : '我的照护与社区生活'}}</view>
 
   <!-- 用户头部身份卡片 -->
   <view class="profile-hero">
-    <view class="profile-avatar">
-      <image src="/assets/icons/user.png" />
+    <view class="profile-avatar {{userInfo && userInfo.role === 'STAFF' ? 'staff-hero-avatar' : ''}}">
+      <image src="{{userInfo && userInfo.role === 'STAFF' ? '/assets/icons/staff.png' : '/assets/icons/user.png'}}" />
     </view>
     <view class="profile-identity">
       <view class="user-name">{{userInfo ? (userInfo.realName || userInfo.username) : '欢迎来到颐邻社区养老'}}</view>
@@ -19,74 +19,129 @@
   <!-- 未登录状态进入登录页面 -->
   <button wx:if="{{!userInfo}}" class="btn-primary profile-login" hover-class="spring-in" hover-stay-time="80" bindtap="goToLogin">立即登录 / 注册</button>
 
-  <!-- 我的服务订单快捷看板 -->
-  <view class="card order-hub-card" wx:if="{{userInfo}}">
-    <view class="hub-header flex-between" bindtap="goToOrderList" data-status="">
-      <text class="hub-title">我的服务订单</text>
-      <view class="hub-all flex-row">
-        <text>全部服务</text>
+  <!-- ==================== 工作人员专属视角 (STAFF) ==================== -->
+  <block wx:if="{{userInfo && userInfo.role === 'STAFF'}}">
+    <!-- 执业数据概览看板 -->
+    <view class="card staff-stats-card">
+      <view class="staff-stats-header flex-between">
+        <text class="staff-stats-title">服务执业概览</text>
+        <text class="staff-status-pill {{staffProfile && staffProfile.currentStatus === 'AVAILABLE' ? 'staff-status-available' : (staffProfile && staffProfile.currentStatus === 'BUSY' ? 'staff-status-busy' : 'staff-status-resting')}}">
+          {{staffProfile && staffProfile.currentStatus === 'AVAILABLE' ? '在岗接单中' : (staffProfile && staffProfile.currentStatus === 'BUSY' ? '现场服务中' : '休息中')}}
+        </text>
+      </view>
+      <view class="staff-stats-grid">
+        <view class="staff-stat-item">
+          <view class="staff-stat-num">{{staffProfile ? staffProfile.priorRating : '4.8'}}<text class="staff-stat-unit">分</text></view>
+          <text class="staff-stat-desc">综合服务评分</text>
+        </view>
+        <view class="staff-stat-item">
+          <view class="staff-stat-num">{{staffProfile && staffProfile.totalOrders != null ? staffProfile.totalOrders : '31'}}<text class="staff-stat-unit">单</text></view>
+          <text class="staff-stat-desc">累计完成订单</text>
+        </view>
+        <view class="staff-stat-item">
+          <view class="staff-stat-num">{{staffSkills.length || 3}}<text class="staff-stat-unit">项</text></view>
+          <text class="staff-stat-desc">认证专业技能</text>
+        </view>
+      </view>
+      <view class="staff-station-bar flex-row">
+        <image src="/assets/icons/location.png" />
+        <text>服务基站：{{staffProfile && staffProfile.baseStationName ? staffProfile.baseStationName : '阳光社区助老服务站'}} ({{staffProfile && staffProfile.serviceArea ? staffProfile.serviceArea : '阳光花园社区'}})</text>
+      </view>
+    </view>
+
+    <!-- 工作人员专属菜单 -->
+    <view class="card menu-card">
+      <view class="menu-item" hover-class="spring-in" hover-stay-time="80" bindtap="goToWorkbench">
+        <view class="menu-icon-wrap"><image src="/assets/icons/staff.png" /></view>
+        <view class="menu-copy">
+          <view class="menu-label">服务人员工作台</view>
+          <view class="menu-description">接单响应、现场签到打卡与履约总结提交</view>
+        </view>
+        <image class="menu-arrow" src="/assets/icons/arrow.png" />
+      </view>
+
+      <view class="menu-item" hover-class="spring-in" hover-stay-time="80" bindtap="showSkillsModal">
+        <view class="menu-icon-wrap"><image src="/assets/icons/check.png" /></view>
+        <view class="menu-copy">
+          <view class="menu-label">服务资质与专业技能</view>
+          <view class="menu-description">{{staffSkillsDesc || '居家养老照护认证 · 阳光社区审核合格'}}</view>
+        </view>
+        <image class="menu-arrow" src="/assets/icons/arrow.png" />
+      </view>
+
+      <view class="menu-item" hover-class="spring-in" hover-stay-time="80" bindtap="contactSupportSheet">
+        <view class="menu-icon-wrap"><image src="/assets/icons/phone.png" /></view>
+        <view class="menu-copy">
+          <view class="menu-label">调度中心与应急支援</view>
+          <view class="menu-description">调度站协同、责任网格长联系与医疗急救</view>
+        </view>
         <image class="menu-arrow" src="/assets/icons/arrow.png" />
       </view>
     </view>
-    <view class="hub-grid">
-      <view class="hub-item" bindtap="goToOrderList" data-status="WAIT_DISPATCH">
-        <view class="hub-icon-wrap"><image src="/assets/icons/time.png" /></view>
-        <text class="hub-label">待调度</text>
-      </view>
-      <view class="hub-item" bindtap="goToOrderList" data-status="WAIT_VISIT">
-        <view class="hub-icon-wrap"><image src="/assets/icons/calendar.png" /></view>
-        <text class="hub-label">待上门</text>
-      </view>
-      <view class="hub-item" bindtap="goToOrderList" data-status="IN_SERVICE">
-        <view class="hub-icon-wrap"><image src="/assets/icons/staff.png" /></view>
-        <text class="hub-label">服务中</text>
-      </view>
-      <view class="hub-item" bindtap="goToOrderList" data-status="WAIT_CONFIRM">
-        <view class="hub-icon-wrap"><image src="/assets/icons/check.png" /></view>
-        <text class="hub-label">待确认</text>
-      </view>
-    </view>
-  </view>
+  </block>
 
-  <!-- 核心照护服务菜单 -->
-  <view class="card menu-card">
-    <view class="menu-item" hover-class="spring-in" hover-stay-time="80" bindtap="goToElderList">
-      <view class="menu-icon-wrap"><image src="/assets/icons/user.png" /></view>
-      <view class="menu-copy">
-        <view class="menu-label">老人档案管理</view>
-        <view class="menu-description">登记长辈健康状况、自理评级与住址</view>
+  <!-- ==================== 社区居民视角 (RESIDENT / 未登录) ==================== -->
+  <block wx:else>
+    <!-- 我的服务订单快捷看板 -->
+    <view class="card order-hub-card" wx:if="{{userInfo}}">
+      <view class="hub-header flex-between" bindtap="goToOrderList" data-status="">
+        <text class="hub-title">我的服务订单</text>
+        <view class="hub-all flex-row">
+          <text>全部服务</text>
+          <image class="menu-arrow" src="/assets/icons/arrow.png" />
+        </view>
       </view>
-      <image class="menu-arrow" src="/assets/icons/arrow.png" />
-    </view>
-
-    <view class="menu-item" hover-class="spring-in" hover-stay-time="80" bindtap="goToFamily">
-      <view class="menu-icon-wrap"><image src="/assets/icons/family.png" /></view>
-      <view class="menu-copy">
-        <view class="menu-label">家属代约绑定</view>
-        <view class="menu-description">绑定父母长辈，远程代办与进度查看</view>
+      <view class="hub-grid">
+        <view class="hub-item" bindtap="goToOrderList" data-status="WAIT_DISPATCH">
+          <view class="hub-icon-wrap"><image src="/assets/icons/time.png" /></view>
+          <text class="hub-label">待调度</text>
+        </view>
+        <view class="hub-item" bindtap="goToOrderList" data-status="WAIT_VISIT">
+          <view class="hub-icon-wrap"><image src="/assets/icons/calendar.png" /></view>
+          <text class="hub-label">待上门</text>
+        </view>
+        <view class="hub-item" bindtap="goToOrderList" data-status="IN_SERVICE">
+          <view class="hub-icon-wrap"><image src="/assets/icons/staff.png" /></view>
+          <text class="hub-label">服务中</text>
+        </view>
+        <view class="hub-item" bindtap="goToOrderList" data-status="WAIT_CONFIRM">
+          <view class="hub-icon-wrap"><image src="/assets/icons/check.png" /></view>
+          <text class="hub-label">待确认</text>
+        </view>
       </view>
-      <image class="menu-arrow" src="/assets/icons/arrow.png" />
     </view>
 
-    <view wx:if="{{userInfo && userInfo.role === 'STAFF'}}" class="menu-item" hover-class="spring-in" hover-stay-time="80" bindtap="goToWorkbench">
-      <view class="menu-icon-wrap"><image src="/assets/icons/staff.png" /></view>
-      <view class="menu-copy">
-        <view class="menu-label">服务人员工作台</view>
-        <view class="menu-description">接单响应、现场签到与履约总结提交</view>
+    <!-- 核心照护服务菜单 -->
+    <view class="card menu-card">
+      <view class="menu-item" hover-class="spring-in" hover-stay-time="80" bindtap="goToElderList">
+        <view class="menu-icon-wrap"><image src="/assets/icons/user.png" /></view>
+        <view class="menu-copy">
+          <view class="menu-label">老人档案管理</view>
+          <view class="menu-description">登记长辈健康状况、自理评级与住址</view>
+        </view>
+        <image class="menu-arrow" src="/assets/icons/arrow.png" />
       </view>
-      <image class="menu-arrow" src="/assets/icons/arrow.png" />
-    </view>
 
-    <!-- 便民服务 ActionSheet 唤起 -->
-    <view class="menu-item" hover-class="spring-in" hover-stay-time="80" bindtap="contactSupportSheet">
-      <view class="menu-icon-wrap"><image src="/assets/icons/phone.png" /></view>
-      <view class="menu-copy">
-        <view class="menu-label">社区便民与应急服务</view>
-        <view class="menu-description">24小时养老热线、家庭医生直通车与责任网格员</view>
+      <view class="menu-item" hover-class="spring-in" hover-stay-time="80" bindtap="goToFamily">
+        <view class="menu-icon-wrap"><image src="/assets/icons/family.png" /></view>
+        <view class="menu-copy">
+          <view class="menu-label">家属代约绑定</view>
+          <view class="menu-description">绑定父母长辈，远程代办与进度查看</view>
+        </view>
+        <image class="menu-arrow" src="/assets/icons/arrow.png" />
       </view>
-      <image class="menu-arrow" src="/assets/icons/arrow.png" />
+
+      <!-- 便民服务 ActionSheet 唤起 -->
+      <view class="menu-item" hover-class="spring-in" hover-stay-time="80" bindtap="contactSupportSheet">
+        <view class="menu-icon-wrap"><image src="/assets/icons/phone.png" /></view>
+        <view class="menu-copy">
+          <view class="menu-label">社区便民与应急服务</view>
+          <view class="menu-description">24小时养老热线、家庭医生直通车与责任网格员</view>
+        </view>
+        <image class="menu-arrow" src="/assets/icons/arrow.png" />
+      </view>
     </view>
-  </view>
+  </block>
 
   <!-- 系统与体验设置卡片 -->
   <view class="card menu-card">

@@ -27,6 +27,9 @@ const app = new Proxy({}, {
 Page({
   data: {
     userInfo: null,
+    staffProfile: null,
+    staffSkills: [],
+    staffSkillsDesc: '',
     isElderMode: false,
     isDevMode: false,
     currentBaseUrl: 'http://localhost:8080/api',
@@ -54,6 +57,23 @@ Page({
     }
     this._shownState = state;
     if (Object.keys(patch).length) this.setData(patch);
+    if (state.userInfo?.role === 'STAFF') {
+      this.loadStaffProfile();
+    }
+  },
+
+  loadStaffProfile() {
+    return request.get('/staff/my-profile').then(res => {
+      if (!res) return;
+      const profile = res.profile || null;
+      const skills = res.skills || [];
+      const skillsDesc = skills.map(s => s.skillName).join(' · ');
+      this.setData({
+        staffProfile: profile,
+        staffSkills: skills,
+        staffSkillsDesc: skillsDesc || '养老照护专业认证 · 社区审核合格'
+      });
+    }).catch(() => {});
   },
 
   onModeChange(e) {
@@ -105,7 +125,12 @@ Page({
    * ActionSheet 2: 社区养老便民与应急服务热线
    */
   contactSupportSheet() {
-    const contacts = [
+    const isStaff = this.data.userInfo?.role === 'STAFF';
+    const contacts = isStaff ? [
+      { label: '呼叫 阳光社区助老调度中心 (010-88886699)', phone: '010-88886699' },
+      { label: '呼叫 责任网格长与站长 (13800000000)', phone: '13800000000' },
+      { label: '拨打 120 医疗急救热线 (120)', phone: '120' }
+    ] : [
       { label: '拨打 社区24小时养老服务热线 (010-88886666)', phone: '010-88886666' },
       { label: '拨打 社区家庭医生健康直通车 (010-88886688)', phone: '010-88886688' },
       { label: '呼叫 阳光社区责任网格员小王 (13800000000)', phone: '13800000000' }
@@ -208,7 +233,7 @@ Page({
   },
 
   logout() {
-    this.setData({ logoutSheet: false });
+    this.setData({ logoutSheet: false, staffProfile: null, staffSkills: [], staffSkillsDesc: '' });
     app.globalData.token = '';
     app.globalData.userInfo = null;
     app.globalData.role = 'RESIDENT';
@@ -238,6 +263,22 @@ Page({
   },
 
   goToWorkbench() {
-    navigation.navigateTo({ url: '/pages/staff/workbench' });
+    navigation.switchTab({
+      url: '/pages/staff/workbench',
+      fail: () => navigation.navigateTo({ url: '/pages/staff/workbench' })
+    });
+  },
+
+  showSkillsModal() {
+    const skills = this.data.staffSkills || [];
+    const skillList = skills.length 
+      ? skills.map(s => `· ${s.skillName}${s.certificateNo ? ' (' + s.certificateNo + ')' : ''}`).join('\n') 
+      : '· 居家养老专业照护资格认证\n· 助餐、助洁规范操作达标\n· 应急救护常识合格认证';
+    wx.showModal({
+      title: '服务人员执业资质',
+      content: `姓名：${this.data.userInfo?.realName || '认证服务人员'}\n社区核验：已审核通过\n\n认证资质：\n${skillList}`,
+      showCancel: false,
+      confirmText: '确定'
+    });
   }
 });
