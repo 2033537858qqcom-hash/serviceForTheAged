@@ -177,6 +177,15 @@ public class StaffService {
     }
 
     public List<StaffShift> getStaffShifts(Long staffId, LocalDate startDate, LocalDate endDate) {
+        LoginUser currentUser = UserContext.getUser();
+        if (currentUser != null && UserRole.STAFF.getCode().equalsIgnoreCase(currentUser.getRole())) {
+            StaffProfile myProfile = staffProfileMapper.selectOne(new LambdaQueryWrapper<StaffProfile>()
+                    .eq(StaffProfile::getUserId, currentUser.getId()));
+            if (myProfile == null || !myProfile.getId().equals(staffId)) {
+                throw new BusinessException(403, "服务人员只能查看本人的排班安排");
+            }
+        }
+
         LambdaQueryWrapper<StaffShift> wrapper = new LambdaQueryWrapper<StaffShift>()
                 .eq(StaffShift::getStaffId, staffId)
                 .eq(StaffShift::getStatus, "ACTIVE");

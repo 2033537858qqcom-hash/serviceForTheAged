@@ -13,6 +13,9 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -32,20 +35,33 @@ public class UserController {
 
     @Data
     public static class UpdatePwdDTO {
+        @NotBlank(message = "旧密码不能为空")
         private String oldPassword;
+
+        @NotBlank(message = "新密码不能为空")
+        @Size(min = 6, max = 32, message = "新密码长度必须在6至32位之间")
         private String newPassword;
     }
 
     @Data
     public static class UpdateAvatarDTO {
+        @NotBlank(message = "头像URL不能为空")
         private String avatar;
     }
 
     @Data
     public static class UpdateProfileDTO {
+        @Size(max = 32, message = "姓名长度不能超过32位")
         private String realName;
-        private String phone;
         private String avatar;
+    }
+
+    public static boolean isValidImageUrl(String url) {
+        if (!StringUtils.hasText(url)) return false;
+        String trimmed = url.trim();
+        return (trimmed.startsWith("https://") && (trimmed.contains(".myqcloud.com/") || trimmed.contains(".cos.")))
+                || trimmed.startsWith("/media/")
+                || ((trimmed.startsWith("http://") || trimmed.startsWith("https://")) && trimmed.contains("/media/"));
     }
 
     @Operation(summary = "分页查询系统用户(管理员)")
@@ -85,7 +101,7 @@ public class UserController {
 
     @Operation(summary = "修改个人登录密码")
     @PostMapping("/update-password")
-    public Result<Void> updatePassword(@RequestBody UpdatePwdDTO dto) {
+    public Result<Void> updatePassword(@Valid @RequestBody UpdatePwdDTO dto) {
         LoginUser currentUser = UserContext.getUser();
         SysUser user = sysUserMapper.selectById(currentUser.getId());
         if (!passwordEncoder.matches(dto.getOldPassword(), user.getPassword())) {
@@ -117,9 +133,9 @@ public class UserController {
 
     @Operation(summary = "修改当前登录用户的个人头像")
     @PostMapping("/avatar")
-    public Result<String> updateAvatar(@RequestBody UpdateAvatarDTO dto) {
-        if (!StringUtils.hasText(dto.getAvatar())) {
-            throw new BusinessException("头像URL不能为空");
+    public Result<String> updateAvatar(@Valid @RequestBody UpdateAvatarDTO dto) {
+        if (!isValidImageUrl(dto.getAvatar())) {
+            throw new BusinessException("头像图片地址格式不合法，仅支持本系统及受信任的存储源");
         }
         LoginUser currentUser = UserContext.getUser();
         SysUser user = sysUserMapper.selectById(currentUser.getId());
@@ -134,7 +150,7 @@ public class UserController {
 
     @Operation(summary = "修改当前登录用户的个人资料")
     @PutMapping("/profile")
-    public Result<UserSummaryVO> updateProfile(@RequestBody UpdateProfileDTO dto) {
+    public Result<UserSummaryVO> updateProfile(@Valid @RequestBody UpdateProfileDTO dto) {
         LoginUser currentUser = UserContext.getUser();
         SysUser user = sysUserMapper.selectById(currentUser.getId());
         if (user == null) {
@@ -143,10 +159,10 @@ public class UserController {
         if (StringUtils.hasText(dto.getRealName())) {
             user.setRealName(dto.getRealName().trim());
         }
-        if (StringUtils.hasText(dto.getPhone())) {
-            user.setPhone(dto.getPhone().trim());
-        }
         if (StringUtils.hasText(dto.getAvatar())) {
+            if (!isValidImageUrl(dto.getAvatar())) {
+                throw new BusinessException("头像图片地址格式不合法，仅支持本系统及受信任的存储源");
+            }
             user.setAvatar(dto.getAvatar().trim());
         }
         user.setUpdatedAt(LocalDateTime.now());

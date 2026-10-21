@@ -58,8 +58,6 @@ public class JwtTokenProvider {
         claims.put("username", user.getUsername());
         claims.put("realName", user.getRealName());
         claims.put("role", user.getRole());
-        claims.put("phone", user.getPhone());
-        claims.put("openid", user.getOpenid());
         claims.put("avatar", user.getAvatar());
 
         return Jwts.builder()
@@ -91,9 +89,7 @@ public class JwtTokenProvider {
                     .id(userId)
                     .username((String) claims.get("username"))
                     .realName((String) claims.get("realName"))
-                    .phone((String) claims.get("phone"))
                     .role((String) claims.get("role"))
-                    .openid((String) claims.get("openid"))
                     .avatar((String) claims.get("avatar"))
                     .build();
         } catch (JwtException | IllegalArgumentException e) {

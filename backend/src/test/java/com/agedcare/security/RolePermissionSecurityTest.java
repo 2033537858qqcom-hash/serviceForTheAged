@@ -19,6 +19,12 @@ import com.agedcare.modules.fulfillment.mapper.ServiceComplaintMapper;
 import com.agedcare.modules.fulfillment.mapper.ServiceRecordMapper;
 import com.agedcare.modules.fulfillment.mapper.ServiceReviewMapper;
 import com.agedcare.modules.fulfillment.service.FulfillmentService;
+import com.agedcare.modules.notification.entity.MessageNotification;
+import com.agedcare.modules.notification.mapper.MessageNotificationMapper;
+import com.agedcare.modules.notification.service.NotificationService;
+import com.agedcare.modules.staff.mapper.StaffShiftMapper;
+import com.agedcare.modules.staff.mapper.StaffSkillMapper;
+import com.agedcare.modules.staff.service.StaffService;
 import com.agedcare.modules.order.dto.OrderCreateDTO;
 import com.agedcare.modules.order.entity.ServiceOrder;
 import com.agedcare.modules.order.mapper.OrderStatusLogMapper;
@@ -228,6 +234,13 @@ public class RolePermissionSecurityTest {
         assertEquals(403, exUnauthorized.getCode());
     }
 
+    @Mock private MessageNotificationMapper notificationMapper;
+    @InjectMocks private NotificationService notificationService;
+
+    @Mock private StaffShiftMapper staffShiftMapper;
+    @Mock private StaffSkillMapper staffSkillMapper;
+    @InjectMocks private StaffService staffService;
+
     @Test
     @DisplayName("P8履约安全: 非当前指派的服务人员禁止开始服务")
     public void testNonAssignedStaffCannotStartService() {
@@ -251,5 +264,40 @@ public class RolePermissionSecurityTest {
         BusinessException ex = assertThrows(BusinessException.class, () -> fulfillmentService.startService(601L));
         assertEquals(403, ex.getCode());
         assertTrue(ex.getMessage().contains("只有当前接单的服务人员才能开始服务"));
+    }
+
+    @Test
+    @DisplayName("M5安全防越权: 标记通知已读严格校验通知所属人")
+    public void testMarkNotificationReadRequiresOwnership() {
+        // 当前登录用户为 100L
+        UserContext.setUser(LoginUser.builder().id(100L).role(UserRole.RESIDENT.getCode()).build());
+
+        // 通知属于用户 200L
+        MessageNotification notif = MessageNotification.builder()
+                .id(1L)
+                .userId(200L)
+                .isRead(0)
+                .build();
+        when(notificationMapper.selectById(1L)).thenReturn(notif);
+
+        BusinessException ex = assertThrows(BusinessException.class, () -> notificationService.markAsRead(1L));
+        assertEquals(403, ex.getCode());
+        assertTrue(ex.getMessage().contains("无权操作他人的通知消息"));
+    }
+
+    @Test
+    @DisplayName("M6安全防越权: 服务人员只能查看本人的排班安排，禁止横向越权")
+    public void testStaffCannotViewColleagueShifts() {
+        // 当前登录用户为 2L (张师傅)
+        UserContext.setUser(LoginUser.builder().id(2L).role(UserRole.STAFF.getCode()).build());
+
+        // 张师傅的 staffProfile ID 为 401L
+        StaffProfile myProfile = StaffProfile.builder().id(401L).userId(2L).build();
+        when(staffProfileMapper.selectOne(any())).thenReturn(myProfile);
+
+        // 张师傅试图查询李师傅 (402L) 的排班
+        BusinessException ex = assertThrows(BusinessException.class, () -> staffService.getStaffShifts(402L, null, null));
+        assertEquals(403, ex.getCode());
+        assertTrue(ex.getMessage().contains("服务人员只能查看本人的排班安排"));
     }
 }

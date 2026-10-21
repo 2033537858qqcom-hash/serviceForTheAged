@@ -108,3 +108,5 @@
 .elder-mode .welcome-contact { flex-wrap: wrap; padding: 18rpx 0; }
 .elder-mode .contact-hours { margin-left: 0; }
 .elder-mode .home-brand-icon { width: 88rpx; height: 88rpx; border-radius: 22rpx; }
+
+.home-skeleton-card { padding: 32rpx; margin-bottom: 24rpx; }

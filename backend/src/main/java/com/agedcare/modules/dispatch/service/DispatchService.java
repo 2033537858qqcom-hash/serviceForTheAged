@@ -69,6 +69,12 @@ public class DispatchService {
             throw new BusinessException("订单当前状态不可派单: " + oldStatus);
         }
 
+        // 检查预约服务时段是否已经结束，若已结束则转入 WAIT_MANUAL 人工处理，不再对外派发
+        if (order.getPlannedEndAt() != null && LocalDateTime.now().isAfter(order.getPlannedEndAt())) {
+            markOrderWaitManual(order, "预约服务时段已过，自动转入人工调度协助");
+            throw new BusinessException("预约服务时段已过，无法继续自动派单");
+        }
+
         int currentRound = order.getDispatchRound() != null ? order.getDispatchRound() : 1;
 
         // 如果订单处于待人工状态，管理员重新触发调度时递增轮次，避免被上一轮历史超限次数阻断
@@ -234,6 +240,9 @@ public class DispatchService {
         // 订单状态与当前派单ID双重校验
         if (!OrderStatus.WAIT_ACCEPT.getCode().equals(order.getStatus())) {
             throw new BusinessException("订单当前状态非待接单，无法接单");
+        }
+        if (order.getPlannedEndAt() != null && LocalDateTime.now().isAfter(order.getPlannedEndAt())) {
+            throw new BusinessException("该服务订单已过预约服务时段，无法接单");
         }
         if (order.getCurrentDispatchId() == null || !order.getCurrentDispatchId().equals(attempt.getId())) {
             throw new BusinessException("该派单已失效或已被改派，无法接单");
@@ -414,8 +423,10 @@ public class DispatchService {
             throw new BusinessException("订单不存在");
         }
 
-        if (OrderStatus.IN_SERVICE.getCode().equals(order.getStatus()) || order.getStatusEnum().isTerminal()) {
-            throw new BusinessException("订单已开始服务或已结束，无法改派");
+        if (OrderStatus.IN_SERVICE.getCode().equals(order.getStatus())
+                || OrderStatus.WAIT_CONFIRM.getCode().equals(order.getStatus())
+                || order.getStatusEnum().isTerminal()) {
+            throw new BusinessException("订单已开始服务、已提交履约或已结束，无法改派");
         }
 
         // 撤销原有的有效派单与预留

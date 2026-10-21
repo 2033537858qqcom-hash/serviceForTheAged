@@ -60,7 +60,7 @@ npm run dev
 
 ### 4. 运行微信小程序
 1. 打开**微信开发者工具**。
-2. 点击“导入项目”，选择目录 `d:\serviceForTheAged\miniprogram`。
+2. 点击“导入项目”，选择项目代码中的 `miniprogram` 目录。
 3. AppID 已配置为您的专属 AppID：`wxb460b87f30a9791b`。
 4. 在开发工具详情设置中勾选“不校验合法域名、web-view（业务域名）、TLS版本以及HTTPS证书”（开发联调专用）。
 

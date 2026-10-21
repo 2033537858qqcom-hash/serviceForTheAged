@@ -28,12 +28,15 @@ import com.agedcare.modules.staff.entity.StaffProfile;
 import com.agedcare.modules.staff.mapper.StaffProfileMapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
@@ -54,6 +57,7 @@ public class FulfillmentService {
     private final ServiceRecordMapper serviceRecordMapper;
     private final ServiceReviewMapper serviceReviewMapper;
     private final ServiceComplaintMapper serviceComplaintMapper;
+    private final ObjectMapper objectMapper;
 
     /**
      * 服务人员开始上门服务
@@ -177,6 +181,27 @@ public class FulfillmentService {
 
         if (!StringUtils.hasText(record.getServiceSummary())) {
             throw new BusinessException("请填写服务情况与工作说明");
+        }
+
+        // 校验现场照片凭证格式与域名合法性 (防任意恶意 URL 伪造注入)
+        if (StringUtils.hasText(record.getAttachmentsJson())) {
+            try {
+                JsonNode arrayNode = objectMapper.readTree(record.getAttachmentsJson());
+                if (!arrayNode.isArray()) {
+                    throw new BusinessException("现场照片凭证必须是图片列表");
+                }
+                if (arrayNode.size() > 4) {
+                    throw new BusinessException("现场照片凭证最多上传4张");
+                }
+                for (JsonNode item : arrayNode) {
+                    String imgUrl = item.asText();
+                    if (!isValidAttachmentUrl(imgUrl)) {
+                        throw new BusinessException("现场凭证包含未受信任或非法的图片地址");
+                    }
+                }
+            } catch (IOException e) {
+                throw new BusinessException("现场照片凭证格式无效");
+            }
         }
 
         // 保存或更新履约记录
@@ -399,5 +424,13 @@ public class FulfillmentService {
                 .createdAt(LocalDateTime.now())
                 .build();
         orderStatusLogMapper.insert(logEntity);
+    }
+
+    private boolean isValidAttachmentUrl(String url) {
+        if (!StringUtils.hasText(url)) return false;
+        String trimmed = url.trim();
+        return (trimmed.startsWith("https://") && (trimmed.contains(".myqcloud.com/") || trimmed.contains(".cos.")))
+                || trimmed.startsWith("/media/")
+                || ((trimmed.startsWith("http://") || trimmed.startsWith("https://")) && trimmed.contains("/media/"));
     }
 }

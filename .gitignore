@@ -41,6 +41,7 @@ uploads/
 /backend/config/cos-local.properties
 /config/cos-local.properties
 
-# AI Assistants
-.agents/
-.grok/
+# WeChat DevTools Private Config
+project.private.config.json
+**/project.private.config.json
+

@@ -35,7 +35,7 @@
   min-height: 42rpx;
   line-height: 40rpx;
   padding: 0 14rpx;
-  font-size: 24rpx;
+  font-size: var(--font-caption, 26rpx);
   margin-left: 12rpx;
   vertical-align: middle;
   box-sizing: border-box;

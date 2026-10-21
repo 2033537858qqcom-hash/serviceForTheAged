@@ -64,6 +64,9 @@ public class AuthInterceptor implements HandlerInterceptor {
             throw new BusinessException(ResultCode.UNAUTHORIZED.getCode(), "账号已被停用或注销，请联系社区工作人员");
         }
 
+        user.setPhone(dbUser.getPhone());
+        user.setOpenid(dbUser.getOpenid());
+        user.setAvatar(dbUser.getAvatar());
         UserContext.setUser(user);
 
         // 检查方法或类上的角色权限约束

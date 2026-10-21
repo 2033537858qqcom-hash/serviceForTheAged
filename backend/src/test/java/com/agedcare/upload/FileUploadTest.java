@@ -42,7 +42,7 @@ class FileUploadTest {
         cosService = new CosService();
         ReflectionTestUtils.setField(cosService, "secretId", "mock-test-secret-id");
         ReflectionTestUtils.setField(cosService, "secretKey", "mock-test-secret-key");
-        ReflectionTestUtils.setField(cosService, "bucket", "shiyan-bbs-01-1429420924");
+        ReflectionTestUtils.setField(cosService, "bucket", "test-bucket");
         ReflectionTestUtils.setField(cosService, "region", "ap-guangzhou");
         ReflectionTestUtils.setField(cosService, "fallbackDir", tempDir.toString());
         cosService.init();
@@ -93,8 +93,19 @@ class FileUploadTest {
     }
 
     @Test
-    void testUploadFulfillmentSuccess() {
-        MockMultipartFile validImage = new MockMultipartFile("file", "done.jpg", "image/jpeg", new byte[]{10, 20, 30});
+    void testResidentUploadFulfillmentForbidden() {
+        MockMultipartFile validImage = new MockMultipartFile("file", "done.jpg", "image/jpeg", new byte[]{1, 2, 3});
+        assertThrows(BusinessException.class, () -> fileUploadController.uploadImage(validImage, "fulfillment"));
+    }
+
+    @Test
+    void testStaffUploadFulfillmentSuccess() {
+        UserContext.setUser(LoginUser.builder()
+                .id(2001L)
+                .username("staff01")
+                .role("STAFF")
+                .build());
+        MockMultipartFile validImage = new MockMultipartFile("file", "done.jpg", "image/jpeg", new byte[]{1, 2, 3});
         Result<Map<String, String>> result = fileUploadController.uploadImage(validImage, "fulfillment");
         assertNotNull(result);
         assertEquals(200, result.getCode());

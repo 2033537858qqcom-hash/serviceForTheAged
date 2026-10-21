@@ -44,8 +44,15 @@ public class NotificationService {
 
     @Transactional(rollbackFor = Exception.class)
     public void markAsRead(Long id) {
+        LoginUser currentUser = UserContext.getUser();
+        if (currentUser == null) {
+            throw new BusinessException("未登录");
+        }
         MessageNotification notif = notificationMapper.selectById(id);
         if (notif != null) {
+            if (!notif.getUserId().equals(currentUser.getId())) {
+                throw new BusinessException(403, "无权操作他人的通知消息");
+            }
             notif.setIsRead(1);
             notif.setReadAt(LocalDateTime.now());
             notificationMapper.updateById(notif);

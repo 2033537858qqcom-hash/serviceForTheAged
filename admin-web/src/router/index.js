@@ -64,8 +64,20 @@ const router = createRouter({
 
 router.beforeEach((to) => {
   const token = localStorage.getItem('admin_token')
-  if (to.path !== '/login' && !token) {
-    return '/login'
+  if (to.path !== '/login') {
+    if (!token) {
+      return '/login'
+    }
+    try {
+      const user = JSON.parse(localStorage.getItem('admin_user') || '{}')
+      if (user.role && user.role !== 'ADMIN') {
+        localStorage.removeItem('admin_token')
+        localStorage.removeItem('admin_user')
+        return '/login'
+      }
+    } catch {
+      // ignore json parse error
+    }
   }
 })
 

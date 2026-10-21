@@ -14,6 +14,13 @@
     </button>
   </view>
 
+  <!-- 首页初始加载骨架屏 -->
+  <view class="home-skeleton-card card" wx:if="{{servicesLoading && (!serviceItems || serviceItems.length === 0)}}" aria-label="正在加载社区服务信息">
+    <view class="skeleton-block skeleton-banner" style="border-radius: 24rpx;"></view>
+    <view class="skeleton-block skeleton-section" style="margin-top: 24rpx;"></view>
+    <view class="skeleton-block skeleton-body" style="margin-top: 16rpx;"></view>
+  </view>
+
   <!-- 优先级1：有进行中服务时，在顶部突出置顶展示“今天的服务”卡片 -->
   <block wx:if="{{activeOrder}}">
     <view class="section-title home-section-heading">

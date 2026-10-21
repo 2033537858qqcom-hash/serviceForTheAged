@@ -40,15 +40,6 @@ public class AuthController {
         return Result.success(authService.wechatLogin(request));
     }
 
-    @Operation(summary = "演示环境一键切换角色登录")
-    @PostMapping("/mock-login")
-    public Result<AuthResponse> mockLogin(
-            @RequestParam(required = false) String role,
-            @RequestParam(required = false) String username
-    ) {
-        return Result.success(authService.mockLogin(role, username));
-    }
-
     @Operation(summary = "获取当前登录用户上下文")
     @GetMapping("/current-user")
     public Result<LoginUser> getCurrentUser() {
