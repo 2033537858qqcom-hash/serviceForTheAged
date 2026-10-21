@@ -54,6 +54,7 @@ public class DispatchController {
 
     @Operation(summary = "服务人员接单确认")
     @PostMapping("/accept/{dispatchId}")
+    @RequireRole(UserRole.STAFF)
     public Result<Void> accept(@PathVariable Long dispatchId) {
         dispatchService.acceptDispatch(dispatchId);
         return Result.success();
@@ -61,6 +62,7 @@ public class DispatchController {
 
     @Operation(summary = "服务人员拒单(释放并自动重派)")
     @PostMapping("/reject")
+    @RequireRole(UserRole.STAFF)
     public Result<Void> reject(@RequestBody RejectDTO dto) {
         dispatchService.rejectDispatch(dto.getDispatchId(), dto.getReason());
         return Result.success();
@@ -74,8 +76,9 @@ public class DispatchController {
         return Result.success();
     }
 
-    @Operation(summary = "查询订单历史各轮次算法候选人评分与解释明细")
+    @Operation(summary = "查询订单历史各轮次算法候选人评分与解释明细(管理员)")
     @GetMapping("/scores/{orderId}")
+    @RequireRole(UserRole.ADMIN)
     public Result<List<DispatchScore>> getScores(@PathVariable Long orderId) {
         return Result.success(dispatchScoreMapper.selectList(new LambdaQueryWrapper<DispatchScore>()
                 .eq(DispatchScore::getOrderId, orderId)

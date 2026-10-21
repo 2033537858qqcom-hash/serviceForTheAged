@@ -83,13 +83,11 @@ public class FulfillmentService {
             throw new BusinessException("未找到订单对应派单信息");
         }
 
-        // 权限校验：非管理员只能由被指派的服务人员开始服务
-        if (!UserRole.ADMIN.getCode().equalsIgnoreCase(currentUser.getRole())) {
-            StaffProfile staff = staffProfileMapper.selectOne(new LambdaQueryWrapper<StaffProfile>()
-                    .eq(StaffProfile::getUserId, currentUser.getId()));
-            if (staff == null || !staff.getId().equals(attempt.getStaffId())) {
-                throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "只有当前接单的服务人员才能开始服务");
-            }
+        // 权限校验：仅允许当前被指派的服务人员开始服务
+        StaffProfile staff = staffProfileMapper.selectOne(new LambdaQueryWrapper<StaffProfile>()
+                .eq(StaffProfile::getUserId, currentUser.getId()));
+        if (staff == null || !staff.getId().equals(attempt.getStaffId())) {
+            throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "只有当前接单的服务人员才能开始服务");
         }
 
         order.setStatus(OrderStatus.IN_SERVICE.getCode());
@@ -147,13 +145,11 @@ public class FulfillmentService {
             throw new BusinessException("未找到订单派单信息");
         }
 
-        // 权限校验：非管理员只能由当前被派单人员提交
-        if (!UserRole.ADMIN.getCode().equalsIgnoreCase(currentUser.getRole())) {
-            StaffProfile staff = staffProfileMapper.selectOne(new LambdaQueryWrapper<StaffProfile>()
-                    .eq(StaffProfile::getUserId, currentUser.getId()));
-            if (staff == null || !staff.getId().equals(attempt.getStaffId())) {
-                throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "只有当前接单的服务人员才能提交履约记录");
-            }
+        // 权限校验：仅允许当前被派单的服务人员提交履约记录
+        StaffProfile staff = staffProfileMapper.selectOne(new LambdaQueryWrapper<StaffProfile>()
+                .eq(StaffProfile::getUserId, currentUser.getId()));
+        if (staff == null || !staff.getId().equals(attempt.getStaffId())) {
+            throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "只有当前接单的服务人员才能提交履约记录");
         }
 
         // 补齐 staffId
@@ -283,9 +279,11 @@ public class FulfillmentService {
             throw new BusinessException("订单尚未完成，暂无法评价");
         }
 
-        // 权限校验：非管理员只能由下单人或关联家属/老人评价
-        if (!UserRole.ADMIN.getCode().equalsIgnoreCase(currentUser.getRole())
-                && !order.getRequesterUserId().equals(currentUser.getId())) {
+        // 权限校验：管理员不得代客评价（防止人为干预服务质量指标）；非下单人需校验老人关联授权
+        if (UserRole.ADMIN.getCode().equalsIgnoreCase(currentUser.getRole())) {
+            throw new BusinessException(403, "管理员不得代用户评价，以确保履约质量与派单数据客观真实");
+        }
+        if (!order.getRequesterUserId().equals(currentUser.getId())) {
             ElderProfile elder = elderProfileMapper.selectById(order.getElderId());
             elderProfileService.checkAccessPermission(elder);
         }
@@ -338,6 +336,22 @@ public class FulfillmentService {
     @Transactional(rollbackFor = Exception.class)
     public void submitComplaint(ServiceComplaint complaint) {
         LoginUser currentUser = UserContext.getUser();
+        if (currentUser == null) {
+            throw new BusinessException(ResultCode.UNAUTHORIZED);
+        }
+        if (complaint.getOrderId() == null) {
+            throw new BusinessException("请指定所要投诉的订单编号");
+        }
+        ServiceOrder order = serviceOrderMapper.selectById(complaint.getOrderId());
+        if (order == null) {
+            throw new BusinessException("目标订单不存在");
+        }
+        // 权限校验：仅下单人或关联老人/家属可以发起投诉
+        if (!order.getRequesterUserId().equals(currentUser.getId())) {
+            ElderProfile elder = elderProfileMapper.selectById(order.getElderId());
+            elderProfileService.checkAccessPermission(elder);
+        }
+
         complaint.setComplainantId(currentUser.getId());
         complaint.setStatus("PENDING");
         complaint.setCreatedAt(LocalDateTime.now());

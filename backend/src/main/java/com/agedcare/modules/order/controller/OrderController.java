@@ -1,6 +1,8 @@
 package com.agedcare.modules.order.controller;
 
 import com.agedcare.common.api.Result;
+import com.agedcare.common.enums.UserRole;
+import com.agedcare.common.security.RequireRole;
 import com.agedcare.modules.order.dto.OrderCreateDTO;
 import com.agedcare.modules.order.dto.OrderQueryDTO;
 import com.agedcare.modules.order.dto.OrderTrackingVO;
@@ -24,6 +26,7 @@ public class OrderController {
 
     @Operation(summary = "提交预约服务下单")
     @PostMapping("/create")
+    @RequireRole(UserRole.RESIDENT)
     public Result<ServiceOrder> createOrder(@Valid @RequestBody OrderCreateDTO dto) {
         return Result.success(orderService.createOrder(dto));
     }
@@ -42,6 +45,7 @@ public class OrderController {
 
     @Operation(summary = "取消订单(服务开始前)")
     @PostMapping("/{id}/cancel")
+    @RequireRole({UserRole.RESIDENT, UserRole.ADMIN})
     public Result<Void> cancelOrder(
             @PathVariable Long id,
             @RequestParam(required = false, defaultValue = "用户主动取消") String reason

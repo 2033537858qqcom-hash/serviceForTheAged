@@ -36,6 +36,7 @@ public class FulfillmentController {
 
     @Operation(summary = "服务人员开始上门服务(签到)")
     @PostMapping("/start/{orderId}")
+    @RequireRole(UserRole.STAFF)
     public Result<Void> startService(@PathVariable Long orderId) {
         fulfillmentService.startService(orderId);
         return Result.success();
@@ -43,6 +44,7 @@ public class FulfillmentController {
 
     @Operation(summary = "服务人员提交上门履约记录")
     @PostMapping("/submit-record")
+    @RequireRole(UserRole.STAFF)
     public Result<Void> submitRecord(@RequestBody ServiceRecord record) {
         fulfillmentService.submitServiceRecord(record);
         return Result.success();
@@ -50,20 +52,23 @@ public class FulfillmentController {
 
     @Operation(summary = "确认服务完成(老人、家属或管理员核实代办)")
     @PostMapping("/confirm")
+    @RequireRole({UserRole.RESIDENT, UserRole.ADMIN})
     public Result<Void> confirm(@RequestBody ConfirmDTO dto) {
         fulfillmentService.confirmOrder(dto.getOrderId(), dto.getNote());
         return Result.success();
     }
 
-    @Operation(summary = "提交服务评价")
+    @Operation(summary = "提交服务评价(仅限居民)")
     @PostMapping("/review")
+    @RequireRole(UserRole.RESIDENT)
     public Result<Void> submitReview(@RequestBody ServiceReview review) {
         fulfillmentService.submitReview(review);
         return Result.success();
     }
 
-    @Operation(summary = "提交服务投诉或建议")
+    @Operation(summary = "提交服务投诉或建议(仅限订单关联居民)")
     @PostMapping("/complaint")
+    @RequireRole(UserRole.RESIDENT)
     public Result<Void> submitComplaint(@RequestBody ServiceComplaint complaint) {
         fulfillmentService.submitComplaint(complaint);
         return Result.success();

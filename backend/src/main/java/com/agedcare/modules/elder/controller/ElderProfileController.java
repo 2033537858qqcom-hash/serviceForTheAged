@@ -35,6 +35,7 @@ public class ElderProfileController {
 
     @Operation(summary = "获取当前用户可访问的老人列表(本人及已授权家属)")
     @GetMapping("/my-list")
+    @RequireRole({UserRole.RESIDENT, UserRole.ADMIN})
     public Result<List<ElderProfile>> getAccessibleElders() {
         return Result.success(elderProfileService.getAccessibleElders());
     }
@@ -47,6 +48,7 @@ public class ElderProfileController {
 
     @Operation(summary = "新增或编辑老人档案")
     @PostMapping("/save")
+    @RequireRole({UserRole.RESIDENT, UserRole.ADMIN})
     public Result<ElderProfile> saveOrUpdate(@RequestBody ElderProfile profile) {
         return Result.success(elderProfileService.saveOrUpdate(profile));
     }

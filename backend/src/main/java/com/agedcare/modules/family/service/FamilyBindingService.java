@@ -7,6 +7,7 @@ import com.agedcare.common.security.LoginUser;
 import com.agedcare.common.security.UserContext;
 import com.agedcare.modules.elder.entity.ElderProfile;
 import com.agedcare.modules.elder.mapper.ElderProfileMapper;
+import com.agedcare.modules.family.dto.ElderSearchVO;
 import com.agedcare.modules.family.dto.FamilyBindingVO;
 import com.agedcare.modules.family.entity.FamilyBinding;
 import com.agedcare.modules.family.mapper.FamilyBindingMapper;
@@ -32,7 +33,7 @@ public class FamilyBindingService {
     private final ElderProfileMapper elderProfileMapper;
     private final SysUserMapper sysUserMapper;
 
-    public ElderProfile searchElderByPhone(String phone) {
+    public ElderSearchVO searchElderByPhone(String phone) {
         if (!StringUtils.hasText(phone)) {
             throw new BusinessException("请输入老人联系电话");
         }
@@ -43,10 +44,43 @@ public class FamilyBindingService {
         if (elder == null) {
             throw new BusinessException("未找到电话为 " + phone + " 的老人档案");
         }
-        if (StringUtils.hasText(elder.getIdCard()) && elder.getIdCard().length() >= 10) {
-            elder.setIdCard(elder.getIdCard().substring(0, 6) + "********" + elder.getIdCard().substring(elder.getIdCard().length() - 4));
+        return ElderSearchVO.builder()
+                .id(elder.getId())
+                .name(maskName(elder.getName()))
+                .phone(maskPhone(elder.getPhone()))
+                .community(elder.getCommunity() != null ? elder.getCommunity() : "")
+                .exists(true)
+                .build();
+    }
+
+    private String maskName(String name) {
+        if (!StringUtils.hasText(name)) {
+            return "";
         }
-        return elder;
+        int len = name.length();
+        if (len <= 1) {
+            return name;
+        }
+        if (len == 2) {
+            return name.charAt(0) + "*";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append(name.charAt(0));
+        for (int i = 0; i < len - 2; i++) {
+            sb.append("*");
+        }
+        sb.append(name.charAt(len - 1));
+        return sb.toString();
+    }
+
+    private String maskPhone(String phone) {
+        if (!StringUtils.hasText(phone) || phone.length() < 7) {
+            return phone;
+        }
+        if (phone.length() >= 11) {
+            return phone.substring(0, 3) + "****" + phone.substring(phone.length() - 4);
+        }
+        return phone.substring(0, 2) + "****" + phone.substring(phone.length() - 2);
     }
 
     @Transactional(rollbackFor = Exception.class)

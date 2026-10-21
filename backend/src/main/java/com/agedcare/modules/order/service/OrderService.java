@@ -74,6 +74,9 @@ public class OrderService {
         if (currentUser == null) {
             throw new BusinessException("请先登录后下单");
         }
+        if (UserRole.STAFF.getCode().equalsIgnoreCase(currentUser.getRole())) {
+            throw new BusinessException(403, "服务人员无权作为发起人代客下单");
+        }
 
         // 1. 幂等性校验 (用户作用域 + 核心字段摘要比对)
         if (StringUtils.hasText(dto.getIdempotencyKey())) {

@@ -3,6 +3,7 @@ package com.agedcare.modules.family.controller;
 import com.agedcare.common.api.Result;
 import com.agedcare.common.enums.UserRole;
 import com.agedcare.common.security.RequireRole;
+import com.agedcare.modules.family.dto.ElderSearchVO;
 import com.agedcare.modules.family.dto.FamilyBindingVO;
 import com.agedcare.modules.family.entity.FamilyBinding;
 import com.agedcare.modules.family.service.FamilyBindingService;
@@ -41,18 +42,21 @@ public class FamilyBindingController {
 
     @Operation(summary = "按电话精确查询社区老人档案(供家属申请绑定前核实)")
     @GetMapping("/search-elder")
-    public Result<com.agedcare.modules.elder.entity.ElderProfile> searchElder(@RequestParam String phone) {
+    @RequireRole(UserRole.RESIDENT)
+    public Result<ElderSearchVO> searchElder(@RequestParam String phone) {
         return Result.success(familyBindingService.searchElderByPhone(phone));
     }
 
     @Operation(summary = "提交家属代约/监护绑定申请")
     @PostMapping("/apply")
+    @RequireRole(UserRole.RESIDENT)
     public Result<FamilyBinding> apply(@RequestBody ApplyDTO dto) {
         return Result.success(familyBindingService.applyBinding(dto.getElderId(), dto.getElderPhone(), dto.getElderName(), dto.getRelation(), dto.getProofMaterials()));
     }
 
     @Operation(summary = "查询我的家属绑定列表")
     @GetMapping("/my-bindings")
+    @RequireRole(UserRole.RESIDENT)
     public Result<List<FamilyBindingVO>> getMyBindings() {
         return Result.success(familyBindingService.getMyBindings());
     }
@@ -78,6 +82,7 @@ public class FamilyBindingController {
 
     @Operation(summary = "撤销家属绑定")
     @PostMapping("/{id}/revoke")
+    @RequireRole({UserRole.RESIDENT, UserRole.ADMIN})
     public Result<Void> revoke(@PathVariable Long id) {
         familyBindingService.revokeBinding(id);
         return Result.success();

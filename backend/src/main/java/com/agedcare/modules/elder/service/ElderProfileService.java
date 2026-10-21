@@ -97,6 +97,9 @@ public class ElderProfileService {
     @Transactional(rollbackFor = Exception.class)
     public ElderProfile saveOrUpdate(ElderProfile profile) {
         LoginUser currentUser = UserContext.getUser();
+        if (currentUser != null && UserRole.STAFF.getCode().equalsIgnoreCase(currentUser.getRole())) {
+            throw new BusinessException(403, "服务人员无权新建或修改老人档案");
+        }
         if (profile.getId() == null) {
             profile.setStatus(1);
             profile.setCreatedAt(LocalDateTime.now());

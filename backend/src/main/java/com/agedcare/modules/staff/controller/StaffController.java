@@ -56,20 +56,23 @@ public class StaffController {
         return Result.success(staffService.pageStaff(pageNum, pageSize, name, auditStatus, currentStatus));
     }
 
-    @Operation(summary = "获取服务人员详情")
+    @Operation(summary = "获取服务人员详情(管理员)")
     @GetMapping("/{id}")
+    @RequireRole(UserRole.ADMIN)
     public Result<StaffDetailVO> getDetail(@PathVariable Long id) {
         return Result.success(staffService.getStaffDetail(id));
     }
 
     @Operation(summary = "服务人员获取本人工位档案")
     @GetMapping("/my-profile")
+    @RequireRole(UserRole.STAFF)
     public Result<StaffDetailVO> getMyProfile() {
         return Result.success(staffService.getMyStaffProfile());
     }
 
     @Operation(summary = "修改服务人员工作状态(RESTING, AVAILABLE, BUSY)")
     @PostMapping("/{id}/status")
+    @RequireRole({UserRole.STAFF, UserRole.ADMIN})
     public Result<Void> updateStatus(@PathVariable Long id, @RequestParam String status) {
         staffService.updateStaffStatus(id, status);
         return Result.success();
@@ -109,6 +112,7 @@ public class StaffController {
 
     @Operation(summary = "查询服务人员指定日期范围排班")
     @GetMapping("/{id}/shifts")
+    @RequireRole({UserRole.STAFF, UserRole.ADMIN})
     public Result<List<StaffShift>> getShifts(
             @PathVariable Long id,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
@@ -119,6 +123,7 @@ public class StaffController {
 
     @Operation(summary = "服务人员上报实时经纬度位置")
     @PostMapping("/location/report")
+    @RequireRole(UserRole.STAFF)
     public Result<Void> reportLocation(@Valid @RequestBody StaffLocationReportDTO dto) {
         staffService.reportLocation(dto);
         return Result.success();
@@ -126,6 +131,7 @@ public class StaffController {
 
     @Operation(summary = "模拟服务人员向订单目的地移动演示")
     @PostMapping("/location/mock-move")
+    @RequireRole(UserRole.STAFF)
     public Result<StaffProfile> mockMoveLocation(@RequestParam Long orderId) {
         return Result.success(staffService.mockMoveLocation(orderId));
     }
