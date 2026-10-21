@@ -1,6 +1,7 @@
 const navigation = require('../../utils/navigation.js');
 const { syncTabBar } = require('../../utils/tab-bar.js');
 const request = require('../../utils/request.js');
+const { HOTLINE_NUMBER, HOTLINE_HOURS } = require('../../utils/contact.js');
 
 function getAppSafe() {
   try {
@@ -26,6 +27,7 @@ const app = new Proxy({}, {
 
 Page({
   data: {
+    hotlineHours: HOTLINE_HOURS,
     userInfo: null,
     staffProfile: null,
     staffSkills: [],
@@ -213,7 +215,7 @@ Page({
       { label: '呼叫 责任网格长与站长 (13800000000)', phone: '13800000000' },
       { label: '拨打 120 医疗急救热线 (120)', phone: '120' }
     ] : [
-      { label: '拨打 社区24小时养老服务热线 (010-88886666)', phone: '010-88886666' },
+      { label: `拨打 社区养老服务热线 ${HOTLINE_NUMBER}（${HOTLINE_HOURS}）`, phone: HOTLINE_NUMBER },
       { label: '拨打 社区家庭医生健康直通车 (010-88886688)', phone: '010-88886688' },
       { label: '呼叫 阳光社区责任网格员小王 (13800000000)', phone: '13800000000' }
     ];

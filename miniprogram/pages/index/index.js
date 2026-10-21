@@ -5,6 +5,7 @@ const request = require('../../utils/request.js');
 const { loadCatalog } = require('../../utils/service-catalog.js');
 const { orderCard, sessionKey } = require('../../utils/list-state.js');
 const { lightTap } = require('../../utils/feedback.js');
+const { HOTLINE_NUMBER, HOTLINE_HOURS } = require('../../utils/contact.js');
 const { DEFAULT_IMAGES, categoryImages } = require('../../utils/service-images.js');
 
 function getAppSafe() {
@@ -38,6 +39,7 @@ Page({
     categoryPhotos: DEFAULT_IMAGES,
     photoFallbacks: DEFAULT_IMAGES,
     categoryIcons: { MEAL: 'meal', CLEANING: 'cleaning', ERRAND: 'errand', ESCORT: 'escort' },
+    hotlineHours: HOTLINE_HOURS,
     activeOrder: null,
     activeOrderReady: false,
     statusTextMap: {
@@ -157,11 +159,11 @@ Page({
 
   callHotline() {
     wx.makePhoneCall({
-      phoneNumber: '010-88886666',
+      phoneNumber: HOTLINE_NUMBER,
       fail() {
         wx.showModal({
           title: '社区服务热线',
-          content: '010-88886666 (工作时间 08:00 - 20:00)',
+          content: `${HOTLINE_NUMBER}（服务时间 ${HOTLINE_HOURS}）`,
           showCancel: false
         });
       }

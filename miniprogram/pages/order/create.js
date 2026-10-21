@@ -4,6 +4,7 @@ const BOOKING_BEAT_MS = 420;
 const request = require('../../utils/request.js');
 const { getCachedService, loadService } = require('../../utils/service-catalog.js');
 const { markOrdersChanged, sessionKey } = require('../../utils/list-state.js');
+const { parseTime, dateKey, friendlyTime, bookingDays, hourSlots } = require('../../utils/time-format.js');
 
 function getAppSafe() {
   try {
@@ -28,23 +29,9 @@ const app = new Proxy({}, {
 });
 
 function formatFriendlyDate(dateStr) {
-  if (!dateStr) return '';
-  const now = new Date();
-  const pad = n => (n < 10 ? '0' + n : n);
-  const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-  const tomorrow = new Date(now.getTime() + 86400000);
-  const tomorrowStr = `${tomorrow.getFullYear()}-${pad(tomorrow.getMonth() + 1)}-${pad(tomorrow.getDate())}`;
-  const parts = dateStr.split('-');
-  if (parts.length < 3) return dateStr;
-  const month = parseInt(parts[1], 10);
-  const day = parseInt(parts[2], 10);
-  if (dateStr === todayStr) {
-    return `今天 ${month}月${day}日`;
-  }
-  if (dateStr === tomorrowStr) {
-    return `明天 ${month}月${day}日`;
-  }
-  return `${month}月${day}日`;
+  const date = parseTime(dateStr);
+  if (!date) return dateStr || '';
+  return friendlyTime(date).replace(/ \d{2}:\d{2}$/, '');
 }
 
 Page({
@@ -59,6 +46,8 @@ Page({
     endDate: '',
     selectedDate: '',
     friendlyDateText: '',
+    bookingDays: [],
+    timeSlots: [],
     selectedTime: '09:00',
     address: '',
     latitude: null,
@@ -98,29 +87,25 @@ Page({
 
   initDates() {
     const now = new Date();
-    const pad = n => (n < 10 ? '0' + n : n);
-    const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    const maxDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 30);
+    const days = bookingDays(now);
+    // 默认选中最近一个仍可预约的时段（今天约满则顺延到明天）
+    const day = days.find(item => hourSlots(item.date, now).some(slot => !slot.disabled)) || days[1];
+    this.setData({ startDate: days[0].date, endDate: dateKey(maxDate), bookingDays: days });
+    this.selectDate(day.date, true);
+  },
 
-    // 最大支持预约未来30天
-    const maxDate = new Date();
-    maxDate.setDate(now.getDate() + 30);
-    const maxStr = `${maxDate.getFullYear()}-${pad(maxDate.getMonth() + 1)}-${pad(maxDate.getDate())}`;
-
-    const firstSlot = new Date(now.getTime() + 35 * 60000);
-    firstSlot.setSeconds(0, 0);
-    firstSlot.setMinutes(Math.ceil(firstSlot.getMinutes() / 5) * 5);
-    if (firstSlot.getHours() >= 18) {
-      firstSlot.setDate(firstSlot.getDate() + 1);
-      firstSlot.setHours(8, 0, 0, 0);
-    } else if (firstSlot.getHours() < 8) firstSlot.setHours(8, 0, 0, 0);
-
-    const selectedDate = `${firstSlot.getFullYear()}-${pad(firstSlot.getMonth() + 1)}-${pad(firstSlot.getDate())}`;
+  // 切换日期时重算时段；已选时段若变得不可选则改为当天第一个可选时段
+  selectDate(selectedDate, pickFirst) {
+    const timeSlots = hourSlots(selectedDate, new Date());
+    const keep = !pickFirst && timeSlots.some(slot => slot.time === this.data.selectedTime && !slot.disabled);
+    const first = timeSlots.find(slot => !slot.disabled);
     this.setData({
-      startDate: todayStr,
-      endDate: maxStr,
       selectedDate,
       friendlyDateText: formatFriendlyDate(selectedDate),
-      selectedTime: `${pad(firstSlot.getHours())}:${pad(firstSlot.getMinutes())}`
+      timeSlots,
+      selectedTime: keep ? this.data.selectedTime : (first ? first.time : ''),
+      'formErrors.time': ''
     });
   },
 
@@ -214,20 +199,19 @@ Page({
     });
   },
 
-  onDateChange(e) {
-    const selectedDate = e.detail.value;
-    this.setData({
-      selectedDate,
-      friendlyDateText: formatFriendlyDate(selectedDate),
-      'formErrors.time': ''
-    });
+  onDayTap(e) {
+    this.selectDate(e.currentTarget.dataset.date);
   },
 
-  onTimeChange(e) {
-    this.setData({
-      selectedTime: e.detail.value,
-      'formErrors.time': ''
-    });
+  // 兜底：后天以后的日期仍用系统日期选择器
+  onDateChange(e) {
+    this.selectDate(e.detail.value);
+  },
+
+  onSlotTap(e) {
+    const { time, disabled } = e.currentTarget.dataset;
+    if (disabled) return;
+    this.setData({ selectedTime: time, 'formErrors.time': '' });
   },
 
   onInputAddress(e) {

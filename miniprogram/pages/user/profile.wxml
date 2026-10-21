@@ -137,7 +137,7 @@
         <view class="menu-icon-wrap"><image src="/assets/icons/phone.png" /></view>
         <view class="menu-copy">
           <view class="menu-label">社区便民与应急服务</view>
-          <view class="menu-description">24小时养老热线、家庭医生直通车与责任网格员</view>
+          <view class="menu-description">养老服务热线（{{hotlineHours}}）、家庭医生直通车与责任网格员</view>
         </view>
         <image class="menu-arrow" src="/assets/icons/arrow.png" />
       </view>
@@ -165,8 +165,8 @@
       <image class="menu-arrow" src="/assets/icons/arrow.png" />
     </view>
 
-    <!-- 后端地址 ActionSheet 切换 -->
-    <view class="menu-item" hover-class="spring-in" hover-stay-time="80" bindtap="changeServerUrl">
+    <!-- 后端地址 ActionSheet 切换 (仅开发模式显示) -->
+    <view wx:if="{{isDevMode}}" class="menu-item" hover-class="spring-in" hover-stay-time="80" bindtap="changeServerUrl">
       <view class="menu-icon-wrap"><image src="/assets/icons/network.png" /></view>
       <view class="menu-copy">
         <view class="menu-label">服务接口地址</view>
