@@ -10,6 +10,7 @@ import com.agedcare.modules.elder.entity.ElderProfile;
 import com.agedcare.modules.elder.mapper.ElderProfileMapper;
 import com.agedcare.modules.elder.service.ElderProfileService;
 import com.agedcare.modules.family.dto.ElderSearchVO;
+import com.agedcare.modules.family.entity.FamilyBinding;
 import com.agedcare.modules.family.mapper.FamilyBindingMapper;
 import com.agedcare.modules.family.service.FamilyBindingService;
 import com.agedcare.modules.fulfillment.entity.ServiceComplaint;
@@ -117,6 +118,29 @@ public class RolePermissionSecurityTest {
         BusinessException ex = assertThrows(BusinessException.class, () -> realElderProfileService.saveOrUpdate(profile));
         assertEquals(403, ex.getCode());
         assertTrue(ex.getMessage().contains("服务人员无权新建或修改老人档案"));
+    }
+
+    @Test
+    @DisplayName("P1审核闭环: 居民自主新建第二位老人档案时，关系绑定进入待审核(PENDING)状态，杜绝免审绕过漏洞")
+    public void testResidentSecondElderProfileRequiresAudit() {
+        UserContext.setUser(LoginUser.builder().id(88L).role(UserRole.RESIDENT.getCode()).build());
+
+        // 已存在本人的档案
+        when(elderProfileMapper.selectCount(any())).thenReturn(1L);
+
+        ElderProfile secondElder = ElderProfile.builder().name("王奶奶").phone("13899998888").build();
+        realElderProfileService.saveOrUpdate(secondElder);
+
+        verify(elderProfileMapper).insert(secondElder);
+
+        // 验证插入的 FamilyBinding 为 PENDING 状态，等待管理员审核
+        verify(familyBindingMapper).insert((FamilyBinding) argThat(b -> {
+            FamilyBinding binding = (FamilyBinding) b;
+            return binding != null
+                    && Long.valueOf(88L).equals(binding.getFamilyUserId())
+                    && "PENDING".equals(binding.getStatus())
+                    && binding.getReviewerId() == null;
+        }));
     }
 
     @Test

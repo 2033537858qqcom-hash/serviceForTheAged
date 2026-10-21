@@ -128,11 +128,8 @@ public class ElderProfileService {
                         .familyUserId(currentUser.getId())
                         .elderId(profile.getId())
                         .relation("家属代管")
-                        .proofMaterials("居民自主登记建档")
-                        .status(FamilyBindingStatus.APPROVED.getCode())
-                        .reviewerId(0L)
-                        .reviewTime(LocalDateTime.now())
-                        .reviewReason("自主建档自动授权")
+                        .proofMaterials("居民自主登记建档，待社区核验")
+                        .status(FamilyBindingStatus.PENDING.getCode())
                         .createdAt(LocalDateTime.now())
                         .updatedAt(LocalDateTime.now())
                         .build();
