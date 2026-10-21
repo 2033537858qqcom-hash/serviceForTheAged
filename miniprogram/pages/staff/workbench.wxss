@@ -26,15 +26,15 @@
 .staff-meta { font-size: var(--font-caption); color: var(--text-secondary); margin-top: 8rpx; }
 .status-segmented {
   background: #dce7e0;
-  border-radius: var(--radius-pill, 999rpx);
+  border-radius: var(--radius-sm, 12rpx);
   padding: 6rpx;
   gap: 6rpx;
   flex-shrink: 0;
 }
 .seg-btn {
   font-size: var(--font-caption);
-  padding: 10rpx 22rpx;
-  border-radius: var(--radius-pill, 999rpx);
+  padding: 10rpx 20rpx;
+  border-radius: 8rpx;
   color: var(--text-secondary);
   font-weight: 500;
   transition: all 180ms ease;
@@ -137,10 +137,49 @@
   justify-content: center;
 }
 
-.task-actions { flex-wrap: wrap; gap: 20rpx; margin-top: 26rpx; padding-top: 24rpx; border-top: 1rpx solid var(--border-color); }
-.task-actions button { margin: 0; min-height: 88rpx; padding: 18rpx 28rpx; font-size: var(--font-body); flex: 1; border-radius: 20rpx; font-weight: 550; display: flex; align-items: center; justify-content: center; }
-.btn-call { background: #edf5f1; color: var(--primary-dark); border: 1.5rpx solid #c9e0d4; }
-.completed-hint { font-size: var(--font-caption); color: var(--text-secondary); }
+.task-actions {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  margin-top: 24rpx;
+  padding-top: 24rpx;
+  border-top: 1rpx solid var(--border-color);
+}
+.task-actions button, .task-actions .task-status-pill {
+  margin: 0;
+  height: 88rpx;
+  min-height: 88rpx;
+  padding: 0 16rpx;
+  font-size: var(--font-caption);
+  flex: 1;
+  border-radius: var(--radius-md, 20rpx);
+  font-weight: 550;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+.btn-call {
+  background: #edf5f1;
+  color: var(--primary-dark);
+  border: 1.5rpx solid #c9e0d4;
+}
+.task-status-pill {
+  font-size: var(--font-caption);
+  font-weight: 500;
+  letter-spacing: 0.5rpx;
+}
+.status-pill-waiting {
+  background: #fff8ed;
+  color: #94601b;
+  border: 1rpx solid #eeddc2;
+}
+.status-pill-completed {
+  background: #edf6f0;
+  color: var(--primary-dark);
+  border: 1rpx solid #cce2d4;
+}
 .record-sheet-body { padding: 10rpx 0 20rpx; }
 .record-sheet-body .modal-tip { font-size: var(--font-caption); color: var(--text-secondary); margin-bottom: 20rpx; }
 .record-textarea { font-size: var(--font-body); line-height: 1.8; width: 100%; min-height: 240rpx; border-radius: var(--radius-md, 20rpx); padding: 22rpx; border: 1rpx solid var(--border-color); background: #f6f8f3; box-sizing: border-box; }

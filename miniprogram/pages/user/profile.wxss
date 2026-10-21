@@ -58,7 +58,19 @@
 .staff-stats-card { padding: 28rpx; margin-bottom: 24rpx; }
 .staff-stats-header { padding-bottom: 20rpx; border-bottom: 1rpx solid var(--border-color); }
 .staff-stats-title { font-size: var(--font-body); font-weight: 600; color: var(--text-main); }
-.staff-status-pill { font-size: var(--font-meta); padding: 6rpx 18rpx; border-radius: var(--radius-pill, 999rpx); font-weight: 500; }
+.staff-status-pill {
+  font-size: var(--font-caption);
+  height: 52rpx;
+  min-height: 52rpx;
+  padding: 0 20rpx;
+  border-radius: var(--radius-sm, 12rpx);
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  box-sizing: border-box;
+}
 .staff-status-available { background: #edf7f1; color: #1b7a54; border: 1rpx solid #cbe9d6; }
 .staff-status-resting { background: #f1f4f2; color: #55655e; border: 1rpx solid #d8e0db; }
 .staff-status-busy { background: #fdf5eb; color: #b26815; border: 1rpx solid #fae1c3; }

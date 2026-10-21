@@ -98,20 +98,20 @@
         <button wx:if="{{isDevMode}}" class="btn-mock" bindtap="mockMoveStep" data-id="{{item.order.id}}">模拟移动</button>
       </view>
 
-      <!-- 操作按钮流 (去除 mini 属性，保持适老 88rpx 触控高度) -->
+      <!-- 操作按钮流 (6字精简不折行，保持适老 88rpx 触控高度与对齐) -->
       <view class="task-actions flex-between">
         <button class="btn-call" bindtap="dialPhone" data-phone="{{item.order.contactPhoneSnapshot}}">联系服务对象</button>
 
         <button class="btn-primary" wx:if="{{item.order.status === 'WAIT_VISIT'}}" loading="{{actionId === item.order.id ? actionLoading : false}}" disabled="{{actionLoading}}" bindtap="openStartService" data-id="{{item.order.id}}">
-          到达现场 · 开始服务
+          开始上门服务
         </button>
 
         <button class="btn-primary" wx:if="{{item.order.status === 'IN_SERVICE'}}" bindtap="openSubmitRecordModal" data-id="{{item.order.id}}">
-          服务完成 · 提交记录
+          提交服务记录
         </button>
 
-        <text class="completed-hint" wx:if="{{item.order.status === 'WAIT_CONFIRM'}}">已提交记录，等待老人/家属确认</text>
-        <text class="completed-hint" wx:if="{{item.order.status === 'COMPLETED'}}">服务已圆满完成</text>
+        <view class="task-status-pill status-pill-waiting" wx:if="{{item.order.status === 'WAIT_CONFIRM'}}">待老人确认完成</view>
+        <view class="task-status-pill status-pill-completed" wx:if="{{item.order.status === 'COMPLETED'}}">✓ 服务已完成</view>
       </view>
     </view>
     <view class="empty-tip" wx:if="{{filteredTasks.length === 0 && !tasksLoading && !tasksHasMore && !loadError}}">
