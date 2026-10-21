@@ -62,7 +62,7 @@
           >
             <view class="service-card-main">
               <view class="service-picture">
-                <image src="/assets/icons/{{categoryIcons[item.category] || 'service'}}.png" />
+                <service-photo src="{{item.imageUrl}}" fallback="{{item.imageFallback}}" />
               </view>
               <view class="service-copy">
                 <view class="item-name">{{item.name}}</view>

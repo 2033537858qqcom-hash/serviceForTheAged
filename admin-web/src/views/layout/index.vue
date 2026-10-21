@@ -3,7 +3,7 @@
     <button v-if="sidebarOpen" class="nav-backdrop" aria-label="收起导航" @click="sidebarOpen = false"></button>
     <aside class="sidebar" :class="{ 'is-open': sidebarOpen }">
       <router-link to="/dashboard" class="brand-lockup" aria-label="颐邻社区养老，返回工作台">
-        <span class="brand-symbol"><el-icon><House /></el-icon></span>
+        <img class="brand-symbol" src="/brand/yilin-icon.png" alt="" width="46" height="46" />
         <span><strong>颐邻<span class="brand-dot">.</span></strong><small>社区居家养老服务</small></span>
       </router-link>
       <div class="nav-group-label">服务运营</div>
@@ -69,7 +69,7 @@ const logout = () => {
 .app-shell { display: flex; min-height: 100vh; }
 .sidebar { position: fixed; inset: 0 auto 0 0; z-index: 40; width: 226px; background: #fff; border-right: 1px solid var(--line); display: flex; flex-direction: column; padding: 30px 18px 18px; }
 .brand-lockup { display: flex; align-items: center; gap: 12px; padding: 0 13px; margin-bottom: 45px; color: var(--ink); }
-.brand-symbol { display: grid; place-items: center; width: 42px; height: 46px; border-radius: 13px 13px 13px 3px; background: var(--brand); color: #fff; font-size: 24px; }
+.brand-symbol { display: block; flex-shrink: 0; width: 46px; height: 46px; border-radius: 12px; object-fit: contain; }
 .brand-lockup strong { display: block; font-size: 25px; font-weight: 650; letter-spacing: 3px; line-height: 1.2; }
 .brand-dot { color: var(--warm); letter-spacing: 0; }
 .brand-lockup small { display: block; font-size: 12px; letter-spacing: 1px; color: var(--muted); margin-top: 6px; }

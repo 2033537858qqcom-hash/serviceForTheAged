@@ -5,6 +5,8 @@ import com.agedcare.common.enums.UserRole;
 import com.agedcare.common.security.RequireRole;
 import com.agedcare.modules.serviceitem.entity.ServiceItem;
 import com.agedcare.modules.serviceitem.service.ServiceItemService;
+import com.agedcare.modules.serviceitem.service.ServiceImageStorage;
+import org.springframework.web.multipart.MultipartFile;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -20,6 +22,13 @@ import java.util.List;
 public class ServiceItemController {
 
     private final ServiceItemService serviceItemService;
+    private final ServiceImageStorage serviceImageStorage;
+
+    @PostMapping("/image")
+    @RequireRole(UserRole.ADMIN)
+    public Result<String> uploadImage(@RequestParam("file") MultipartFile file) {
+        return Result.success(serviceImageStorage.store(file));
+    }
 
     @Operation(summary = "查询上架中的服务项目列表(小程序/前端居民)")
     @GetMapping("/list-available")

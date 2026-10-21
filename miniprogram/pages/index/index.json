@@ -1,4 +1,7 @@
 {
   "navigationBarTitleText": "阳光社区居家养老",
-  "enablePullDownRefresh": true
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "service-photo": "/components/service-photo/index"
+  }
 }

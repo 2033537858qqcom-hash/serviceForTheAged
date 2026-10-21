@@ -1,5 +1,6 @@
 <view class="container page-state {{isElderMode ? 'elder-mode' : ''}}" wx:if="{{!service}}">
   <view wx:if="{{loading}}" aria-label="正在加载服务详情">
+    <view class="detail-cover skeleton-block"></view>
     <view class="card main-info-card">
       <view class="skeleton-block skeleton-title"></view>
       <view class="skeleton-block skeleton-price"></view>
@@ -24,6 +25,9 @@
   <view class="card empty-tip" wx:elif="{{loadError}}">服务信息暂时未能加载<button class="retry-button" bindtap="loadServiceDetail">重新加载</button></view>
 </view>
 <view class="container scroll-content-with-bottom {{isElderMode ? 'elder-mode' : ''}}" wx:if="{{service}}">
+  <view class="detail-cover">
+    <service-photo src="{{service.imageUrl}}" fallback="{{service.imageFallback}}" />
+  </view>
   <view class="card main-info-card">
     <view class="service-title">{{service.name}}</view>
     <view class="service-price">¥{{service.price}} <text class="unit">/ 次</text></view>

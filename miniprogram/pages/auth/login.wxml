@@ -1,88 +1,36 @@
 <view class="login-page">
-  <!-- 顶栏跳过按钮 -->
-  <view class="top-nav-bar flex-between">
-    <view class="nav-title">欢迎登录</view>
-    <view class="guest-skip-btn" bindtap="skipToHome">
-      <text>暂不登录，先逛逛</text>
-      <text class="arrow-symbol">›</text>
-    </view>
-  </view>
-
-  <view class="hero-section">
-    <view class="brand-mark"><image src="/assets/icons/home.png" /></view>
-
-    <!-- 品牌标语 -->
-    <view class="brand-title">颐邻 · 社区居家养老</view>
-    <view class="brand-sub">热餐送到家 · 贴心助洁 · 随时照应</view>
-  </view>
-
-  <!-- 操作按钮区域 (高度还原截图) -->
-  <view class="action-section">
-    <!-- 主登录大按钮：微信/微信快捷登录 -->
-    <button class="btn-quick-login spring" hover-class="spring-in" hover-stay-time="80" bindtap="handleQuickLogin" loading="{{loggingIn}}" disabled="{{loggingIn}}">
-      <image class="wechat-icon" src="/assets/icons/check.png" />
-      <text>微信快捷登录</text>
-    </button>
-
-    <!-- 次级按钮：账号密码登录/注册 -->
-    <view class="secondary-btn" bindtap="openAccountModal">
-      输入账号密码登录 / 注册
-    </view>
-  </view>
-
-  <!-- 底部协议勾选 -->
-  <view class="agreement-section">
-    <view class="agreement-row" bindtap="toggleAgreement">
-      <view class="custom-checkbox {{isAgreed ? 'is-checked' : ''}}">
-        <view class="check-stroke"></view>
-      </view>
-      <view class="agreement-label">
-        <text>阅读并同意</text>
-        <text class="doc-link" catchtap="openDocModal" data-type="service">《颐邻社区居家养老服务》</text>
-        <text>及</text>
-        <text class="doc-link" catchtap="openDocModal" data-type="privacy">《隐私政策》</text>
-        <text>条款</text>
+  <image wx:if="{{!heroImageFailed}}" class="login-background" src="/assets/photos/login-care.jpg" mode="aspectFill" binderror="onHeroImageError" />
+  <view class="login-shade"></view>
+  <view class="login-content">
+    <view class="brand-lockup">
+      <image class="brand-icon" src="/assets/brand/yilin-icon.png" mode="aspectFit" />
+      <view class="brand-copy">
+        <view class="brand-name">颐邻<text class="brand-dot">.</text></view>
+        <view class="brand-description">社区居家养老</view>
       </view>
     </view>
+    <view class="login-spacer"></view>
+    <view class="hero-caption">
+      <view class="hero-eyebrow">熟悉的社区，用心的照护</view>
+      <view class="hero-title">陪伴在身边，<view>安心每一天。</view></view>
+      <view class="hero-description">为自己和家人，安排一份安心。</view>
+    </view>
+    <view class="action-section">
+      <button class="btn-quick-login" hover-class="login-button-pressed" hover-stay-time="80" bindtap="handleQuickLogin" loading="{{loggingIn}}" disabled="{{loggingIn}}">{{loggingIn ? '正在登录…' : '微信快捷登录'}}</button>
+    </view>
+    <view class="agreement-section">
+      <view class="agreement-row" bindtap="toggleAgreement" role="checkbox" aria-label="同意服务协议与隐私政策" aria-checked="{{isAgreed}}">
+        <view class="checkbox-hit-area"><view class="custom-checkbox {{isAgreed ? 'is-checked' : ''}}"><view class="check-stroke"></view></view></view>
+        <view class="agreement-label">
+          <text>我已阅读并同意</text>
+          <text class="doc-link" catchtap="openDocModal" data-type="service">《服务协议》</text>
+          <text>及</text>
+          <text class="doc-link" catchtap="openDocModal" data-type="privacy">《隐私政策》</text>
+        </view>
+      </view>
+    </view>
+    <view class="login-footer">助餐送餐 · 居家助洁 · 陪同照护</view>
   </view>
-
-  <bottom-sheet show="{{showAccountModal}}" dismiss-text="关闭" bind:close="closeAccountModal">
-      <view class="modal-tab-header flex-between">
-        <view class="tab-options flex-row">
-          <view class="modal-tab {{accountTab === 'login' ? 'active' : ''}}" bindtap="switchAccountTab" data-tab="login">账号登录</view>
-          <view class="modal-tab {{accountTab === 'register' ? 'active' : ''}}" bindtap="switchAccountTab" data-tab="register">居民注册</view>
-        </view>
-        <view class="modal-close-icon" bindtap="closeAccountModal">✕</view>
-      </view>
-
-      <view class="modal-body">
-        <view class="form-group">
-          <text class="input-label">账号 / 手机号</text>
-          <input class="input-field" placeholder="请输入用户名或手机号" value="{{formUsername}}" bindinput="onInputUsername" />
-        </view>
-
-        <view class="form-group">
-          <text class="input-label">登录密码</text>
-          <input class="input-field" password="true" placeholder="请输入密码" value="{{formPassword}}" bindinput="onInputPassword" />
-        </view>
-
-        <!-- 注册补充字段 -->
-        <block wx:if="{{accountTab === 'register'}}">
-          <view class="form-group">
-            <text class="input-label">真实姓名</text>
-            <input class="input-field" placeholder="如：李建国" value="{{formRealName}}" bindinput="onInputRealName" />
-          </view>
-          <view class="form-group">
-            <text class="input-label">联系电话</text>
-            <input class="input-field" type="number" placeholder="11位手机号" value="{{formPhone}}" bindinput="onInputPhone" />
-          </view>
-        </block>
-
-        <button class="btn-primary modal-submit-btn" hover-class="spring-in" bindtap="submitAccountForm" loading="{{loggingIn}}" disabled="{{loggingIn}}">
-          {{accountTab === 'login' ? '立即登录' : '注册并登录'}}
-        </button>
-      </view>
-  </bottom-sheet>
 
   <bottom-sheet show="{{showDocModal}}" title="{{docTitle}}" confirm-text="我已了解并同意" dismiss-text="关闭" bind:close="closeDocModal" bind:confirm="agreeAndCloseDoc">
     <scroll-view class="doc-scroll-content" scroll-y="true">

@@ -1,7 +1,9 @@
 // Only presentation fields cross the logic/view bridge.
+const { DEFAULT_IMAGES, serviceImage } = require('./service-images.js');
 function serviceCard(item) {
   const { id, name, category, description, durationMinutes, serviceArea, price } = item;
-  return { id, name, category, description, durationMinutes, serviceArea, price };
+  return { id, name, category, description, durationMinutes, serviceArea, price,
+    imageUrl: serviceImage(item.icon, category), imageFallback: DEFAULT_IMAGES[category] || DEFAULT_IMAGES.MEAL };
 }
 function orderCard(item) {
   const order = item.order;

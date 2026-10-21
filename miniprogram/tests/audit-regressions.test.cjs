@@ -167,15 +167,16 @@ test('detaching a closing sheet cancels delayed updates', () => {
   assert.equal(timers.size, 0);
 });
 
-test('account login locks duplicates and always releases loading after failure', async () => {
+test('WeChat login locks duplicates and always releases loading after failure', async () => {
   let posts = 0, hidden = 0;
   const pending = deferred();
-  const page = createRuntime(app(), { showLoading() {}, hideLoading() { hidden++; } }, {
+  const page = createRuntime(app(), { login(o) { o.success({ code: 'test-code' }); }, showLoading() {}, hideLoading() { hidden++; } }, {
     post() { posts++; return pending.promise; }
   }).page('auth/login');
-  page.setData({ isAgreed: true, formUsername: 'resident01', formPassword: 'password' });
-  const first = page.submitAccountForm();
-  await page.submitAccountForm();
+  page.setData({ isAgreed: true });
+  const first = page.handleQuickLogin();
+  await page.handleQuickLogin();
+  await new Promise(resolve => setImmediate(resolve));
   assert.equal(posts, 1);
   pending.reject(Error('offline'));
   await first;
@@ -186,11 +187,11 @@ test('account login locks duplicates and always releases loading after failure',
 test('login response cannot overwrite a new session or navigate after unload', async () => {
   for (const unload of [true, false]) {
     const pending = deferred(), state = app(); let writes = 0;
-    const page = createRuntime(state, { showLoading() {}, hideLoading() {}, setStorageSync() { writes++; } }, {
+    const page = createRuntime(state, { login(o) { o.success({ code: 'test-code' }); }, showLoading() {}, hideLoading() {}, setStorageSync() { writes++; } }, {
       post: () => pending.promise
     }).page('auth/login');
-    page.setData({ isAgreed: true, formUsername: 'resident01', formPassword: 'password' });
-    const task = page.submitAccountForm();
+    page.setData({ isAgreed: true });
+    const task = page.handleQuickLogin();
     await Promise.resolve();
     if (unload) page.onUnload(); else state.globalData.token = 'new-session';
     pending.resolve({ token: 'old-response', userInfo: { role: 'RESIDENT' } });
@@ -233,6 +234,7 @@ test('family binding submit is single flight and an error permits retry', async 
   page.setData({ targetElder: { id: 1 }, relation: '父子' });
   const task = page.submitApply();
   await page.submitApply();
+  await new Promise(resolve => setImmediate(resolve));
   assert.equal(posts, 1);
   pending.reject(Error('offline'));
   await task;

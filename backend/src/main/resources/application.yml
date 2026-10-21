@@ -6,6 +6,10 @@ server:
 spring:
   application:
     name: aged-care-backend
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 3MB
   profiles:
     active: dev
   jackson:

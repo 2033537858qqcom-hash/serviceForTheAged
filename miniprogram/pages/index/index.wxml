@@ -63,28 +63,28 @@
   </view>
   <view class="service-grid-2x2">
     <view class="service-entry-card spring" hover-class="spring-in" hover-stay-time="80" bindtap="goToService" data-category="MEAL">
-      <view class="service-icon-box meal-box"><image src="/assets/icons/meal.png" /></view>
+      <view class="service-entry-photo"><service-photo src="{{categoryPhotos.MEAL}}" fallback="{{photoFallbacks.MEAL}}" /></view>
       <view class="service-card-info">
         <view class="grid-name">助餐送餐</view>
         <view class="grid-desc">热餐准时送到家</view>
       </view>
     </view>
     <view class="service-entry-card spring" hover-class="spring-in" hover-stay-time="80" bindtap="goToService" data-category="CLEANING">
-      <view class="service-icon-box cleaning-box"><image src="/assets/icons/cleaning.png" /></view>
+      <view class="service-entry-photo"><service-photo src="{{categoryPhotos.CLEANING}}" fallback="{{photoFallbacks.CLEANING}}" /></view>
       <view class="service-card-info">
         <view class="grid-name">居家保洁</view>
         <view class="grid-desc">居室整理与清洁</view>
       </view>
     </view>
     <view class="service-entry-card spring" hover-class="spring-in" hover-stay-time="80" bindtap="goToService" data-category="ERRAND">
-      <view class="service-icon-box errand-box"><image src="/assets/icons/errand.png" /></view>
+      <view class="service-entry-photo"><service-photo src="{{categoryPhotos.ERRAND}}" fallback="{{photoFallbacks.ERRAND}}" /></view>
       <view class="service-card-info">
         <view class="grid-name">代买代办</view>
         <view class="grid-desc">买菜配药跑腿办</view>
       </view>
     </view>
     <view class="service-entry-card spring" hover-class="spring-in" hover-stay-time="80" bindtap="goToService" data-category="ESCORT">
-      <view class="service-icon-box escort-box"><image src="/assets/icons/escort.png" /></view>
+      <view class="service-entry-photo"><service-photo src="{{categoryPhotos.ESCORT}}" fallback="{{photoFallbacks.ESCORT}}" /></view>
       <view class="service-card-info">
         <view class="grid-name">陪同办事</view>
         <view class="grid-desc">就医陪诊出行看护</view>
@@ -117,7 +117,7 @@
   <view wx:elif="{{!serviceItems.length}}" class="card service-empty">新的社区服务正在准备中</view>
   <view wx:else class="service-list">
     <view class="card home-service-card spring" hover-class="spring-in" hover-stay-time="80" wx:for="{{serviceItems}}" wx:key="id" bindtap="goToServiceDetail" data-id="{{item.id}}">
-      <view class="service-list-icon"><image src="/assets/icons/{{categoryIcons[item.category] || 'service'}}.png"/></view>
+      <view class="service-list-icon"><service-photo src="{{item.imageUrl}}" fallback="{{item.imageFallback}}" /></view>
       <view class="service-main">
         <view class="item-title">{{item.name}}</view>
         <view class="item-desc">{{item.description}}</view>

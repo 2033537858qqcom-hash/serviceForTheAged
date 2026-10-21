@@ -6,12 +6,22 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import com.agedcare.modules.serviceitem.service.ServiceImageStorage;
 
 @Configuration
 @RequiredArgsConstructor
 public class WebMvcConfig implements WebMvcConfigurer {
 
     private final AuthInterceptor authInterceptor;
+    private final ServiceImageStorage serviceImageStorage;
+
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        registry.addResourceHandler("/media/service-images/**")
+                .addResourceLocations(serviceImageStorage.resourceLocation(), "classpath:/static/service-images/")
+                .setCachePeriod(3600);
+    }
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {

@@ -79,7 +79,6 @@ page {
 .cat-slider.is-live { transition: none; }
 .slider-line { width: 44rpx; height: 6rpx; margin: 0 auto; background: var(--primary-color); border-radius: 4rpx; }
 
-
 /* Swiper 滑动区域 */
 .service-swiper {
   flex: 1;
@@ -104,6 +103,7 @@ page {
 .service-card {
   padding: 30rpx;
   margin-bottom: 24rpx;
+  box-shadow: none;
 }
 
 .service-card-main {
@@ -114,18 +114,21 @@ page {
 
 .service-picture {
   flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 112rpx;
-  height: 126rpx;
-  border-radius: 22rpx;
+  display: block;
+  width: 156rpx;
+  height: 132rpx;
+  border-radius: 20rpx;
+  overflow: hidden;
   background: #eef3e7;
+  position: relative;
 }
 
+.service-picture service-photo,
+.service-picture .service-photo,
 .service-picture image {
-  height: 58rpx;
-  width: 58rpx;
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .service-copy {
@@ -185,6 +188,7 @@ page {
   gap: 10rpx;
   display: inline-flex;
   align-items: center;
+  transition: opacity var(--motion-fast);
 }
 
 .book-button image {
@@ -216,21 +220,17 @@ page {
 }
 
 /* 适老模式适配 */
-
+.elder-mode .service-card-main {
+  flex-direction: column;
+}
 
 .elder-mode .service-picture {
-  width: 80rpx;
-  height: 96rpx;
+  width: 100%;
+  height: 260rpx;
+  border-radius: 20rpx;
+  overflow: hidden;
 }
-.elder-mode .service-picture image {
-  width: 44rpx;
-  height: 44rpx;
-}
+
 .elder-mode .item-footer {
   flex-wrap: wrap;
 }
-
-.cat-nav-item { font-size: var(--font-caption); }
-.service-card { box-shadow: none; }
-
-.book-button, .btn-action { transition: opacity var(--motion-fast); }

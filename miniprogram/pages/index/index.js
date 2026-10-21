@@ -5,6 +5,7 @@ const request = require('../../utils/request.js');
 const { loadCatalog } = require('../../utils/service-catalog.js');
 const { orderCard, sessionKey } = require('../../utils/list-state.js');
 const { lightTap } = require('../../utils/feedback.js');
+const { DEFAULT_IMAGES, categoryImages } = require('../../utils/service-images.js');
 
 function getAppSafe() {
   try {
@@ -34,6 +35,8 @@ Page({
     serviceItems: [],
     servicesLoading: false,
     serviceError: false,
+    categoryPhotos: DEFAULT_IMAGES,
+    photoFallbacks: DEFAULT_IMAGES,
     categoryIcons: { MEAL: 'meal', CLEANING: 'cleaning', ERRAND: 'errand', ESCORT: 'escort' },
     activeOrder: null,
     statusTextMap: {
@@ -85,7 +88,7 @@ Page({
     const context = app.globalData.baseUrl || '';
     if (this._catalogContext !== context) {
       this._catalogContext = context; this._catalogPromise = null; this._catalogRows = null;
-      if (this.data.serviceItems.length) this.setData({ serviceItems: [] });
+      if (this.data.serviceItems.length) this.setData({ serviceItems: [], categoryPhotos: DEFAULT_IMAGES });
     }
     if (this._catalogPromise) return this._catalogPromise;
     if (!this.data.serviceItems.length) this.setData({ servicesLoading: true, serviceError: false });
@@ -93,7 +96,7 @@ Page({
       if (this._disposed || (app.globalData.baseUrl || '') !== context) return;
       if (this._catalogRows !== rows) {
         this._catalogRows = rows;
-        this.setData({ serviceItems: rows.slice(0, 3), serviceError: false });
+        this.setData({ serviceItems: rows.slice(0, 3), categoryPhotos: categoryImages(rows), serviceError: false });
       }
     }).catch(() => {
       if (!this._disposed && this._catalogContext === context && !this.data.serviceItems.length) this.setData({ serviceError: true });

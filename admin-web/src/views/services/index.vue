@@ -8,6 +8,9 @@
       </div>
 
       <el-table :data="tableData" v-loading="loading" stripe style="width: 100%">
+        <el-table-column label="服务图片" width="130">
+          <template #default="{ row }"><img class="service-thumbnail" :src="imageFor(row.icon, row.category)" alt="服务展示图" @error="useDefaultImage($event, row.category)" /></template>
+        </el-table-column>
         <el-table-column prop="name" label="项目名称" width="160">
           <template #default="{ row }">
             <span style="font-weight: bold;">{{ row.name }}</span>
@@ -73,6 +76,19 @@
             <el-option label="陪同就医办事" value="ESCORT" />
           </el-select>
         </el-form-item>
+        <el-form-item label="服务展示图">
+          <div class="image-editor">
+            <img class="cover-preview" :src="imageFor(currentItem.icon, currentItem.category)" alt="当前服务展示图" @error="useDefaultImage($event, currentItem.category)" />
+            <div class="image-actions">
+              <el-upload accept="image/jpeg,image/png" :show-file-list="false" :disabled="uploading || saving" :http-request="uploadImage">
+                <el-button :loading="uploading" :disabled="uploading || saving">{{ uploading ? '正在上传…' : '上传替换图片' }}</el-button>
+              </el-upload>
+              <el-button text :disabled="uploading || saving" @click="currentItem.icon = ''">恢复分类默认图</el-button>
+              <p>JPG / PNG，最大2MB。上传后点击“保存项目”生效。</p>
+              <p>首页分类入口使用该分类排序最靠前的上架项目图片。</p>
+            </div>
+          </div>
+        </el-form-item>
         <el-form-item label="基准单价(元)">
           <el-input-number v-model="currentItem.price" :precision="2" :step="5" :min="0" />
         </el-form-item>
@@ -93,7 +109,7 @@
       </el-form>
       <template #footer>
         <el-button @click="modalVisible = false">取消</el-button>
-        <el-button type="primary" @click="saveItem">保存项目</el-button>
+        <el-button type="primary" :loading="saving" :disabled="uploading || saving" @click="saveItem">保存项目</el-button>
       </template>
     </el-dialog>
   </div>
@@ -107,6 +123,9 @@ import request from '../../utils/request'
 const loading = ref(false)
 const tableData = ref([])
 const modalVisible = ref(false)
+const uploading = ref(false)
+const saving = ref(false)
+const editorVersion = ref(0)
 const skillNames = { COOKING: '助餐服务', CLEANING: '居家保洁', ERRAND: '代买代办', ESCORT: '陪同办事', NURSING: '基础照护护理' }
 const displaySkills = (value) => String(value).split(',').map(code => skillNames[code.trim()] || code.trim()).join('、')
 
@@ -132,7 +151,8 @@ const currentItem = reactive({
   durationMinutes: 60,
   requiredSkills: '',
   serviceArea: '阳光花园社区',
-  description: ''
+  description: '',
+  icon: ''
 })
 const selectedSkills = computed({
   get: () => (currentItem.requiredSkills || '').split(',').map(code => code.trim()).filter(Boolean),
@@ -149,8 +169,9 @@ const fetchData = () => {
 }
 
 const openModal = (row) => {
+  editorVersion.value++
   if (row) {
-    Object.assign(currentItem, row)
+    Object.assign(currentItem, row, { icon: row.icon || '' })
   } else {
     Object.assign(currentItem, {
       id: null,
@@ -160,18 +181,47 @@ const openModal = (row) => {
       durationMinutes: 60,
       requiredSkills: '',
       serviceArea: '阳光花园社区',
-      description: ''
+      description: '',
+      icon: ''
     })
   }
   modalVisible.value = true
 }
 
-const saveItem = () => {
-  request.post('/service-items/save', currentItem).then(() => {
-    ElMessage.success('服务项目保存成功')
+const imageNames = { MEAL: 'meal', CLEANING: 'cleaning', ERRAND: 'errand', ESCORT: 'escort' }
+const defaultImage = category => `/images/services/${imageNames[category] || 'meal'}.jpg`
+const imageFor = (icon, category) => /^\/media\/service-images\/[a-zA-Z0-9-]+\.(jpg|png|jpeg)$/.test(icon || '') ? '/api' + icon : defaultImage(category)
+function useDefaultImage(event, category) {
+  const next = new URL(defaultImage(category), window.location.origin).href
+  if (event.target.src !== next) event.target.src = next
+}
+async function uploadImage(options) {
+  if (uploading.value) return
+  const file = options.file
+  if (!['image/jpeg', 'image/png'].includes(file.type) || !file.size || file.size > 2 * 1024 * 1024) {
+    ElMessage.warning('请选择不超过2MB的JPG或PNG图片')
+    throw new Error('Invalid image')
+  }
+  uploading.value = true
+  const editingVersion = editorVersion.value
+  try {
+    const form = new FormData()
+    form.append('file', file)
+    const path = await request.post('/service-items/image', form)
+    if (modalVisible.value && editorVersion.value === editingVersion) currentItem.icon = path
+    return path
+  }
+  finally { uploading.value = false }
+}
+const saveItem = async () => {
+  if (saving.value || uploading.value) return
+  saving.value = true
+  try {
+    await request.post('/service-items/save', currentItem)
+    ElMessage.success('服务项目保存成功，小程序下拉刷新即可查看')
     modalVisible.value = false
     fetchData()
-  })
+  } catch {} finally { saving.value = false }
 }
 
 const toggleStatus = (id) => {
@@ -200,4 +250,8 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
 }
+.service-thumbnail { display: block; width: 96px; height: 68px; object-fit: cover; border-radius: 10px; background: #edf2e8; }
+.image-editor { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+.cover-preview { width: 100%; height: 180px; object-fit: cover; border-radius: 12px; background: #edf2e8; }
+.image-actions p { font-size: 12px; color: var(--muted); line-height: 1.7; margin-top: 8px; }
 </style>

@@ -27,12 +27,7 @@ Page({
   data: {
     isAgreed: false,
     loggingIn: false,
-    showAccountModal: false,
-    accountTab: 'login', // 'login' or 'register'
-    formUsername: '',
-    formPassword: '',
-    formRealName: '',
-    formPhone: '',
+    heroImageFailed: false,
     showDocModal: false,
     docTitle: '',
     docContent: ''
@@ -51,6 +46,10 @@ Page({
 
   toggleAgreement() {
     this.setData({ isAgreed: !this.data.isAgreed });
+  },
+
+  onHeroImageError() {
+    if (!this._disposed) this.setData({ heroImageFailed: true });
   },
 
   checkAgreement() {
@@ -84,7 +83,6 @@ Page({
       if (valid()) return action(valid);
     }).then(result => {
       if (valid() && result) {
-        this.closeAccountModal();
         this.onLoginSuccess(result);
       }
     }).catch(() => {}).finally(() => {
@@ -109,89 +107,12 @@ Page({
           resolve(res.code);
         },
         fail: () => {
-          if (valid()) wx.showToast({ title: '微信登录失败，请重试或使用账号登录', icon: 'none' });
+          if (valid()) wx.showToast({ title: '微信登录失败，请稍后重试', icon: 'none' });
           reject(new Error('WeChat login failed'));
         }
       });
     }).then(code => {
       if (valid()) return request.post('/auth/wechat-login', { code, role: 'RESIDENT' });
-    }));
-  },
-
-  // 演示答辩一键体验快捷入口 (老人/家属/师傅/管理)
-  openRoleSwitchSheet() {
-    const roles = [
-      { username: 'resident01', name: '赵大爷', desc: '老人本人 (阳光社区长辈)' },
-      { username: 'family01', name: '赵志强', desc: '家属代约 (社区居民)' },
-      { username: 'staff01', name: '张玉兰', desc: '服务师傅 (专业居家护理)' },
-      { username: 'admin', name: '系统管理员', desc: '管理员 (调度运营中心)' }
-    ];
-
-    const that = this;
-    wx.showActionSheet({
-      itemList: roles.map(r => `${r.name} · ${r.desc}`),
-      success(res) {
-        const target = roles[res.tapIndex];
-        if (target) {
-          that.setData({ isAgreed: true });
-          return that.runLogin(() => request.post('/auth/mock-login?username=' + encodeURIComponent(target.username)), `正在以 ${target.name} 登录…`);
-        }
-      }
-    });
-  },
-
-  // 账号密码登录/注册弹窗
-  openAccountModal() {
-    this.setData({
-      showAccountModal: true,
-      accountTab: 'login'
-    });
-  },
-
-  closeAccountModal() {
-    this.setData({ showAccountModal: false });
-  },
-
-  switchAccountTab(e) {
-    const tab = e.currentTarget.dataset.tab;
-    this.setData({ accountTab: tab });
-  },
-
-  onInputUsername(e) { this.setData({ formUsername: e.detail.value }); },
-  onInputPassword(e) { this.setData({ formPassword: e.detail.value }); },
-  onInputRealName(e) { this.setData({ formRealName: e.detail.value }); },
-  onInputPhone(e) { this.setData({ formPhone: e.detail.value }); },
-
-  submitAccountForm() {
-    if (!this.checkAgreement()) return;
-
-    const { accountTab, formUsername, formPassword, formRealName, formPhone } = this.data;
-    if (!formUsername.trim()) {
-      wx.showToast({ title: '请输入账号或手机号', icon: 'none' });
-      return;
-    }
-    if (!formPassword.trim()) {
-      wx.showToast({ title: '请输入登录密码', icon: 'none' });
-      return;
-    }
-
-    if (accountTab === 'register') {
-      if (!formRealName.trim()) {
-        wx.showToast({ title: '请输入真实姓名', icon: 'none' });
-        return;
-      }
-      if (!/^1[3-9]\d{9}$/.test(formPhone.trim())) {
-        wx.showToast({ title: '请输入有效的11位手机号', icon: 'none' });
-        return;
-      }
-
-      return this.runLogin(() => request.post('/auth/register', {
-        username: formUsername.trim(), password: formPassword,
-        realName: formRealName.trim(), phone: formPhone.trim()
-      }), '正在注册…');
-    }
-    return this.runLogin(() => request.post('/auth/login', {
-      username: formUsername.trim(), password: formPassword
     }));
   },
 
@@ -215,11 +136,6 @@ Page({
     });
 
     navigation.afterLogin(this.redirectUrl);
-  },
-
-  // 游客模式先去逛逛
-  skipToHome() {
-    navigation.switchTab({ url: '/pages/index/index' });
   },
 
   // 打开协议条款弹窗
