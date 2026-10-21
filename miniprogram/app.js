@@ -1,7 +1,7 @@
 // app.js
 // 启动配置放在入口中，避免真机增量编译遗漏新增公共模块时中断 App 注册。
 const SIMULATOR_BASE_URL = 'http://localhost:8080/api';
-const LAN_BASE_URL = 'http://10.146.147.237:8080/api';
+const LAN_BASE_URL = 'http://10.0.151.146:8080/api';
 
 function isLocalDevUrl(url) {
   const ipv6 = /^https?:\/\/\[([^\]]+)\](?=[:/]|$)/i.exec(url);

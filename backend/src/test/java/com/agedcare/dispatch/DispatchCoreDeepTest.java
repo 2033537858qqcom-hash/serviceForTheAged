@@ -233,4 +233,81 @@ public class DispatchCoreDeepTest {
         // 综合得分高于 0.70
         assertTrue(result.getTotalScore().doubleValue() >= 0.70);
     }
+
+    @Test
+    @DisplayName("地址一致性安全检查: 订单地址与老人档案地址不一致时，严禁误用档案坐标，必须执行未知位置保守降级")
+    void testElderAddressMismatchTriggersConservativeDegradation() {
+        StaffProfile staff = createStaff(6L, "AVAILABLE", 39.9042, 116.4074, 4.6);
+        LocalDate tomorrowDate = LocalDate.now().plusDays(1);
+        LocalDateTime orderStart = tomorrowDate.atTime(10, 0);
+        LocalDateTime orderEnd = tomorrowDate.atTime(11, 0);
+
+        // 订单没有经纬度，且服务地址为子女家
+        ServiceOrder order = createOrder(106L, "", orderStart, orderEnd, null, null);
+        order.setAddressSnapshot("海淀区中关村南大街1号子女家");
+        order.setElderId(501L);
+
+        // 老人档案登记的常驻地址在朝阳区老人家，且档案有坐标 (39.9042, 116.4074)
+        ElderProfile elder = ElderProfile.builder()
+                .id(501L)
+                .name("李大爷")
+                .address("朝阳区建国门外大街10号老人家")
+                .latitude(BigDecimal.valueOf(39.9042))
+                .longitude(BigDecimal.valueOf(116.4074))
+                .build();
+        when(elderProfileMapper.selectById(501L)).thenReturn(elder);
+
+        when(staffSkillMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(Collections.emptyList());
+        when(staffShiftMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(
+                StaffShift.builder().staffId(6L).shiftDate(tomorrowDate)
+                        .startTime(LocalTime.of(8, 0))
+                        .endTime(LocalTime.of(18, 0))
+                        .status("ACTIVE").build()
+        ));
+        when(staffBookingMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(Collections.emptyList());
+        when(serviceOrderMapper.selectCount(any())).thenReturn(0L);
+
+        CandidateEvaluationResult result = scoreEngine.evaluateSingleCandidate(staff, order);
+        assertTrue(result.isQualified());
+        assertTrue(result.isLocationUnknown(), "地址不一致时不得继承档案坐标，必须标记 locationUnknown=true");
+        assertEquals(0.30, result.getMetricD().doubleValue(), 0.001, "到场便利度必须执行0.30保守降级");
+    }
+
+    @Test
+    @DisplayName("地址一致性正常继承: 订单地址与老人档案地址完全匹配时，允许安全继承档案坐标并作为已知位置计算")
+    void testElderAddressMatchInheritsCoordinates() {
+        StaffProfile staff = createStaff(7L, "AVAILABLE", 39.9042, 116.4074, 4.6);
+        LocalDate tomorrowDate = LocalDate.now().plusDays(1);
+        LocalDateTime orderStart = tomorrowDate.atTime(10, 0);
+        LocalDateTime orderEnd = tomorrowDate.atTime(11, 0);
+
+        // 订单没有经纬度，但服务地址就是老人档案地址
+        ServiceOrder order = createOrder(107L, "", orderStart, orderEnd, null, null);
+        order.setAddressSnapshot("朝阳区建国门外大街10号老人家");
+        order.setElderId(502L);
+
+        ElderProfile elder = ElderProfile.builder()
+                .id(502L)
+                .name("张奶奶")
+                .address("朝阳区建国门外大街10号老人家")
+                .latitude(BigDecimal.valueOf(39.9050))
+                .longitude(BigDecimal.valueOf(116.4080))
+                .build();
+        when(elderProfileMapper.selectById(502L)).thenReturn(elder);
+
+        when(staffSkillMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(Collections.emptyList());
+        when(staffShiftMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(
+                StaffShift.builder().staffId(7L).shiftDate(tomorrowDate)
+                        .startTime(LocalTime.of(8, 0))
+                        .endTime(LocalTime.of(18, 0))
+                        .status("ACTIVE").build()
+        ));
+        when(staffBookingMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(Collections.emptyList());
+        when(serviceOrderMapper.selectCount(any())).thenReturn(0L);
+
+        CandidateEvaluationResult result = scoreEngine.evaluateSingleCandidate(staff, order);
+        assertTrue(result.isQualified());
+        assertFalse(result.isLocationUnknown(), "地址完全一致时应成功继承坐标，标记 locationUnknown=false");
+        assertTrue(result.getMetricD().doubleValue() > 0.30, "继承坐标后近距离到场便利度应正常计算，大于保守值0.30");
+    }
 }

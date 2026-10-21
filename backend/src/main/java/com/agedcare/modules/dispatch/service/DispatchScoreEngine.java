@@ -103,6 +103,66 @@ public class DispatchScoreEngine {
     }
 
     public CandidateEvaluationResult evaluateSingleCandidate(StaffProfile staff, ServiceOrder order) {
+        return evaluateSingleCandidate(staff, order, LocalDateTime.now());
+    }
+
+    public CandidateEvaluationResult evaluateSingleCandidate(StaffProfile staff, ServiceOrder order, LocalDateTime evaluationTime) {
+        ElderProfile elder = (elderProfileMapper != null && order.getElderId() != null)
+                ? elderProfileMapper.selectById(order.getElderId()) : null;
+
+        List<StaffSkill> skills = (staffSkillMapper != null)
+                ? staffSkillMapper.selectList(new LambdaQueryWrapper<StaffSkill>()
+                        .eq(StaffSkill::getStaffId, staff.getId())
+                        .eq(StaffSkill::getAuditStatus, "APPROVED"))
+                : Collections.emptyList();
+
+        LocalDate orderDate = order.getPlannedStartAt().toLocalDate();
+        List<StaffShift> shifts = (staffShiftMapper != null)
+                ? staffShiftMapper.selectList(new LambdaQueryWrapper<StaffShift>()
+                        .eq(StaffShift::getStaffId, staff.getId())
+                        .eq(StaffShift::getShiftDate, orderDate)
+                        .eq(StaffShift::getStatus, "ACTIVE"))
+                : Collections.emptyList();
+
+        LocalDateTime dayStart = orderDate.atStartOfDay();
+        LocalDateTime dayEnd = orderDate.atTime(23, 59, 59);
+        List<StaffBooking> dayBookings = (staffBookingMapper != null)
+                ? staffBookingMapper.selectList(new LambdaQueryWrapper<StaffBooking>()
+                        .eq(StaffBooking::getStaffId, staff.getId())
+                        .ge(StaffBooking::getStartTime, dayStart)
+                        .le(StaffBooking::getEndTime, dayEnd)
+                        .in(StaffBooking::getStatus, BookingStatus.HELD.getCode(), BookingStatus.CONFIRMED.getCode(), BookingStatus.FINISHED.getCode())
+                        .orderByAsc(StaffBooking::getStartTime))
+                : Collections.emptyList();
+
+        java.util.function.Function<Long, ServiceOrder> orderLookup = (orderId) ->
+                (serviceOrderMapper != null && orderId != null) ? serviceOrderMapper.selectById(orderId) : null;
+
+        Long completedCount = (serviceOrderMapper != null && order.getElderId() != null)
+                ? serviceOrderMapper.selectCount(new LambdaQueryWrapper<ServiceOrder>()
+                        .eq(ServiceOrder::getElderId, order.getElderId())
+                        .eq(ServiceOrder::getStatus, "COMPLETED")
+                        .apply("id in (select order_id from service_record where staff_id = {0})", staff.getId()))
+                : 0L;
+
+        boolean hasFamiliarity = completedCount != null && completedCount > 0;
+        return evaluateCandidateWithContext(staff, order, skills, shifts, dayBookings, orderLookup, elder, hasFamiliarity, evaluationTime);
+    }
+
+    /**
+     * 核心候选人资格与多目标综合评分函数（完全解耦I/O，供生产调度与基准仿真实验完全共享）
+     */
+    public CandidateEvaluationResult evaluateCandidateWithContext(
+            StaffProfile staff,
+            ServiceOrder order,
+            List<StaffSkill> skills,
+            List<StaffShift> shifts,
+            List<StaffBooking> dayBookings,
+            java.util.function.Function<Long, ServiceOrder> orderLookup,
+            ElderProfile elder,
+            boolean hasFamiliarity,
+            LocalDateTime evaluationTime) {
+
         CandidateEvaluationResult result = CandidateEvaluationResult.builder()
                 .staffId(staff.getId())
                 .staffName("工作人员#" + staff.getId())
@@ -132,11 +192,8 @@ public class DispatchScoreEngine {
             boolean areaMatch = "全网格".equals(area) || "全区".equals(area) || "通用".equals(area)
                     || order.getAddressSnapshot().contains(area)
                     || area.contains(order.getAddressSnapshot());
-            if (!areaMatch && elderProfileMapper != null && order.getElderId() != null) {
-                ElderProfile elder = elderProfileMapper.selectById(order.getElderId());
-                if (elder != null && StringUtils.hasText(elder.getCommunity())) {
-                    areaMatch = elder.getCommunity().contains(area) || area.contains(elder.getCommunity());
-                }
+            if (!areaMatch && elder != null && StringUtils.hasText(elder.getCommunity())) {
+                areaMatch = elder.getCommunity().contains(area) || area.contains(elder.getCommunity());
             }
             if (!areaMatch) {
                 result.setExcludeReason("服务地址不在该人员负责网格区域(" + area + ")");
@@ -162,12 +219,9 @@ public class DispatchScoreEngine {
             }
 
             if (!required.isEmpty()) {
-                List<StaffSkill> skills = staffSkillMapper.selectList(new LambdaQueryWrapper<StaffSkill>()
-                        .eq(StaffSkill::getStaffId, staff.getId())
-                        .eq(StaffSkill::getAuditStatus, "APPROVED"));
-                Set<String> staffSkillCodes = skills.stream()
+                Set<String> staffSkillCodes = (skills != null) ? skills.stream()
                         .map(StaffSkill::getSkillCode)
-                        .collect(Collectors.toSet());
+                        .collect(Collectors.toSet()) : Collections.emptySet();
 
                 for (String reqSkill : required) {
                     if (!staffSkillCodes.contains(reqSkill)) {
@@ -182,12 +236,7 @@ public class DispatchScoreEngine {
         LocalDate orderDate = order.getPlannedStartAt().toLocalDate();
 
         // 4. 当日排班检查
-        List<StaffShift> shifts = staffShiftMapper.selectList(new LambdaQueryWrapper<StaffShift>()
-                .eq(StaffShift::getStaffId, staff.getId())
-                .eq(StaffShift::getShiftDate, orderDate)
-                .eq(StaffShift::getStatus, "ACTIVE"));
-
-        if (shifts.isEmpty()) {
+        if (shifts == null || shifts.isEmpty()) {
             result.setExcludeReason("当日没有有效工作排班");
             recordContext(result, debugContext);
             return result;
@@ -198,19 +247,11 @@ public class DispatchScoreEngine {
         LocalTime shiftEnd = shift.getEndTime();
 
         // 5. 出行时间与位置推算
-        // 读取当日已有排班预留(HELD, CONFIRMED, FINISHED)
         LocalDateTime dayStart = orderDate.atStartOfDay();
-        LocalDateTime dayEnd = orderDate.atTime(23, 59, 59);
-
-        List<StaffBooking> dayBookings = staffBookingMapper.selectList(new LambdaQueryWrapper<StaffBooking>()
-                .eq(StaffBooking::getStaffId, staff.getId())
-                .ge(StaffBooking::getStartTime, dayStart)
-                .le(StaffBooking::getEndTime, dayEnd)
-                .in(StaffBooking::getStatus, BookingStatus.HELD.getCode(), BookingStatus.CONFIRMED.getCode(), BookingStatus.FINISHED.getCode())
-                .orderByAsc(StaffBooking::getStartTime));
+        List<StaffBooking> safeBookings = (dayBookings != null) ? dayBookings : Collections.emptyList();
 
         // 检查与已有任务的时段冲突
-        for (StaffBooking b : dayBookings) {
+        for (StaffBooking b : safeBookings) {
             // [startA, endA) 与 [startB, endB) 重叠: startA < endB && endA > startB
             if (order.getPlannedStartAt().isBefore(b.getEndTime()) && order.getPlannedEndAt().isAfter(b.getStartTime())) {
                 result.setExcludeReason("与已有服务排班预留时段存在冲突");
@@ -222,7 +263,7 @@ public class DispatchScoreEngine {
         // 推算该单前一项任务或站点位置
         StaffBooking prevBooking = null;
         StaffBooking nextBooking = null;
-        for (StaffBooking b : dayBookings) {
+        for (StaffBooking b : safeBookings) {
             if (b.getEndTime().isBefore(order.getPlannedStartAt()) || b.getEndTime().isEqual(order.getPlannedStartAt())) {
                 prevBooking = b;
             } else if (b.getStartTime().isAfter(order.getPlannedEndAt()) || b.getStartTime().isEqual(order.getPlannedEndAt())) {
@@ -232,11 +273,11 @@ public class DispatchScoreEngine {
             }
         }
 
-        double originLat = staff.getBaseLatitude().doubleValue();
-        double originLng = staff.getBaseLongitude().doubleValue();
+        double originLat = staff.getBaseLatitude() != null ? staff.getBaseLatitude().doubleValue() : 39.9042;
+        double originLng = staff.getBaseLongitude() != null ? staff.getBaseLongitude().doubleValue() : 116.4074;
 
-        if (prevBooking != null) {
-            ServiceOrder prevOrder = serviceOrderMapper.selectById(prevBooking.getOrderId());
+        if (prevBooking != null && orderLookup != null) {
+            ServiceOrder prevOrder = orderLookup.apply(prevBooking.getOrderId());
             if (prevOrder != null && prevOrder.getLatitude() != null && prevOrder.getLongitude() != null) {
                 originLat = prevOrder.getLatitude().doubleValue();
                 originLng = prevOrder.getLongitude().doubleValue();
@@ -245,10 +286,18 @@ public class DispatchScoreEngine {
 
         BigDecimal orderLat = order.getLatitude();
         BigDecimal orderLng = order.getLongitude();
-        if (orderLat == null || orderLng == null) {
-            if (order.getElderId() != null) {
-                ElderProfile elder = elderProfileMapper.selectById(order.getElderId());
-                if (elder != null && elder.getLatitude() != null && elder.getLongitude() != null) {
+        if (!validCoordinates(orderLat, orderLng)) {
+            orderLat = null;
+            orderLng = null;
+        }
+
+        // 仅当订单服务地址与老人档案常驻地址一致且档案具备有效坐标时，才继承档案坐标
+        // 若老人临时变更至子女家等其他地址，不可误用原住址坐标，必须执行未知位置保守降级
+        if (orderLat == null && order.getElderId() != null && elder != null) {
+            if (validCoordinates(elder.getLatitude(), elder.getLongitude())) {
+                String orderAddr = order.getAddressSnapshot() != null ? order.getAddressSnapshot().trim() : "";
+                String elderAddr = elder.getAddress() != null ? elder.getAddress().trim() : "";
+                if (StringUtils.hasText(orderAddr) && Objects.equals(orderAddr, elderAddr)) {
                     orderLat = elder.getLatitude();
                     orderLng = elder.getLongitude();
                 }
@@ -288,11 +337,11 @@ public class DispatchScoreEngine {
         }
 
         // 检查该单结束后前往下一单是否可行
-        if (nextBooking != null) {
+        if (nextBooking != null && orderLookup != null) {
             double nextDestLat = originLat;
             double nextDestLng = originLng;
             boolean hasNextCoord = false;
-            ServiceOrder nextOrder = serviceOrderMapper.selectById(nextBooking.getOrderId());
+            ServiceOrder nextOrder = orderLookup.apply(nextBooking.getOrderId());
             if (nextOrder != null && nextOrder.getLatitude() != null && nextOrder.getLongitude() != null) {
                 nextDestLat = nextOrder.getLatitude().doubleValue();
                 nextDestLng = nextOrder.getLongitude().doubleValue();
@@ -319,7 +368,7 @@ public class DispatchScoreEngine {
         }
 
         // 检查当前时间是否仍能赶上
-        if (LocalDateTime.now().isAfter(requiredDepart)) {
+        if (evaluationTime != null && evaluationTime.isAfter(requiredDepart)) {
             result.setExcludeReason("当前时间已无法按预计路程准时到达");
             recordContext(result, debugContext);
             return result;
@@ -344,12 +393,12 @@ public class DispatchScoreEngine {
         BigDecimal metricQ = BigDecimal.valueOf(qVal).setScale(4, RoundingMode.HALF_UP);
         result.setMetricQ(metricQ);
 
-        // 3. 指标 L: 当日工作量余量 (计入任务时长与出行耗时)
+        // 3. 指标 L: 当日工作量余量 (计入任务时长与出行耗时，分母采用班次真实时长)
         long shiftTotalMinutes = Duration.between(shiftStart, shiftEnd).toMinutes();
         if (shiftTotalMinutes <= 0) shiftTotalMinutes = 480; // 默认8小时
 
         long occupiedMinutesToday = 0;
-        for (StaffBooking b : dayBookings) {
+        for (StaffBooking b : safeBookings) {
             occupiedMinutesToday += Math.max(0, Duration.between(b.getStartTime(), b.getEndTime()).toMinutes());
         }
         int thisOrderMinutes = order.getDurationMinutesSnapshot() != null ? order.getDurationMinutesSnapshot() : 60;
@@ -358,11 +407,7 @@ public class DispatchScoreEngine {
         result.setMetricL(metricL);
 
         // 4. 指标 F: 熟悉程度 (曾为该老人完成服务为1，否则为0)
-        Long completedCount = serviceOrderMapper.selectCount(new LambdaQueryWrapper<ServiceOrder>()
-                .eq(ServiceOrder::getElderId, order.getElderId())
-                .eq(ServiceOrder::getStatus, "COMPLETED")
-                .apply("id in (select order_id from service_record where staff_id = {0})", staff.getId()));
-        double fVal = (completedCount != null && completedCount > 0) ? 1.0 : 0.0;
+        double fVal = hasFamiliarity ? 1.0 : 0.0;
         BigDecimal metricF = BigDecimal.valueOf(fVal).setScale(4, RoundingMode.HALF_UP);
         result.setMetricF(metricF);
 
@@ -389,5 +434,11 @@ public class DispatchScoreEngine {
         } catch (JsonProcessingException e) {
             result.setDetailsJson("{}");
         }
+    }
+
+    private static boolean validCoordinates(BigDecimal latitude, BigDecimal longitude) {
+        return latitude != null && longitude != null
+                && latitude.abs().compareTo(BigDecimal.valueOf(90)) <= 0
+                && longitude.abs().compareTo(BigDecimal.valueOf(180)) <= 0;
     }
 }

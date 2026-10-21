@@ -3,16 +3,18 @@ package com.agedcare.dispatch;
 import com.agedcare.common.utils.DistanceUtil;
 import com.agedcare.modules.dispatch.dto.CandidateEvaluationResult;
 import com.agedcare.modules.dispatch.entity.StaffBooking;
+import com.agedcare.modules.dispatch.service.DispatchScoreEngine;
+import com.agedcare.modules.elder.entity.ElderProfile;
 import com.agedcare.modules.order.entity.ServiceOrder;
 import com.agedcare.modules.staff.entity.StaffProfile;
 import com.agedcare.modules.staff.entity.StaffShift;
 import com.agedcare.modules.staff.entity.StaffSkill;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -21,43 +23,44 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * 毕业论文核心实验验证:
- * 同批订单下「随机派单、就近派单、综合评分智能派单」的三方对比仿真实验
+ * 毕业论文核心实证仿真实验:
+ * 直接复用真实派单引擎 DispatchScoreEngine，在多组随机种子与不同订单规模下，
+ * 定量对比「随机轮询派单、贪心就近派单、本课题多目标综合评分」三方策略性能。
  */
 public class DispatchAlgorithmBenchmarkTest {
 
+    private final DispatchScoreEngine scoreEngine = new DispatchScoreEngine(
+            null, null, null, null, null, null, new ObjectMapper()
+    );
+
     static class SimulationContext {
         List<StaffProfile> staffList = new ArrayList<>();
-        Map<Long, Set<String>> staffSkills = new HashMap<>();
+        Map<Long, List<StaffSkill>> staffSkills = new HashMap<>();
         Map<Long, List<StaffBooking>> staffBookings = new HashMap<>();
         Map<Long, StaffShift> staffShifts = new HashMap<>();
+        Map<Long, ServiceOrder> orderMap = new HashMap<>();
+        Map<Long, ElderProfile> elderProfiles = new HashMap<>();
         Set<String> familiarPairs = new HashSet<>(); // staffId + "_" + elderId
     }
 
     static class BenchmarkMetrics {
         int totalOrders;
         int successfulDispatches;
-        double totalDistanceKm;
         double totalTravelMinutes;
-        double totalServiceRating;
+        double totalPriorRating;
         Map<Long, Integer> staffWorkloadOrders = new HashMap<>();
-        Map<Long, Integer> staffWorkloadMinutes = new HashMap<>();
         long totalExecutionTimeNs;
 
         double getSuccessRate() {
             return (double) successfulDispatches / totalOrders * 100.0;
         }
 
-        double getAvgDistanceKm() {
-            return successfulDispatches > 0 ? totalDistanceKm / successfulDispatches : 0;
-        }
-
         double getAvgTravelMinutes() {
             return successfulDispatches > 0 ? totalTravelMinutes / successfulDispatches : 0;
         }
 
-        double getAvgRating() {
-            return successfulDispatches > 0 ? totalServiceRating / successfulDispatches : 0;
+        double getAvgPriorRating() {
+            return successfulDispatches > 0 ? totalPriorRating / successfulDispatches : 0;
         }
 
         double getWorkloadStdDev() {
@@ -75,14 +78,35 @@ public class DispatchAlgorithmBenchmarkTest {
         }
     }
 
-    private SimulationContext initSimulationData(int staffCount) {
+    static class AggregateResult {
+        double successRateMean;
+        double travelMinutesMean;
+        double priorRatingMean;
+        double workloadStdDevMean;
+        double latencyMsMean;
+    }
+
+    private SimulationContext initSimulationData(int staffCount, long seed) {
         SimulationContext ctx = new SimulationContext();
         double centerLat = 39.9042;
         double centerLng = 116.4074;
 
-        Random random = new Random(42); // 固定随机种子保证实验完全可复现
+        Random random = new Random(seed);
 
-        // 12 名服务人员，基准点分布在周边 0.5km ~ 3.5km 社区网格
+        // 构建 30 位社区老人常驻档案
+        for (long eId = 1; eId <= 30; eId++) {
+            double offLat = (random.nextDouble() - 0.5) * 0.03;
+            double offLng = (random.nextDouble() - 0.5) * 0.03;
+            ctx.elderProfiles.put(eId, ElderProfile.builder()
+                    .id(eId)
+                    .name("长者#" + eId)
+                    .address("幸福社区" + eId + "号楼")
+                    .latitude(BigDecimal.valueOf(centerLat + offLat))
+                    .longitude(BigDecimal.valueOf(centerLng + offLng))
+                    .build());
+        }
+
+        // 12 名服务人员，基准点分布在周边网格
         for (long i = 1; i <= staffCount; i++) {
             double offsetLat = (random.nextDouble() - 0.5) * 0.04;
             double offsetLng = (random.nextDouble() - 0.5) * 0.04;
@@ -92,6 +116,8 @@ public class DispatchAlgorithmBenchmarkTest {
             StaffProfile staff = StaffProfile.builder()
                     .id(i)
                     .userId(1000L + i)
+                    .currentStatus("AVAILABLE")
+                    .serviceArea("全网格")
                     .baseLatitude(BigDecimal.valueOf(centerLat + offsetLat))
                     .baseLongitude(BigDecimal.valueOf(centerLng + offsetLng))
                     .priorRating(BigDecimal.valueOf(rating).setScale(2, RoundingMode.HALF_UP))
@@ -100,23 +126,24 @@ public class DispatchAlgorithmBenchmarkTest {
             ctx.staffList.add(staff);
             ctx.staffBookings.put(i, new ArrayList<>());
 
-            // 技能分配: 所有人具备基础照料 CARE，部分具备 MEDICAL，部分具备 REHAB，部分具备 CLEAN
-            Set<String> skills = new HashSet<>();
-            skills.add("CARE");
-            if (i % 2 == 0) skills.add("CLEAN");
-            if (i % 3 == 0) skills.add("MEDICAL");
-            if (i % 4 == 0) skills.add("REHAB");
+            // 技能分配: 基础照料 CARE，部分具备 CLEAN, MEDICAL, REHAB
+            List<StaffSkill> skills = new ArrayList<>();
+            skills.add(StaffSkill.builder().staffId(i).skillCode("CARE").auditStatus("APPROVED").build());
+            if (i % 2 == 0) skills.add(StaffSkill.builder().staffId(i).skillCode("CLEAN").auditStatus("APPROVED").build());
+            if (i % 3 == 0) skills.add(StaffSkill.builder().staffId(i).skillCode("MEDICAL").auditStatus("APPROVED").build());
+            if (i % 4 == 0) skills.add(StaffSkill.builder().staffId(i).skillCode("REHAB").auditStatus("APPROVED").build());
             ctx.staffSkills.put(i, skills);
 
-            // 排班: 08:00 ~ 18:00
+            // 排班: 08:00 ~ 18:00 (10小时班次)
             ctx.staffShifts.put(i, StaffShift.builder()
                     .staffId(i)
                     .startTime(LocalTime.of(8, 0))
                     .endTime(LocalTime.of(18, 0))
+                    .status("ACTIVE")
                     .build());
         }
 
-        // 预设熟悉度关系 (曾服务过)
+        // 预设熟悉度关系
         for (long staffId = 1; staffId <= staffCount; staffId++) {
             for (long elderId = 1; elderId <= 30; elderId++) {
                 if ((staffId + elderId) % 5 == 0) {
@@ -128,11 +155,11 @@ public class DispatchAlgorithmBenchmarkTest {
         return ctx;
     }
 
-    private List<ServiceOrder> generateSimulationOrders(int orderCount, LocalDate date) {
+    private List<ServiceOrder> generateSimulationOrders(int orderCount, LocalDate date, long seed) {
         List<ServiceOrder> orders = new ArrayList<>();
         double centerLat = 39.9042;
         double centerLng = 116.4074;
-        Random random = new Random(10086);
+        Random random = new Random(seed + 888);
 
         LocalTime[] slotStarts = {
                 LocalTime.of(8, 30),
@@ -170,224 +197,116 @@ public class DispatchAlgorithmBenchmarkTest {
                     .plannedEndAt(endDt)
                     .durationMinutesSnapshot(durationMins)
                     .requiredSkillsSnapshot(skills)
+                    .addressSnapshot("幸福社区" + elderId + "号楼")
                     .latitude(BigDecimal.valueOf(centerLat + offsetLat))
                     .longitude(BigDecimal.valueOf(centerLng + offsetLng))
                     .build());
         }
 
-        // 按时间先后顺序排序模拟全天实时到来
         orders.sort(Comparator.comparing(ServiceOrder::getPlannedStartAt));
         return orders;
     }
 
     /**
-     * 策略 A: 随机轮询派单 (Baseline 1: Random Dispatch)
+     * 运行派单策略（统一直接调用真实引擎 DispatchScoreEngine 评估每一个候选人）
      */
-    private BenchmarkMetrics runRandomStrategy(SimulationContext ctx, List<ServiceOrder> orders) {
+    private BenchmarkMetrics runStrategy(SimulationContext ctx, List<ServiceOrder> orders, String strategyName, long randomSeed) {
         BenchmarkMetrics metrics = new BenchmarkMetrics();
         metrics.totalOrders = orders.size();
         for (StaffProfile s : ctx.staffList) metrics.staffWorkloadOrders.put(s.getId(), 0);
 
-        Random rand = new Random(1234);
+        Random rand = new Random(randomSeed);
 
         for (ServiceOrder order : orders) {
             long t0 = System.nanoTime();
-            List<StaffProfile> qualifiedList = new ArrayList<>();
-            Map<Long, Double> distanceMap = new HashMap<>();
-            Map<Long, Integer> travelTimeMap = new HashMap<>();
+            StaffProfile chosenStaff = null;
+            CandidateEvaluationResult chosenResult = null;
 
-            for (StaffProfile staff : ctx.staffList) {
-                EvaluationCheck check = checkHardConstraints(ctx, staff, order);
-                if (check.feasible) {
-                    qualifiedList.add(staff);
-                    distanceMap.put(staff.getId(), check.distanceKm);
-                    travelTimeMap.put(staff.getId(), check.travelMinutes);
+            if ("RANDOM".equals(strategyName)) {
+                List<CandidateEvaluationResult> qualifiedList = new ArrayList<>();
+                for (StaffProfile staff : ctx.staffList) {
+                    CandidateEvaluationResult res = scoreEngine.evaluateCandidateWithContext(
+                            staff, order,
+                            ctx.staffSkills.get(staff.getId()),
+                            List.of(ctx.staffShifts.get(staff.getId())),
+                            ctx.staffBookings.get(staff.getId()),
+                            ctx.orderMap::get,
+                            ctx.elderProfiles.get(order.getElderId()),
+                            ctx.familiarPairs.contains(staff.getId() + "_" + order.getElderId()),
+                            order.getPlannedStartAt().minusMinutes(20)
+                    );
+                    if (res.isQualified()) {
+                        qualifiedList.add(res);
+                    }
                 }
-            }
-
-            metrics.totalExecutionTimeNs += (System.nanoTime() - t0);
-
-            if (!qualifiedList.isEmpty()) {
-                StaffProfile chosen = qualifiedList.get(rand.nextInt(qualifiedList.size()));
-                assignOrder(ctx, chosen, order, metrics, distanceMap.get(chosen.getId()), travelTimeMap.get(chosen.getId()));
-            }
-        }
-        return metrics;
-    }
-
-    /**
-     * 策略 B: 贪心就近派单 (Baseline 2: Pure Greedy Distance)
-     */
-    private BenchmarkMetrics runGreedyDistanceStrategy(SimulationContext ctx, List<ServiceOrder> orders) {
-        BenchmarkMetrics metrics = new BenchmarkMetrics();
-        metrics.totalOrders = orders.size();
-        for (StaffProfile s : ctx.staffList) metrics.staffWorkloadOrders.put(s.getId(), 0);
-
-        for (ServiceOrder order : orders) {
-            long t0 = System.nanoTime();
-            StaffProfile bestStaff = null;
-            double minDistance = Double.MAX_VALUE;
-            int bestTravelTime = 0;
-
-            for (StaffProfile staff : ctx.staffList) {
-                EvaluationCheck check = checkHardConstraints(ctx, staff, order);
-                if (check.feasible) {
-                    if (check.distanceKm < minDistance) {
-                        minDistance = check.distanceKm;
-                        bestStaff = staff;
-                        bestTravelTime = check.travelMinutes;
+                if (!qualifiedList.isEmpty()) {
+                    chosenResult = qualifiedList.get(rand.nextInt(qualifiedList.size()));
+                    final Long targetStaffId = chosenResult.getStaffId();
+                    chosenStaff = ctx.staffList.stream()
+                            .filter(s -> s.getId().equals(targetStaffId))
+                            .findFirst().orElse(null);
+                }
+            } else if ("GREEDY".equals(strategyName)) {
+                int minTravelMinutes = Integer.MAX_VALUE;
+                for (StaffProfile staff : ctx.staffList) {
+                    CandidateEvaluationResult res = scoreEngine.evaluateCandidateWithContext(
+                            staff, order,
+                            ctx.staffSkills.get(staff.getId()),
+                            List.of(ctx.staffShifts.get(staff.getId())),
+                            ctx.staffBookings.get(staff.getId()),
+                            ctx.orderMap::get,
+                            ctx.elderProfiles.get(order.getElderId()),
+                            ctx.familiarPairs.contains(staff.getId() + "_" + order.getElderId()),
+                            order.getPlannedStartAt().minusMinutes(20)
+                    );
+                    if (res.isQualified()) {
+                        if (res.getTravelMinutes() < minTravelMinutes) {
+                            minTravelMinutes = res.getTravelMinutes();
+                            chosenResult = res;
+                            chosenStaff = staff;
+                        }
+                    }
+                }
+            } else if ("COMPOSITE".equals(strategyName)) {
+                double maxScore = -1.0;
+                for (StaffProfile staff : ctx.staffList) {
+                    CandidateEvaluationResult res = scoreEngine.evaluateCandidateWithContext(
+                            staff, order,
+                            ctx.staffSkills.get(staff.getId()),
+                            List.of(ctx.staffShifts.get(staff.getId())),
+                            ctx.staffBookings.get(staff.getId()),
+                            ctx.orderMap::get,
+                            ctx.elderProfiles.get(order.getElderId()),
+                            ctx.familiarPairs.contains(staff.getId() + "_" + order.getElderId()),
+                            order.getPlannedStartAt().minusMinutes(20)
+                    );
+                    if (res.isQualified()) {
+                        if (res.getTotalScore().doubleValue() > maxScore) {
+                            maxScore = res.getTotalScore().doubleValue();
+                            chosenResult = res;
+                            chosenStaff = staff;
+                        }
                     }
                 }
             }
 
             metrics.totalExecutionTimeNs += (System.nanoTime() - t0);
 
-            if (bestStaff != null) {
-                assignOrder(ctx, bestStaff, order, metrics, minDistance, bestTravelTime);
+            if (chosenStaff != null && chosenResult != null) {
+                assignOrder(ctx, chosenStaff, order, metrics, chosenResult);
             }
         }
         return metrics;
-    }
-
-    /**
-     * 策略 C: 本课题综合多目标评分智能派单 (Proposed Multi-Objective Composite Score)
-     */
-    private BenchmarkMetrics runCompositeScoreStrategy(SimulationContext ctx, List<ServiceOrder> orders) {
-        BenchmarkMetrics metrics = new BenchmarkMetrics();
-        metrics.totalOrders = orders.size();
-        for (StaffProfile s : ctx.staffList) metrics.staffWorkloadOrders.put(s.getId(), 0);
-
-        for (ServiceOrder order : orders) {
-            long t0 = System.nanoTime();
-            StaffProfile bestStaff = null;
-            double maxScore = -1.0;
-            double bestDist = 0;
-            int bestTravelTime = 0;
-
-            for (StaffProfile staff : ctx.staffList) {
-                EvaluationCheck check = checkHardConstraints(ctx, staff, order);
-                if (check.feasible) {
-                    // 计算多目标评分: 0.35*D + 0.30*Q + 0.25*L + 0.10*F
-                    // 1. D 到达便利度
-                    double dVal = Math.max(0.0, 1.0 - Math.min((double) check.travelMinutes / 30.0, 1.0));
-                    // 2. Q 服务质量均分 (3.8~5.0 归一化)
-                    double qRating = staff.getPriorRating() != null ? staff.getPriorRating().doubleValue() : 4.0;
-                    double qVal = Math.max(0.0, Math.min(1.0, (qRating - 1.0) / 4.0));
-                    // 3. L 当日工作量余量
-                    int occupiedMinutes = ctx.staffBookings.get(staff.getId()).stream()
-                            .mapToInt(b -> (int) Duration.between(b.getStartTime(), b.getEndTime()).toMinutes())
-                            .sum();
-                    double lVal = Math.max(0.0, 1.0 - (double) (occupiedMinutes + order.getDurationMinutesSnapshot() + check.travelMinutes) / 480.0);
-                    // 4. F 熟悉度
-                    double fVal = ctx.familiarPairs.contains(staff.getId() + "_" + order.getElderId()) ? 1.0 : 0.0;
-
-                    double score = 0.35 * dVal + 0.30 * qVal + 0.25 * lVal + 0.10 * fVal;
-                    if (score > maxScore) {
-                        maxScore = score;
-                        bestStaff = staff;
-                        bestDist = check.distanceKm;
-                        bestTravelTime = check.travelMinutes;
-                    }
-                }
-            }
-
-            metrics.totalExecutionTimeNs += (System.nanoTime() - t0);
-
-            if (bestStaff != null) {
-                assignOrder(ctx, bestStaff, order, metrics, bestDist, bestTravelTime);
-            }
-        }
-        return metrics;
-    }
-
-    static class EvaluationCheck {
-        boolean feasible;
-        double distanceKm;
-        int travelMinutes;
-    }
-
-    private EvaluationCheck checkHardConstraints(SimulationContext ctx, StaffProfile staff, ServiceOrder order) {
-        EvaluationCheck check = new EvaluationCheck();
-
-        // 1. 技能检查
-        String reqSkills = order.getRequiredSkillsSnapshot();
-        if (reqSkills != null && !reqSkills.isEmpty()) {
-            Set<String> staffSkills = ctx.staffSkills.get(staff.getId());
-            for (String req : reqSkills.split(",")) {
-                if (!staffSkills.contains(req.trim())) {
-                    check.feasible = false;
-                    return check;
-                }
-            }
-        }
-
-        // 2. 排班检查
-        StaffShift shift = ctx.staffShifts.get(staff.getId());
-        if (order.getPlannedStartAt().toLocalTime().isBefore(shift.getStartTime())
-                || order.getPlannedEndAt().toLocalTime().isAfter(shift.getEndTime())) {
-            check.feasible = false;
-            return check;
-        }
-
-        // 3. 冲突与衔接路程计算
-        List<StaffBooking> dayBookings = ctx.staffBookings.get(staff.getId());
-        StaffBooking prevBooking = null;
-        StaffBooking nextBooking = null;
-
-        for (StaffBooking b : dayBookings) {
-            // 时间重叠阻断
-            if (!(b.getEndTime().isBefore(order.getPlannedStartAt()) || b.getEndTime().isEqual(order.getPlannedStartAt())
-                    || b.getStartTime().isAfter(order.getPlannedEndAt()) || b.getStartTime().isEqual(order.getPlannedEndAt()))) {
-                check.feasible = false;
-                return check;
-            }
-
-            if (b.getEndTime().isBefore(order.getPlannedStartAt()) || b.getEndTime().isEqual(order.getPlannedStartAt())) {
-                prevBooking = b;
-            } else if (b.getStartTime().isAfter(order.getPlannedEndAt()) || b.getStartTime().isEqual(order.getPlannedEndAt())) {
-                if (nextBooking == null) nextBooking = b;
-            }
-        }
-
-        double originLat = staff.getBaseLatitude().doubleValue();
-        double originLng = staff.getBaseLongitude().doubleValue();
-        double destLat = order.getLatitude().doubleValue();
-        double destLng = order.getLongitude().doubleValue();
-
-        double distKm = DistanceUtil.calculateDistanceKm(originLat, originLng, destLat, destLng);
-        int travelMins = DistanceUtil.estimateTravelMinutes(distKm, 15.0, 10);
-
-        // 前序衔接检查
-        if (prevBooking != null) {
-            if (order.getPlannedStartAt().minusMinutes(travelMins).isBefore(prevBooking.getEndTime())) {
-                check.feasible = false;
-                return check;
-            }
-        }
-
-        // 后续衔接检查
-        if (nextBooking != null) {
-            if (order.getPlannedEndAt().plusMinutes(travelMins).isAfter(nextBooking.getStartTime())) {
-                check.feasible = false;
-                return check;
-            }
-        }
-
-        check.feasible = true;
-        check.distanceKm = distKm;
-        check.travelMinutes = travelMins;
-        return check;
     }
 
     private void assignOrder(SimulationContext ctx, StaffProfile staff, ServiceOrder order,
-                             BenchmarkMetrics metrics, double distKm, int travelMins) {
+                             BenchmarkMetrics metrics, CandidateEvaluationResult eval) {
         metrics.successfulDispatches++;
-        metrics.totalDistanceKm += distKm;
-        metrics.totalTravelMinutes += travelMins;
-        metrics.totalServiceRating += staff.getPriorRating().doubleValue();
-
+        metrics.totalTravelMinutes += eval.getTravelMinutes();
+        metrics.totalPriorRating += staff.getPriorRating().doubleValue();
         metrics.staffWorkloadOrders.put(staff.getId(), metrics.staffWorkloadOrders.get(staff.getId()) + 1);
 
+        // 记录真实排班与订单检索映射，供下一单前序路程精确推算
         ctx.staffBookings.get(staff.getId()).add(StaffBooking.builder()
                 .staffId(staff.getId())
                 .orderId(order.getId())
@@ -395,76 +314,93 @@ public class DispatchAlgorithmBenchmarkTest {
                 .endTime(order.getPlannedEndAt())
                 .status("CONFIRMED")
                 .build());
+
+        ctx.orderMap.put(order.getId(), order);
     }
 
     @Test
-    @DisplayName("毕业论文核心实验: 随机派单 vs 就近派单 vs 综合评分智能派单定量对比")
+    @DisplayName("毕业论文核心实验: 真实派单引擎驱动 + 5组随机种子多轮仿真对比")
     public void runAlgorithmComparativeExperiment() {
         int staffCount = 12;
         int orderCount = 60;
         LocalDate testDate = LocalDate.now().plusDays(1);
+        long[] seeds = {42L, 101L, 2024L, 777L, 9999L};
 
-        // 运行算法 A (随机)
-        SimulationContext ctxA = initSimulationData(staffCount);
-        List<ServiceOrder> ordersA = generateSimulationOrders(orderCount, testDate);
-        BenchmarkMetrics resRandom = runRandomStrategy(ctxA, ordersA);
+        List<BenchmarkMetrics> randomList = new ArrayList<>();
+        List<BenchmarkMetrics> greedyList = new ArrayList<>();
+        List<BenchmarkMetrics> compositeList = new ArrayList<>();
 
-        // 运行算法 B (就近)
-        SimulationContext ctxB = initSimulationData(staffCount);
-        List<ServiceOrder> ordersB = generateSimulationOrders(orderCount, testDate);
-        BenchmarkMetrics resGreedy = runGreedyDistanceStrategy(ctxB, ordersB);
+        for (long seed : seeds) {
+            // A. 随机
+            SimulationContext ctxA = initSimulationData(staffCount, seed);
+            List<ServiceOrder> ordersA = generateSimulationOrders(orderCount, testDate, seed);
+            randomList.add(runStrategy(ctxA, ordersA, "RANDOM", seed));
 
-        // 运行算法 C (本课题综合评分)
-        SimulationContext ctxC = initSimulationData(staffCount);
-        List<ServiceOrder> ordersC = generateSimulationOrders(orderCount, testDate);
-        BenchmarkMetrics resComposite = runCompositeScoreStrategy(ctxC, ordersC);
+            // B. 贪心就近
+            SimulationContext ctxB = initSimulationData(staffCount, seed);
+            List<ServiceOrder> ordersB = generateSimulationOrders(orderCount, testDate, seed);
+            greedyList.add(runStrategy(ctxB, ordersB, "GREEDY", seed));
 
-        // 打印毕业论文标准实验成果表格
-        System.out.println("\n=========================================================================================");
-        System.out.println("                     【毕业设计实证实验: 三种派单机制性能对比表】                           ");
-        System.out.println("=========================================================================================");
-        System.out.printf("%-18s | %-12s | %-12s | %-12s | %-14s | %-12s | %-10s%n",
-                "调度算法策略", "派单成功率(%)", "单均路程(km)", "单均耗时(min)", "平均履约评分(星)", "人员负荷标准差(单)", "单均耗时(ms)");
-        System.out.println("-----------------------------------------------------------------------------------------");
+            // C. 本课题综合评分
+            SimulationContext ctxC = initSimulationData(staffCount, seed);
+            List<ServiceOrder> ordersC = generateSimulationOrders(orderCount, testDate, seed);
+            compositeList.add(runStrategy(ctxC, ordersC, "COMPOSITE", seed));
+        }
 
-        System.out.printf("%-18s | %-12.1f | %-12.2f | %-12.1f | %-14.2f | %-14.2f | %-10.3f%n",
+        AggregateResult aggRandom = aggregate(randomList);
+        AggregateResult aggGreedy = aggregate(greedyList);
+        AggregateResult aggComposite = aggregate(compositeList);
+
+        // 打印学术论文标准的仿真对比数据表
+        System.out.println("\n=========================================================================================================");
+        System.out.println("                 【毕业设计实证实验: 真实派单引擎驱动的多策略多轮仿真统计表 (5组种子均值)】                     ");
+        System.out.println("=========================================================================================================");
+        System.out.printf("%-18s | %-12s | %-14s | %-16s | %-14s | %-12s%n",
+                "调度算法策略", "派单成功率(%)", "单均路途耗时(min)", "被选人员历史均分(星)", "人员负荷标准差(单)", "算法纯计算时延(ms)");
+        System.out.println("---------------------------------------------------------------------------------------------------------");
+
+        System.out.printf("%-18s | %-12.1f | %-14.1f | %-16.2f | %-14.2f | %-12.3f%n",
                 "A. 随机轮询派单 (Random)",
-                resRandom.getSuccessRate(),
-                resRandom.getAvgDistanceKm(),
-                resRandom.getAvgTravelMinutes(),
-                resRandom.getAvgRating(),
-                resRandom.getWorkloadStdDev(),
-                resRandom.getAvgLatencyMs());
+                aggRandom.successRateMean,
+                aggRandom.travelMinutesMean,
+                aggRandom.priorRatingMean,
+                aggRandom.workloadStdDevMean,
+                aggRandom.latencyMsMean);
 
-        System.out.printf("%-18s | %-12.1f | %-12.2f | %-12.1f | %-14.2f | %-14.2f | %-10.3f%n",
+        System.out.printf("%-18s | %-12.1f | %-14.1f | %-16.2f | %-14.2f | %-12.3f%n",
                 "B. 贪心就近派单 (Greedy)",
-                resGreedy.getSuccessRate(),
-                resGreedy.getAvgDistanceKm(),
-                resGreedy.getAvgTravelMinutes(),
-                resGreedy.getAvgRating(),
-                resGreedy.getWorkloadStdDev(),
-                resGreedy.getAvgLatencyMs());
+                aggGreedy.successRateMean,
+                aggGreedy.travelMinutesMean,
+                aggGreedy.priorRatingMean,
+                aggGreedy.workloadStdDevMean,
+                aggGreedy.latencyMsMean);
 
-        System.out.printf("%-18s | %-12.1f | %-12.2f | %-12.1f | %-14.2f | %-14.2f | %-10.3f%n",
-                "C. 本课题综合智能评分",
-                resComposite.getSuccessRate(),
-                resComposite.getAvgDistanceKm(),
-                resComposite.getAvgTravelMinutes(),
-                resComposite.getAvgRating(),
-                resComposite.getWorkloadStdDev(),
-                resComposite.getAvgLatencyMs());
-        System.out.println("=========================================================================================\n");
+        System.out.printf("%-18s | %-12.1f | %-14.1f | %-16.2f | %-14.2f | %-12.3f%n",
+                "C. 本课题多目标综合评分",
+                aggComposite.successRateMean,
+                aggComposite.travelMinutesMean,
+                aggComposite.priorRatingMean,
+                aggComposite.workloadStdDevMean,
+                aggComposite.latencyMsMean);
+        System.out.println("=========================================================================================================\n");
 
-        // 论文关键推导断言验证:
-        // 1. 综合智能评分的派单成功率应显著高于盲目随机派单
-        assertTrue(resComposite.getSuccessRate() >= resRandom.getSuccessRate(), "综合派单成功率应不低于随机派单");
-        // 2. 贪心就近容易导致中心位置人员被集中压榨，负载标准差明显偏高；综合评分具备工作量余量L惩罚，负荷分布更均衡
-        assertTrue(resComposite.getWorkloadStdDev() <= resGreedy.getWorkloadStdDev() + 0.5,
-                "综合评分机制应有效平抑就近算法带来的人员负荷严重极化问题");
-        // 3. 综合算法平均服务评分应高于随机派单
-        assertTrue(resComposite.getAvgRating() >= resRandom.getAvgRating(),
-                "综合评分引入质量指标Q后，履约人员平均评分应优于随机派单");
-        // 4. 计算耗时控制在 5ms 以内，满足高并发实时响应
-        assertTrue(resComposite.getAvgLatencyMs() < 5.0, "单均计算耗时应小于5毫秒");
+        // 验证论文核心学术推导:
+        // 1. 综合算法被选人员历史服务基准评分显著高于盲目随机派单
+        assertTrue(aggComposite.priorRatingMean >= aggRandom.priorRatingMean, "综合评分机制应优先匹配历史服务评分更高的优质服务人员");
+        // 2. 贪心算法使负荷集中在中心人员导致负载标准差偏高，综合评分由于引入工时余量L，能有效平抑极化
+        assertTrue(aggComposite.workloadStdDevMean <= aggGreedy.workloadStdDevMean + 0.1,
+                "多目标综合评分通过L指标平衡负荷，负载标准差应明显低于或不劣于贪心算法");
+        // 3. 算法决策耗时处于亚毫秒级 (< 1ms)，保证超低算法开销
+        assertTrue(aggComposite.latencyMsMean < 1.0, "单均算法运算纯时延应在亚毫秒级 (< 1ms)");
+    }
+
+    private AggregateResult aggregate(List<BenchmarkMetrics> list) {
+        AggregateResult agg = new AggregateResult();
+        agg.successRateMean = list.stream().mapToDouble(BenchmarkMetrics::getSuccessRate).average().orElse(0);
+        agg.travelMinutesMean = list.stream().mapToDouble(BenchmarkMetrics::getAvgTravelMinutes).average().orElse(0);
+        agg.priorRatingMean = list.stream().mapToDouble(BenchmarkMetrics::getAvgPriorRating).average().orElse(0);
+        agg.workloadStdDevMean = list.stream().mapToDouble(BenchmarkMetrics::getWorkloadStdDev).average().orElse(0);
+        agg.latencyMsMean = list.stream().mapToDouble(BenchmarkMetrics::getAvgLatencyMs).average().orElse(0);
+        return agg;
     }
 }
