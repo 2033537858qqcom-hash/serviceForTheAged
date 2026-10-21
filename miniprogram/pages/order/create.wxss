@@ -55,22 +55,22 @@
   font-weight: 500;
 }
 
-.picker-box { background: #f6f8f1; border: 1rpx solid #e0e7d9; padding: 24rpx; border-radius: 16rpx; font-size: var(--font-body); min-height: 96rpx; }
+.picker-box { background: var(--color-bg-soft); border: 1rpx solid var(--color-line-soft); padding: 24rpx; border-radius: 16rpx; font-size: var(--font-body); min-height: 96rpx; }
 .elder-name-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .placeholder { color: var(--text-secondary); }
 .picker-arrow-icon { width: 26rpx; height: 26rpx; flex-shrink: 0; transform: rotate(90deg); opacity: 0.6; }
 .add-elder-link { font-size: var(--font-caption); color: var(--primary-color); text-align: right; padding: 12rpx 0; min-height: 88rpx; display: flex; align-items: center; justify-content: flex-end; font-weight: 550; }
 .time-pickers { align-items: stretch; gap: 16rpx; }
 .time-pickers > picker { flex: 1; min-width: 0; }
-.picker-item { background: #f6f8f1; border: 1rpx solid #e0e7d9; padding: 20rpx 19rpx; border-radius: 16rpx; font-size: var(--font-body); min-height: 94rpx; }
+.picker-item { background: var(--color-bg-soft); border: 1rpx solid var(--color-line-soft); padding: 20rpx 19rpx; border-radius: 16rpx; font-size: var(--font-body); min-height: 94rpx; }
 .picker-icon { width: 32rpx; height: 32rpx; flex-shrink: 0; }
 .time-tip { font-size: var(--font-meta); line-height: 1.8; color: var(--text-secondary); margin-top: 20rpx; }
 
 .form-item { display: block; padding: 22rpx 0; border-bottom: 1rpx solid var(--border-color); }
 .form-item:last-child { border-bottom: none; padding-bottom: 5rpx; }
 .form-label { display: block; font-size: var(--font-caption); color: var(--text-secondary); margin-bottom: 13rpx; font-weight: 500; }
-.form-input { display: block; width: 100%; font-size: var(--font-body); min-height: 88rpx; line-height: 1.6; background: #f6f8f1; border: 1rpx solid #e0e7d9; border-radius: var(--radius-sm, 12rpx); padding: 14rpx 20rpx; box-sizing: border-box; }
-.form-textarea { display: block; width: 100%; font-size: var(--font-body); min-height: 108rpx; line-height: 1.5; background: #f6f8f1; border: 1rpx solid #e0e7d9; border-radius: var(--radius-sm, 12rpx); padding: 14rpx 20rpx; box-sizing: border-box; }
+.form-input { display: block; width: 100%; font-size: var(--font-body); min-height: 88rpx; line-height: 1.6; background: var(--color-bg-soft); border: 1rpx solid var(--color-line-soft); border-radius: var(--radius-sm, 12rpx); padding: 14rpx 20rpx; box-sizing: border-box; }
+.form-textarea { display: block; width: 100%; font-size: var(--font-body); min-height: 108rpx; line-height: 1.5; background: var(--color-bg-soft); border: 1rpx solid var(--color-line-soft); border-radius: var(--radius-sm, 12rpx); padding: 14rpx 20rpx; box-sizing: border-box; }
 
 .submit-box { position: fixed; z-index: 15; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1rpx solid var(--border-color); padding: 23rpx 32rpx; padding-bottom: calc(23rpx + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 28rpx; box-shadow: 0 -4rpx 16rpx rgba(0,0,0,.03); }
 .submit-price { min-width: 160rpx; }

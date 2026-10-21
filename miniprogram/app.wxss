@@ -12,6 +12,9 @@ page {
   --text-secondary: #56635c;
   --border-color: #e3e9e2;
   --bg-color: #f6f7f3;
+  --color-surface: #ffffff;
+  --color-line-soft: #e0e7d9;
+  --color-bg-soft: #f6f8f3;
   --radius-sm: 12rpx;
   --radius-md: 20rpx;
   --radius-lg: 24rpx;
@@ -208,7 +211,7 @@ input, textarea { color: var(--text-main); }
 }
 .tag-info {
   background: #edf5f2;
-  color: #176b5d;
+  color: var(--primary-color);
   border: 1rpx solid #d0e7dc;
 }
 .tag-neutral {

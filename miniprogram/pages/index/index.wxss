@@ -156,3 +156,12 @@
 .elder-mode .skeleton-list-title { height: 58rpx; }
 .elder-mode .skeleton-list-desc { height: 44rpx; }
 .elder-mode .skeleton-list-meta { height: 54rpx; }
+
+.active-order-skeleton { pointer-events: none; }
+.skeleton-order-title { height: 48rpx; width: 70%; }
+.skeleton-order-meta { height: 36rpx; width: 88%; margin-top: 18rpx; }
+.skeleton-order-cta { height: 96rpx; width: 100%; margin-top: 28rpx; border-radius: 999rpx; }
+.skeleton-strip-label { height: 28rpx; width: 64%; margin: 12rpx auto 0; }
+.elder-mode .skeleton-order-title { height: 58rpx; }
+.elder-mode .skeleton-order-meta { height: 44rpx; }
+.elder-mode .skeleton-order-cta { height: var(--control-height); }
