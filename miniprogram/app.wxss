@@ -158,18 +158,20 @@ input, textarea { color: var(--text-main); }
   font-size: var(--font-body);
 }
 
-/* 标签与状态胶囊规格 */
+/* 标签与状态徽标规格 */
 .tag {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 6rpx 20rpx;
-  border-radius: 999rpx;
-  font-size: 23rpx;
-  font-weight: 550;
-  line-height: 1.45;
+  height: 44rpx;
+  min-height: 44rpx;
+  line-height: 1;
+  padding: 0 16rpx;
+  border-radius: 8rpx;
+  font-size: 22rpx;
+  font-weight: 500;
   white-space: nowrap;
-  letter-spacing: 0.5rpx;
+  vertical-align: middle;
   box-sizing: border-box;
 }
 .tag-success {
@@ -193,9 +195,12 @@ input, textarea { color: var(--text-main); }
   border: 1rpx solid #d0e7dc;
 }
 .elder-mode .tag {
+  height: 56rpx;
+  min-height: 56rpx;
+  line-height: 1;
   font-size: 28rpx;
-  padding: 8rpx 24rpx;
-  border-radius: 999rpx;
+  padding: 0 20rpx;
+  border-radius: 10rpx;
 }
 .section-title { font-size: var(--font-section); font-weight: 600; line-height: 1.5; margin: 36rpx 0 22rpx; color: var(--text-main); }
 .ui-icon { width: 38rpx; height: 38rpx; flex-shrink: 0; }

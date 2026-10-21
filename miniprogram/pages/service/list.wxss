@@ -182,33 +182,36 @@ page {
 
 .book-button {
   margin: 0;
-  height: 64rpx;
-  min-height: 64rpx;
-  line-height: 64rpx;
-  padding: 0 32rpx;
-  font-size: 26rpx;
-  font-weight: 550;
-  border-radius: 999rpx;
+  height: 56rpx;
+  min-height: 56rpx;
+  line-height: 56rpx;
+  padding: 0 24rpx;
+  font-size: 25rpx;
+  font-weight: 500;
+  border-radius: 12rpx;
   background: var(--primary-color);
   color: #fff;
   gap: 8rpx;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4rpx 14rpx rgba(23, 107, 93, 0.22);
-  transition: transform 200ms cubic-bezier(.25, 1.4, .5, 1), background-color 120ms ease, box-shadow 120ms ease;
+  box-sizing: border-box;
+  transition: transform 160ms ease, background-color 120ms ease;
+}
+
+.book-button::after {
+  border: none;
 }
 
 .book-button image {
-  width: 24rpx;
-  height: 24rpx;
+  width: 22rpx;
+  height: 22rpx;
   filter: brightness(0) invert(1);
 }
 
 .book-button:active, .book-button.spring-in {
   background: var(--primary-dark);
-  transform: scale(.96);
-  box-shadow: 0 2rpx 6rpx rgba(23, 107, 93, 0.12);
+  transform: scale(.97);
 }
 
 .empty-tip {
@@ -250,9 +253,10 @@ page {
 }
 
 .elder-mode .book-button {
-  height: 84rpx;
-  min-height: 84rpx;
-  line-height: 84rpx;
-  padding: 0 40rpx;
-  font-size: 32rpx;
+  height: 76rpx;
+  min-height: 76rpx;
+  line-height: 76rpx;
+  padding: 0 32rpx;
+  font-size: 30rpx;
+  border-radius: 14rpx;
 }

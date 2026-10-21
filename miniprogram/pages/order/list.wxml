@@ -75,9 +75,7 @@
           >
             <view class="flex-between card-top">
               <text class="order-no">订单号：{{item.order.orderNo}}</text>
-              <text class="tag {{statusTagMap[item.order.status] || 'tag-info'}}">
-                {{statusTextMap[item.order.status] || item.order.status}}
-              </text>
+              <text class="tag {{statusTagMap[item.order.status] || 'tag-info'}}">{{statusTextMap[item.order.status] || item.order.status}}</text>
             </view>
 
             <view class="service-name-row flex-between">

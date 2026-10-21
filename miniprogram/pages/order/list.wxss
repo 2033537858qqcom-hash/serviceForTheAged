@@ -157,30 +157,35 @@ page {
 
 .btn-action, .btn-primary.btn-action {
   margin: 0;
-  height: 64rpx;
-  min-height: 64rpx;
-  line-height: 64rpx;
-  padding: 0 32rpx;
-  font-size: 26rpx;
-  font-weight: 550;
-  letter-spacing: 1rpx;
-  border-radius: 999rpx;
+  height: 56rpx;
+  min-height: 56rpx;
+  line-height: 54rpx;
+  padding: 0 24rpx;
+  font-size: 25rpx;
+  font-weight: 500;
+  letter-spacing: 0.5rpx;
+  border-radius: 12rpx;
   background: #edf5f1;
   color: var(--primary-color);
-  border: 1.5rpx solid #c4ded2;
-  box-shadow: 0 2rpx 8rpx rgba(23, 107, 93, 0.08);
+  border: 1rpx solid #c4ded2;
+  box-shadow: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: transform 200ms cubic-bezier(.25, 1.4, .5, 1), background-color 120ms ease, border-color 120ms ease;
+  box-sizing: border-box;
+  transition: transform 160ms ease, background-color 120ms ease;
+}
+
+.btn-action::after, .btn-primary.btn-action::after {
+  border: none;
 }
 
 .btn-action:active, .btn-action.button-pressed, .btn-action.spring-in {
   background: #dcece2;
   color: var(--primary-dark);
   border-color: #a8cfc0;
-  transform: scale(.96);
+  transform: scale(.97);
   box-shadow: none;
 }
 
@@ -217,12 +222,12 @@ page {
   gap: 16rpx;
 }
 .elder-mode .btn-action, .elder-mode .btn-primary.btn-action {
-  height: 84rpx;
-  min-height: 84rpx;
-  line-height: 84rpx;
-  padding: 0 38rpx;
-  font-size: 32rpx;
-  border-radius: 999rpx;
+  height: 76rpx;
+  min-height: 76rpx;
+  line-height: 74rpx;
+  padding: 0 32rpx;
+  font-size: 30rpx;
+  border-radius: 14rpx;
 }
 
 .tab-nav-item { font-size: var(--font-caption); }

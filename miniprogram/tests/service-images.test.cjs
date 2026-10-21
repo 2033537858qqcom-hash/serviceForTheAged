@@ -79,15 +79,15 @@ test('home brand icon matches login brand icon path', () => {
   assert.equal(indexWxml.includes('/assets/icons/home.png'), false);
 });
 
-test('status tags and card action buttons adopt refined pill geometry', () => {
+test('status tags and card action buttons adopt refined centered geometry', () => {
   const fs = require('node:fs');
   const path = require('node:path');
   const appWxss = fs.readFileSync(path.join(__dirname, '../app.wxss'), 'utf8');
   const orderListWxss = fs.readFileSync(path.join(__dirname, '../pages/order/list.wxss'), 'utf8');
 
-  // Status tags should be smooth rounded capsule pills
-  assert.equal(/\.tag\s*\{[^}]*border-radius:\s*999rpx/.test(appWxss), true);
-  // Order card action button should be capsule pill with non-blocky height
-  assert.equal(/\.btn-action[^{]*\{[^}]*border-radius:\s*999rpx/.test(orderListWxss), true);
-  assert.equal(/\.btn-action[^{]*\{[^}]*height:\s*64rpx/.test(orderListWxss), true);
+  // Status tags should be clean rounded badges, not bloated 999rpx ovals
+  assert.equal(/\.tag\s*\{[^}]*border-radius:\s*8rpx/.test(appWxss), true);
+  // Order card action button should be structured rounded rectangle with centered height
+  assert.equal(/\.btn-action[^{]*\{[^}]*border-radius:\s*12rpx/.test(orderListWxss), true);
+  assert.equal(/\.btn-action[^{]*\{[^}]*height:\s*56rpx/.test(orderListWxss), true);
 });
