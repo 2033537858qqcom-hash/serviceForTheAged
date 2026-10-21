@@ -7,7 +7,6 @@ import com.agedcare.common.security.JwtTokenProvider;
 import com.agedcare.common.security.LoginUser;
 import com.agedcare.modules.auth.dto.AuthResponse;
 import com.agedcare.modules.auth.dto.LoginRequest;
-import com.agedcare.modules.auth.dto.RegisterRequest;
 import com.agedcare.modules.auth.dto.WechatLoginRequest;
 import com.agedcare.modules.user.entity.SysUser;
 import com.agedcare.modules.user.mapper.SysUserMapper;
@@ -68,38 +67,6 @@ public class AuthService {
         }
 
         return createAuthResponse(user);
-    }
-
-    @Transactional(rollbackFor = Exception.class)
-    public AuthResponse register(RegisterRequest req) {
-        Long countUsername = userMapper.selectCount(new LambdaQueryWrapper<SysUser>()
-                .eq(SysUser::getUsername, req.getUsername()));
-        if (countUsername > 0) {
-            throw new BusinessException("用户名已被占用");
-        }
-
-        Long countPhone = userMapper.selectCount(new LambdaQueryWrapper<SysUser>()
-                .eq(SysUser::getPhone, req.getPhone()));
-        if (countPhone > 0) {
-            throw new BusinessException("手机号已被注册");
-        }
-
-        // 强制限定公开注册用户只能是社区居民身份(RESIDENT)，防提权越权
-        String role = UserRole.RESIDENT.getCode();
-
-        SysUser newUser = SysUser.builder()
-                .username(req.getUsername())
-                .password(passwordEncoder.encode(req.getPassword()))
-                .realName(req.getRealName())
-                .phone(req.getPhone())
-                .role(role)
-                .status(1)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
-
-        userMapper.insert(newUser);
-        return createAuthResponse(newUser);
     }
 
     public AuthResponse mockLogin(String role, String username) {

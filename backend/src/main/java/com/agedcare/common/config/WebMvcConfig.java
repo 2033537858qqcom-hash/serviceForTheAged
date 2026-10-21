@@ -53,7 +53,6 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .addPathPatterns("/**")
                 .excludePathPatterns(
                         "/auth/login",
-                        "/auth/register",
                         "/auth/wechat-login",
                         "/service-items/list-available",
                         "/media/service-images/**",

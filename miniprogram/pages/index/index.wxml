@@ -14,13 +14,6 @@
     </button>
   </view>
 
-  <!-- 首页初始加载骨架屏 -->
-  <view class="home-skeleton-card card" wx:if="{{servicesLoading && (!serviceItems || serviceItems.length === 0)}}" aria-label="正在加载社区服务信息">
-    <view class="skeleton-block skeleton-banner" style="border-radius: 24rpx;"></view>
-    <view class="skeleton-block skeleton-section" style="margin-top: 24rpx;"></view>
-    <view class="skeleton-block skeleton-body" style="margin-top: 16rpx;"></view>
-  </view>
-
   <!-- 有进行中服务：首屏主卡片 + 大按钮；宫格降级为一行快捷入口 -->
   <block wx:if="{{activeOrder}}">
     <view class="section-title home-section-heading">
@@ -128,7 +121,17 @@
     <text>为您提供的服务</text>
     <view class="more-link" bindtap="goToServiceList">查看全部<image src="/assets/icons/arrow.png" /></view>
   </view>
-  <view wx:if="{{servicesLoading}}" class="empty-tip">正在为您查找社区服务…</view>
+  <!-- 推荐列表骨架：与真实服务卡片同尺寸，避免加载完成时页面跳动 -->
+  <view wx:if="{{servicesLoading}}" class="service-list" aria-label="正在为您查找社区服务">
+    <view class="card home-service-card" wx:for="{{[1,2,3]}}" wx:key="*this">
+      <view class="service-list-icon skeleton-block"></view>
+      <view class="service-main">
+        <view class="skeleton-block skeleton-list-title"></view>
+        <view class="skeleton-block skeleton-list-desc"></view>
+        <view class="skeleton-block skeleton-list-meta"></view>
+      </view>
+    </view>
+  </view>
   <view wx:elif="{{serviceError}}" class="card service-empty">
     <view>服务信息暂时未能加载</view>
     <button class="retry-button" bindtap="loadServiceItems">重新加载</button>
