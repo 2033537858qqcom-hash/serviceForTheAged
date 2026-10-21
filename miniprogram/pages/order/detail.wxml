@@ -100,8 +100,8 @@
         <text class="address-text">{{tracking.destAddress || orderVO.order.addressSnapshot}}</text>
       </view>
       <view class="map-btns flex-row">
-        <button class="btn-map-action" size="mini" bindtap="openNavigation">查看导航</button>
-        <button class="btn-map-action btn-refresh" size="mini" bindtap="fetchTracking">刷新位置</button>
+        <button class="btn-map-action" bindtap="openNavigation">查看导航</button>
+        <button class="btn-map-action btn-refresh" bindtap="fetchTracking">刷新位置</button>
       </view>
     </view>
   </view>
@@ -113,7 +113,7 @@
       <text class="label">预约类型</text>
       <view class="flex-row items-center">
         <text class="tag tag-sm {{orderVO.order.requesterType === 'FAMILY' ? 'tag-info' : 'tag-success'}}">{{orderVO.requesterTypeDesc || (orderVO.order.requesterType === 'FAMILY' ? '家属代约' : '老人自约')}}</text>
-        <text class="value" wx:if="{{orderVO.order.requesterType === 'FAMILY' && orderVO.requesterName}}" style="margin-left: 12rpx; font-size: 26rpx; color: #64748B;">(代约人: {{orderVO.requesterName}})</text>
+        <text class="value" wx:if="{{orderVO.order.requesterType === 'FAMILY' && orderVO.requesterName}}" style="margin-left: 12rpx; font-size: var(--font-meta); color: var(--text-secondary);">(代约人: {{orderVO.requesterName}})</text>
       </view>
     </view>
     <view class="info-item flex-between">

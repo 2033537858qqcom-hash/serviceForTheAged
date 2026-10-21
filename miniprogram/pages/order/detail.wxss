@@ -1,9 +1,9 @@
 .container { padding-bottom: calc(220rpx + env(safe-area-inset-bottom)); }
-.status-banner { border-radius: 20rpx; padding: 26rpx 28rpx; background: #eaf3ee; border: 1rpx solid #d4e4d9; margin-bottom: 20rpx; }
+.status-banner { border-radius: 20rpx; padding: 26rpx 28rpx; background: var(--primary-soft); border: 1rpx solid #d4e4d9; margin-bottom: 20rpx; }
 .status-title { font-size: var(--font-title); font-weight: 600; color: var(--primary-dark); }
 .status-sub { font-size: var(--font-caption); margin-top: 10rpx; color: #466553; line-height: 1.6; }
 .bg-WAIT_MANUAL { background: #faf3e7; border-color: #ebdfca; }
-.bg-WAIT_MANUAL .status-title { color: #94601b; }
+.bg-WAIT_MANUAL .status-title { color: var(--warning-color); }
 .bg-CANCELLED { background: #edf0eb; border-color: var(--border-color); }
 
 /* 接下来怎么办？指引卡片 */
@@ -63,7 +63,7 @@
   width: 16rpx;
   height: 16rpx;
   border-radius: 50%;
-  background: #176B5D;
+  background: var(--primary-color);
   box-shadow: 0 0 0 0 rgba(23, 107, 93, 0.7);
   animation: pulse-ring 1.8s infinite;
 }
@@ -108,7 +108,7 @@
   color: var(--text-secondary);
 }
 .eta-dist {
-  color: #ad652f;
+  color: var(--price-color);
   font-weight: 600;
 }
 .eta-time {
@@ -129,6 +129,7 @@
 }
 .map-address-info {
   flex: 1;
+  min-height: 88rpx;
   min-width: 0;
   align-items: center;
   gap: 10rpx;
@@ -206,7 +207,7 @@
   height: 100%;
   object-fit: cover;
 }
-.rating-stars { font-size: var(--font-caption); color: #94601b; font-weight: 600; }
+.rating-stars { font-size: var(--font-caption); color: var(--warning-color); font-weight: 600; }
 .review-content { font-size: var(--font-body); line-height: 1.8; }
 .timeline { margin-left: 12rpx; }
 .timeline-node { padding: 0 0 30rpx 30rpx; position: relative; }

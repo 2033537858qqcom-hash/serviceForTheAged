@@ -1,5 +1,5 @@
 .container { padding-bottom: calc(195rpx + env(safe-area-inset-bottom)); }
-.main-info-card { padding: 38rpx 32rpx; background: #eaf3ee; border-color: #d4e4d9; }
+.main-info-card { padding: 38rpx 32rpx; background: var(--primary-soft); border-color: #d4e4d9; }
 .service-title { font-size: var(--font-title); font-weight: 600; line-height: 1.4; }
 .service-price { margin: 22rpx 0; font-size: var(--font-display); font-weight: 600; color: var(--primary-dark); }
 .unit { font-size: var(--font-caption); font-weight: 400; color: var(--text-secondary); }

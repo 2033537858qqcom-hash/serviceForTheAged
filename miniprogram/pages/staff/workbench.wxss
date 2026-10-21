@@ -3,7 +3,7 @@
 }
 
 .staff-header-card {
-  background: #eaf3ee;
+  background: var(--primary-soft);
   border-color: #d4e4d9;
   padding: 24rpx 28rpx;
 }
@@ -52,10 +52,10 @@
 }
 .seg-btn {
   font-size: var(--font-caption);
-  height: 56rpx;
-  min-height: 56rpx;
-  line-height: 56rpx;
-  padding: 0 22rpx;
+  height: 88rpx;
+  min-height: 88rpx;
+  line-height: 88rpx;
+  padding: 0 28rpx;
   border-radius: 8rpx;
   color: var(--text-secondary);
   font-weight: 500;
@@ -79,8 +79,8 @@
 }
 
 .alert-heading { flex-wrap: wrap; gap: 12rpx; }
-.alert-title { font-size: var(--font-section); color: #94601b; }
-.countdown-badge { font-size: var(--font-caption); color: #94601b; font-weight: 400; }
+.alert-title { font-size: var(--font-section); color: var(--warning-color); }
+.countdown-badge { font-size: var(--font-caption); color: var(--warning-color); font-weight: 400; }
 .pending-card { border-color: #ddc798; background: #fffcf5; }
 .pending-header { align-items: flex-start; margin-bottom: 26rpx; }
 .pending-service-name, .task-name { font-size: var(--font-section); font-weight: 600; }
@@ -156,7 +156,7 @@
   padding: 0 24rpx !important;
   font-size: var(--font-caption) !important;
   background: #f7ede2 !important;
-  color: #94601b !important;
+  color: var(--warning-color) !important;
   border: 1rpx solid #e8d7c2 !important;
   border-radius: var(--radius-md, 20rpx) !important;
   display: inline-flex !important;
@@ -199,7 +199,7 @@
 }
 .status-pill-waiting {
   background: #fff8ed;
-  color: #94601b;
+  color: var(--warning-color);
   border: 1rpx solid #eeddc2;
 }
 .status-pill-completed {
@@ -252,12 +252,12 @@
   position: absolute;
   top: 6rpx;
   right: 6rpx;
-  width: 36rpx;
-  height: 36rpx;
+  width: 44rpx;
+  height: 44rpx;
   border-radius: 50%;
   background: rgba(0, 0, 0, 0.6);
   color: #ffffff;
-  font-size: 20rpx;
+  font-size: 26rpx;
   display: flex;
   align-items: center;
   justify-content: center;

@@ -1,9 +1,9 @@
 <template>
   <section class="dispatch-page">
-    <div class="page-intro"><div><span class="eyebrow">服务与人员，有序连接</span><h1>智能派单</h1><p>查看待安排的预约，为每一项服务找到合适的人。</p></div><div class="intro-actions"><el-button :loading="loading" @click="fetchData"><el-icon><Refresh /></el-icon><span>刷新队列</span></el-button></div></div>
+    <PageHeader eyebrow="服务与人员，有序连接" title="智能派单" description="查看待安排的预约，为每一项服务找到合适的人。"><template #actions><el-button :loading="loading" @click="fetchData"><el-icon><Refresh /></el-icon><span>刷新队列</span></el-button></template></PageHeader>
     <div class="dispatch-layout">
       <section class="panel queue-panel"><div class="panel-heading"><h2>待安排服务 <span class="queue-total">{{ pagination.total }}</span></h2><span class="queue-hint">选择预约查看推荐</span></div><div class="queue-filters" role="group" aria-label="订单状态"><button v-for="filter in filters" :key="filter.value" :class="{ active: queueStatus === filter.value }" @click="changeFilter(filter.value)">{{ filter.label }}</button></div>
-        <div v-loading="loading" class="queue-body"><button v-for="row in tableData" :key="row.order.id" class="queue-item" :class="{ selected: selectedOrder?.order.id === row.order.id }" @click="selectOrder(row)"><span class="queue-item-top"><strong>{{ row.order.serviceNameSnapshot }}</strong><span class="status-label" :class="row.order.status === 'WAIT_MANUAL' ? 'is-amber' : ''">{{ orderStatusText[row.order.status] }}</span></span><span class="queue-person">{{ row.elder?.name || '服务对象' }}<span>第 {{ row.order.dispatchRound || 1 }} 轮安排</span></span><span class="queue-meta"><el-icon><Calendar /></el-icon>{{ shortDate(row.order.plannedStartAt) }}</span><span class="queue-meta queue-address"><el-icon><Location /></el-icon>{{ row.order.addressSnapshot }}</span></button><div v-if="!tableData.length && !loading" class="empty-state"><el-icon><CircleCheck /></el-icon><strong>{{ queueError ? '暂时未能加载预约' : '暂无需要安排的服务' }}</strong><p>{{ queueError ? '点击上方刷新重新加载。' : '新的待安排预约会在这里出现。' }}</p></div></div>
+        <div v-loading="loading && tableData.length > 0" class="queue-body"><el-skeleton v-if="loading && !tableData.length" animated :rows="5" style="padding: 16px;" /><button v-for="row in tableData" :key="row.order.id" class="queue-item" :class="{ selected: selectedOrder?.order.id === row.order.id }" @click="selectOrder(row)"><span class="queue-item-top"><strong>{{ row.order.serviceNameSnapshot }}</strong><span class="status-label" :class="row.order.status === 'WAIT_MANUAL' ? 'is-amber' : ''">{{ orderStatusText[row.order.status] }}</span></span><span class="queue-person">{{ row.elder?.name || '服务对象' }}<span>第 {{ row.order.dispatchRound || 1 }} 轮安排</span></span><span class="queue-meta"><el-icon><Calendar /></el-icon>{{ shortDate(row.order.plannedStartAt) }}</span><span class="queue-meta queue-address"><el-icon><Location /></el-icon>{{ row.order.addressSnapshot }}</span></button><div v-if="!tableData.length && !loading" class="empty-state"><el-icon><CircleCheck /></el-icon><strong>{{ queueError ? '暂时未能加载预约' : '暂无需要安排的服务' }}</strong><p>{{ queueError ? '点击上方刷新重新加载。' : '新的待安排预约会在这里出现。' }}</p></div></div>
         <div v-if="pagination.total" class="queue-pagination"><el-pagination v-model:current-page="pagination.pageNum" :page-size="pagination.pageSize" :total="pagination.total" layout="prev, pager, next" :pager-count="5" small @current-change="fetchData" /></div>
       </section>
       <div class="decision-column">
@@ -23,6 +23,7 @@
 </template>
 
 <script setup>
+import PageHeader from '../../components/PageHeader.vue'
 import { computed, ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import request from '../../utils/request'

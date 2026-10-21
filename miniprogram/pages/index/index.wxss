@@ -15,7 +15,7 @@
   display: block;
 }
 .brand-name { font-size: var(--font-title); color: var(--text-main); font-weight: 650; letter-spacing: 4rpx; line-height: 1.25; }
-.brand-name text { color: #ad652f; }
+.brand-name text { color: var(--price-color); }
 .brand-community { color: var(--text-secondary); font-size: var(--font-meta); margin-top: 5rpx; white-space: nowrap; }
 .care-mode-control { display: flex; flex: 0 0 188rpx; width: 188rpx; align-items: center; justify-content: center; gap: 9rpx; margin: 0; padding: 12rpx 24rpx; min-height: 88rpx; line-height: 1.3; border-radius: 44rpx; background: #fff; border: 1rpx solid #e0e7da; color: var(--primary-color); font-size: var(--font-caption); white-space: nowrap; transition: transform 200ms var(--motion-ease), background-color 120ms ease; }
 .care-mode-control image { flex-shrink: 0; width: 30rpx; height: 30rpx; }
@@ -64,7 +64,7 @@
 .staff-title { font-size: var(--font-body); font-weight: 550; }
 .staff-sub { color: var(--text-secondary); font-size: var(--font-meta); margin-top: 5rpx; }
 
-.more-link { display: flex; align-items: center; min-height: 64rpx; gap: 8rpx; font-size: var(--font-meta); font-weight: 400; color: var(--text-secondary); }
+.more-link { display: flex; align-items: center; min-height: 88rpx; padding-left: 16rpx; gap: 8rpx; font-size: var(--font-meta); font-weight: 400; color: var(--text-secondary); }
 .more-link image { height: 23rpx; width: 23rpx; }
 .home-service-card { display: flex; gap: 21rpx; align-items: center; padding: 27rpx; }
 .service-list-icon {
@@ -88,7 +88,7 @@
 .item-title { font-size: var(--font-body); font-weight: 550; line-height: 1.5; }
 .item-desc { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; font-size: var(--font-meta); color: var(--text-secondary); margin-top: 7rpx; }
 .item-meta { margin-top: 12rpx; line-height: 1.5; }
-.price { color: #ad652f; font-size: var(--font-section); font-weight: 600; }
+.price { color: var(--price-color); font-size: var(--font-section); font-weight: 600; }
 .duration { color: var(--text-secondary); font-size: var(--font-meta); }
 .home-footer { padding: 26rpx 0 16rpx; text-align: center; font-size: var(--font-meta); color: #6a7a63; letter-spacing: 2rpx; }
 .service-empty { text-align: center; color: var(--text-secondary); font-size: var(--font-caption); padding: 45rpx 25rpx; }
