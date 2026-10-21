@@ -54,6 +54,13 @@ public class OrderController {
         return Result.success();
     }
 
+    @Operation(summary = "支付订单(老人本人或已审核绑定家属，每单仅一次)")
+    @PostMapping("/{id}/pay")
+    @RequireRole(UserRole.RESIDENT)
+    public Result<OrderVO> payOrder(@PathVariable Long id) {
+        return Result.success(orderService.payOrder(id));
+    }
+
     @Operation(summary = "获取订单配送与服务人员实时轨迹")
     @GetMapping("/{id}/tracking")
     public Result<OrderTrackingVO> getOrderTracking(@PathVariable Long id) {

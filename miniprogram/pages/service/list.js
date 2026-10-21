@@ -3,7 +3,6 @@ const { syncTabBar } = require('../../utils/tab-bar.js');
 const { loadCatalog } = require('../../utils/service-catalog.js');
 const { visibleTabs } = require('../../utils/list-state.js');
 const { sliderShift } = require('../../utils/slider-shift.js');
-const { lightTap } = require('../../utils/feedback.js');
 
 const CATEGORIES = [
   { key: '', label: '全部' },
@@ -169,12 +168,8 @@ Page({
     return task;
   },
 
+  // 卡片和按钮都进入服务详情，预约只在详情页发起
   goToDetail(e) {
     navigation.navigateTo({ url: `/pages/service/detail?id=${e.currentTarget.dataset.id}` });
-  },
-
-  quickBook(e) {
-    lightTap();
-    navigation.navigateTo({ url: `/pages/order/create?serviceId=${e.currentTarget.dataset.id}` });
   }
 });

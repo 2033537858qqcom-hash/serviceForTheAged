@@ -5,7 +5,7 @@
     <view>
       <view class="item-title">{{service.name}}</view>
       <view class="item-time">服务时长：约 {{service.durationMinutes}} 分钟</view>
-      <view class="item-time">费用由下单人与社区线下结算</view>
+      <view class="item-time">老人本人或已绑定的家属均可在订单详情中支付</view>
     </view>
     <view class="item-price">¥{{service.price}}</view>
   </view>

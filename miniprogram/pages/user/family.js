@@ -27,6 +27,7 @@ const app = new Proxy({}, {
 
 Page({
   data: {
+    bindStep: 1,
     allElders: [],
     selectedElderIndex: -1,
     targetElder: null,
@@ -68,7 +69,7 @@ Page({
     if (this._dataJob?.context === context) return this._dataJob.task;
     if (this._dataContext !== context) {
       this._dataContext = context;
-      this.setData({ allElders: [], bindings: [], targetElder: null, selectedElderIndex: -1, searchPhone: '', relation: '', proofMaterials: '', applying: false, searching: false });
+      this.setData({ bindStep: 1, allElders: [], bindings: [], targetElder: null, selectedElderIndex: -1, searchPhone: '', relation: '', proofMaterials: '', applying: false, searching: false });
     }
     const job = { context };
     this._dataJob = job;
@@ -92,6 +93,7 @@ Page({
     this.setData({
       selectedElderIndex: idx,
       targetElder: this.data.allElders[idx] || null,
+      bindStep: 1,
       searchPhone: '',
       searching: false
     });
@@ -99,7 +101,7 @@ Page({
 
   onInputSearchPhone(e) {
     this._searchVersion = (this._searchVersion || 0) + 1;
-    this.setData({ searchPhone: e.detail.value, targetElder: null, selectedElderIndex: -1, searching: false });
+    this.setData({ searchPhone: e.detail.value, targetElder: null, selectedElderIndex: -1, searching: false, bindStep: 1 });
   },
 
   searchElder() {
@@ -126,6 +128,19 @@ Page({
       });
       wx.showToast({ title: `已找到 ${elder.name}`, icon: 'success' });
     }).catch(() => {}).finally(() => { if (valid()) this.setData({ searching: false }); });
+  },
+
+  // 第一步 → 第二步：必须先找到并确认老人
+  confirmElder() {
+    if (!this.data.targetElder) {
+      wx.showToast({ title: '请先选择或查找要绑定的老人', icon: 'none' });
+      return;
+    }
+    this.setData({ bindStep: 2 });
+  },
+
+  backToFindElder() {
+    this.setData({ bindStep: 1 });
   },
 
   onInputRelation(e) { this.setData({ relation: e.detail.value }); },
@@ -158,7 +173,8 @@ Page({
         selectedElderIndex: -1,
         searchPhone: '',
         relation: '',
-        proofMaterials: ''
+        proofMaterials: '',
+        bindStep: 1
       });
       return this.loadData();
     }).catch(() => {}).finally(() => {

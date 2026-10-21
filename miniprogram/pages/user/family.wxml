@@ -2,45 +2,71 @@
   <view wx:if="{{loadError}}" class="card"><state-view type="error" title="绑定信息加载失败" description="请检查网络后重试" bindaction="loadData" /></view>
   <view class="card apply-card">
     <view class="card-title">为家人预约服务</view>
-    <view class="form-tip">提交亲属关系证明，由社区管理员核验通过后，即可代老人预约各项居家养老服务。</view>
+    <view class="form-tip">两步完成：先找到并确认老人，再填写亲属关系提交申请，社区核验通过后即可代老人预约。</view>
+    <view class="bind-steps">
+      <view class="bind-step {{bindStep === 1 ? 'is-active' : 'is-done'}}"><text class="bind-step-no">1</text>找到并确认老人</view>
+      <view class="bind-step {{bindStep === 2 ? 'is-active' : ''}}"><text class="bind-step-no">2</text>填写关系并提交</view>
+    </view>
 
-    <view class="form-item" wx:if="{{allElders.length > 0}}">
-      <text class="label">快捷选择已有老人</text>
-      <picker range="{{allElders}}" range-key="name" value="{{selectedElderIndex}}" bindchange="onElderChange">
-        <view class="picker-box flex-between">
-          <text wx:if="{{targetElder && selectedElderIndex >= 0}}">{{targetElder.name}} ({{targetElder.address}})</text>
-          <text wx:else class="placeholder">从我的档案中选择 ›</text>
-          <image class="ui-icon-small" src="/assets/icons/arrow.png" />
+    <block wx:if="{{bindStep === 1}}">
+      <view class="form-item" wx:if="{{allElders.length > 0}}">
+        <text class="label">从我的老人档案中选择</text>
+        <picker range="{{allElders}}" range-key="name" value="{{selectedElderIndex}}" bindchange="onElderChange">
+          <view class="picker-box flex-between">
+            <text wx:if="{{targetElder && selectedElderIndex >= 0}}">{{targetElder.name}}</text>
+            <text wx:else class="placeholder">点击选择</text>
+            <image class="ui-icon-small" src="/assets/icons/arrow.png" />
+          </view>
+        </picker>
+      </view>
+
+      <view class="form-item">
+        <text class="label">或按老人预留手机号查找</text>
+        <view class="flex-row search-row">
+          <input class="input-box" type="number" maxlength="11" placeholder="输入老人预留手机号" value="{{searchPhone}}" bindinput="onInputSearchPhone" />
+          <button class="search-button" bindtap="searchElder" loading="{{searching}}" disabled="{{searching}}">查找</button>
         </view>
-      </picker>
-    </view>
-
-    <view class="form-item">
-      <text class="label">按老人手机号精准查询绑定</text>
-      <view class="flex-row search-row">
-        <input class="input-box" type="number" placeholder="输入老人预留手机号" value="{{searchPhone}}" bindinput="onInputSearchPhone" />
-        <button class="search-button" bindtap="searchElder" loading="{{searching}}" disabled="{{searching}}">查找</button>
       </view>
-      <view wx:if="{{targetElder}}" class="search-result flex-row">
-        <image class="ui-icon-small" src="/assets/icons/check.png" />
-        <text>已定位老人：{{targetElder.name}} ({{targetElder.community || targetElder.address}})</text>
+
+      <view class="card elder-confirm-card" wx:if="{{targetElder}}">
+        <view class="elder-confirm-title">
+          <image class="ui-icon-small" src="/assets/icons/check.png" />
+          <text>已找到：{{targetElder.name}}</text>
+        </view>
+        <view class="bind-meta" wx:if="{{targetElder.gender || targetElder.age}}">{{targetElder.gender === 'FEMALE' ? '女' : (targetElder.gender ? '男' : '')}}<text wx:if="{{targetElder.age}}"> · {{targetElder.age}}岁</text></view>
+        <view class="bind-meta" wx:if="{{targetElder.community}}">所在社区：{{targetElder.community}}</view>
+        <view class="bind-meta" wx:if="{{targetElder.address}}">住址：{{targetElder.address}}</view>
+        <view class="bind-meta" wx:if="{{targetElder.phone}}">预留电话：{{targetElder.phone}}</view>
+        <view class="bind-meta">请核对是否为您要绑定的老人。</view>
       </view>
-    </view>
 
-    <view class="form-item">
-      <text class="label">亲属关系</text>
-      <input class="input-box" placeholder="如：父子、母女、配偶、叔侄等" value="{{relation}}" bindinput="onInputRelation" />
-    </view>
+      <button class="btn-primary btn-apply {{isElderMode ? 'btn-large' : ''}}" bindtap="confirmElder" disabled="{{!targetElder || searching}}">确认是这位老人，下一步</button>
+    </block>
 
-    <view class="form-item">
-      <text class="label">关系说明凭证</text>
-      <input class="input-box" placeholder="简述亲属证明或户籍关系" value="{{proofMaterials}}" bindinput="onInputProof" />
-    </view>
+    <block wx:else>
+      <view class="elder-summary flex-between">
+        <view>
+          <view class="elder-title">绑定老人：{{targetElder.name}}</view>
+          <view class="bind-meta" wx:if="{{targetElder.community || targetElder.address}}">{{targetElder.community || targetElder.address}}</view>
+        </view>
+        <view class="change-elder" bindtap="backToFindElder">重新选择</view>
+      </view>
 
-    <button class="btn-primary btn-apply {{isElderMode ? 'btn-large' : ''}}" bindtap="submitApply" loading="{{applying}}" disabled="{{applying || searching}}">
-      <text wx:if="{{applying}}">正在提交申请…</text>
-      <text wx:else>提交绑定申请</text>
-    </button>
+      <view class="form-item">
+        <text class="label">亲属关系</text>
+        <input class="input-box" placeholder="如：父子、母女、配偶、叔侄等" value="{{relation}}" bindinput="onInputRelation" />
+      </view>
+
+      <view class="form-item">
+        <text class="label">关系说明凭证（选填）</text>
+        <input class="input-box" placeholder="如：户口本同户、社区开具的亲属证明" value="{{proofMaterials}}" bindinput="onInputProof" />
+      </view>
+
+      <button class="btn-primary btn-apply {{isElderMode ? 'btn-large' : ''}}" bindtap="submitApply" loading="{{applying}}" disabled="{{applying}}">
+        <text wx:if="{{applying}}">正在提交申请…</text>
+        <text wx:else>提交绑定申请</text>
+      </button>
+    </block>
   </view>
 
   <view class="section-title">我的家属绑定记录</view>
