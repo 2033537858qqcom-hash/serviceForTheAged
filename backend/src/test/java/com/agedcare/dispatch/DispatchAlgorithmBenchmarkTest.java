@@ -306,11 +306,11 @@ public class DispatchAlgorithmBenchmarkTest {
         metrics.totalPriorRating += staff.getPriorRating().doubleValue();
         metrics.staffWorkloadOrders.put(staff.getId(), metrics.staffWorkloadOrders.get(staff.getId()) + 1);
 
-        // 记录真实排班与订单检索映射，供下一单前序路程精确推算
+        // 记录真实排班与订单检索映射，严格按照实际业务规则提前预留出行路程时间
         ctx.staffBookings.get(staff.getId()).add(StaffBooking.builder()
                 .staffId(staff.getId())
                 .orderId(order.getId())
-                .startTime(order.getPlannedStartAt())
+                .startTime(order.getPlannedStartAt().minusMinutes(eval.getTravelMinutes()))
                 .endTime(order.getPlannedEndAt())
                 .status("CONFIRMED")
                 .build());
