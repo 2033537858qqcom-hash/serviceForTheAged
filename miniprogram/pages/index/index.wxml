@@ -15,7 +15,30 @@
   </view>
 
   <!-- 有进行中服务：首屏主卡片 + 大按钮；宫格降级为一行快捷入口 -->
-  <block wx:if="{{activeOrder}}">
+  <!-- 进行中订单加载占位：与英雄卡同尺寸，避免欢迎区先闪后被顶走 -->
+  <block wx:if="{{!activeOrderReady}}">
+    <view class="section-title home-section-heading">
+      <text>今天的服务</text>
+      <text class="section-note">正在查询进度</text>
+    </view>
+    <view class="card active-order-card active-order-hero active-order-skeleton" aria-label="正在查询进行中的服务">
+      <view class="skeleton-block skeleton-order-title"></view>
+      <view class="skeleton-block skeleton-order-meta"></view>
+      <view class="skeleton-block skeleton-order-meta"></view>
+      <view class="skeleton-block skeleton-order-cta"></view>
+    </view>
+    <view class="section-title home-section-heading compact-heading">
+      <text>还需要其他帮助？</text>
+    </view>
+    <view class="service-strip">
+      <view class="service-strip-item" wx:for="{{[1,2,3,4]}}" wx:key="*this">
+        <view class="service-strip-photo skeleton-block"></view>
+        <view class="skeleton-block skeleton-strip-label"></view>
+      </view>
+    </view>
+  </block>
+
+  <block wx:elif="{{activeOrder}}">
     <view class="section-title home-section-heading">
       <text>今天的服务</text>
       <text class="section-note">请优先查看进度</text>

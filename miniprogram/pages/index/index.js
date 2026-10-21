@@ -39,6 +39,7 @@ Page({
     photoFallbacks: DEFAULT_IMAGES,
     categoryIcons: { MEAL: 'meal', CLEANING: 'cleaning', ERRAND: 'errand', ESCORT: 'escort' },
     activeOrder: null,
+    activeOrderReady: false,
     statusTextMap: {
       'WAIT_DISPATCH': '待派单',
       'WAIT_ACCEPT': '待接单',
@@ -114,15 +115,21 @@ Page({
     const context = sessionKey(app);
     if (this._activeContext !== context) {
       this._activeContext = context; this._activeAt = 0; this._activeTask = null; this._activeRefreshAfter = false;
-      if (this.data.activeOrder) this.setData({ activeOrder: null });
+      if (this.data.activeOrder || this.data.activeOrderReady) this.setData({ activeOrder: null, activeOrderReady: false });
     }
-    if (!app.globalData.token) return Promise.resolve();
+    if (!app.globalData.token) {
+      if (!this.data.activeOrderReady || this.data.activeOrder) this.setData({ activeOrder: null, activeOrderReady: true });
+      return Promise.resolve();
+    }
     const version = app.globalData.ordersVersion || 0;
     if (this._activeTask) {
       if (this._activeRequestVersion !== version) this._activeRefreshAfter = true;
       return this._activeTask;
     }
-    if (!force && this._activeVersion === version && this._activeAt && Date.now() - this._activeAt < 15000) return Promise.resolve();
+    if (!force && this._activeVersion === version && this._activeAt && Date.now() - this._activeAt < 15000) {
+      if (!this.data.activeOrderReady) this.setData({ activeOrderReady: true });
+      return Promise.resolve();
+    }
     this._activeRequestVersion = version;
     const task = request.get('/orders/page', {
       pageNum: 1, pageSize: 1,
@@ -131,9 +138,11 @@ Page({
       if (this._disposed || sessionKey(app) !== context) return;
       if (version !== (app.globalData.ordersVersion || 0)) { this._activeRefreshAfter = true; return; }
       const row = data?.records?.[0];
-      this.setData({ activeOrder: row ? orderCard(row) : null });
+      this.setData({ activeOrder: row ? orderCard(row) : null, activeOrderReady: true });
       this._activeAt = Date.now(); this._activeVersion = version;
-    }).catch(() => {}).finally(() => {
+    }).catch(() => {
+      if (!this._disposed && sessionKey(app) === context) this.setData({ activeOrderReady: true });
+    }).finally(() => {
       if (this._activeTask === task) {
         this._activeTask = null;
         if (this._activeRefreshAfter && !this._disposed) {

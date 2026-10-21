@@ -16,7 +16,7 @@
   height: 38rpx;
   border-radius: 50%;
   background: var(--primary-color, var(--primary-color));
-  border: 3rpx solid #ffffff;
+  border: 3rpx solid var(--color-surface);
   display: flex;
   align-items: center;
   justify-content: center;

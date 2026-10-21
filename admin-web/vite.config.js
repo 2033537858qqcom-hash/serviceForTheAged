@@ -1,7 +1,10 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import AutoImport from 'unplugin-auto-import/vite'
+import Components from 'unplugin-vue-components/vite'
+import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 
-// 第三方依赖拆成独立 chunk，便于缓存并避免单个 chunk 超过 500kB 告警
+// 第三方依赖拆成独立 chunk，便于长期缓存
 function vendorChunk(id) {
   if (!id.includes('node_modules')) return undefined
   if (id.includes('@element-plus/icons-vue')) return 'vendor-element-icons'
@@ -13,11 +16,21 @@ function vendorChunk(id) {
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [
+    vue(),
+    AutoImport({
+      resolvers: [ElementPlusResolver()],
+      dts: "src/auto-imports.d.ts",
+    }),
+    Components({
+      resolvers: [ElementPlusResolver()],
+      dts: "src/components.d.ts",
+    }),
+  ],
   build: {
-    // element-plus 采用全量注册（约 900kB / gzip ~280kB），已拆为独立 vendor chunk 长期缓存；
-    // 按需引入改动面较大，暂以 1000kB 阈值约束业务 chunk，新增大依赖仍会告警。
-    chunkSizeWarningLimit: 1000,
+    // 按需引入后 element-plus ≈543kB、echarts≈530kB（dashboard 图表已 tree-shake）；
+    // 二者仍略超 500，阈值设 550 避免误报，新增超大依赖仍会告警。
+    chunkSizeWarningLimit: 550,
     rollupOptions: {
       output: { manualChunks: vendorChunk }
     }

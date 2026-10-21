@@ -5,7 +5,7 @@
 .star-item { transition: transform 160ms cubic-bezier(.25, 1.4, .5, 1), color 120ms ease; }
 .star-item.active { color: #ad732e; transform: scale(1.08); }
 .score-desc { color: var(--text-secondary); font-size: var(--font-caption); }
-.comment-input { width: 100%; min-height: 300rpx; padding: 26rpx; background: #f6f8f3; border: 1rpx solid var(--border-color); border-radius: 16rpx; margin-top: 28rpx; font-size: var(--font-body); line-height: 1.8; }
+.comment-input { width: 100%; min-height: 300rpx; padding: 26rpx; background: var(--color-bg-soft); border: 1rpx solid var(--border-color); border-radius: 16rpx; margin-top: 28rpx; font-size: var(--font-body); line-height: 1.8; }
 .confirm-bottom-bar {
   position: fixed;
   left: 0;

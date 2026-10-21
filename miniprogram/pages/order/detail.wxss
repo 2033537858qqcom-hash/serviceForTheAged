@@ -48,7 +48,7 @@
 .map-tracking-card {
   padding: 24rpx;
   margin-bottom: 24rpx;
-  background: #ffffff;
+  background: var(--color-surface);
   border-radius: 20rpx;
   overflow: hidden;
 }
@@ -120,7 +120,7 @@
   height: 380rpx;
   border-radius: 16rpx;
   overflow: hidden;
-  border: 1rpx solid #e0e7d9;
+  border: 1rpx solid var(--color-line-soft);
 }
 .map-actions-bar {
   margin-top: 18rpx;
@@ -156,7 +156,7 @@
   padding: 0 28rpx;
   margin: 0;
   background: var(--primary-color);
-  color: #ffffff;
+  color: var(--color-surface);
   border-radius: 999rpx;
   display: inline-flex;
   align-items: center;
@@ -177,7 +177,7 @@
 .price { color: var(--primary-dark); font-weight: 600; }
 .code { font-size: var(--font-caption); }
 .record-line { font-size: var(--font-caption); color: var(--text-secondary); }
-.record-summary { background: #f6f8f3; border-radius: 14rpx; padding: 24rpx; margin-top: 22rpx; font-size: var(--font-body); white-space: pre-wrap; }
+.record-summary { background: var(--color-bg-soft); border-radius: 14rpx; padding: 24rpx; margin-top: 22rpx; font-size: var(--font-body); white-space: pre-wrap; }
 .record-photos-wrap {
   margin-top: 24rpx;
   padding-top: 20rpx;

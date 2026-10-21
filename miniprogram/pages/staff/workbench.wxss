@@ -144,7 +144,7 @@
   padding: 0 32rpx !important;
   font-size: var(--font-body) !important;
   background: var(--primary-color) !important;
-  color: #ffffff !important;
+  color: var(--color-surface) !important;
   border-radius: var(--radius-md, 20rpx) !important;
   display: inline-flex !important;
   align-items: center;
@@ -209,7 +209,7 @@
 }
 .record-sheet-body { padding: 10rpx 0 20rpx; }
 .record-sheet-body .modal-tip { font-size: var(--font-caption); color: var(--text-secondary); margin-bottom: 20rpx; }
-.record-textarea { font-size: var(--font-body); line-height: 1.8; width: 100%; min-height: 200rpx; border-radius: var(--radius-md, 20rpx); padding: 22rpx; border: 1rpx solid var(--border-color); background: #f6f8f3; box-sizing: border-box; }
+.record-textarea { font-size: var(--font-body); line-height: 1.8; width: 100%; min-height: 200rpx; border-radius: var(--radius-md, 20rpx); padding: 22rpx; border: 1rpx solid var(--border-color); background: var(--color-bg-soft); box-sizing: border-box; }
 
 /* 履约照片上传区域 */
 .record-photos-section {
@@ -256,7 +256,7 @@
   height: 44rpx;
   border-radius: 50%;
   background: rgba(0, 0, 0, 0.6);
-  color: #ffffff;
+  color: var(--color-surface);
   font-size: 26rpx;
   display: flex;
   align-items: center;
@@ -266,7 +266,7 @@
   width: 100%;
   aspect-ratio: 1 / 1;
   border-radius: var(--radius-md, 16rpx);
-  background: #f6f8f3;
+  background: var(--color-bg-soft);
   border: 2rpx dashed #cbd5e1;
   display: flex;
   flex-direction: column;
