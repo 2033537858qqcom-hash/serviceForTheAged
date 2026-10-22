@@ -9,7 +9,11 @@ export function getToken(storage = defaultStorage()) {
 }
 
 export function getUser(storage = defaultStorage()) {
-  try { return JSON.parse(storage?.getItem(USER_KEY) || 'null') } catch { return null }
+  try {
+    return JSON.parse(storage?.getItem(USER_KEY) || 'null')
+  } catch {
+    return null
+  }
 }
 
 export function saveSession({ token, userInfo }, storage = defaultStorage()) {
@@ -25,7 +29,9 @@ export function clearSession(storage = defaultStorage()) {
 export function hasAdminSession(storage = defaultStorage()) {
   try {
     if (storage.getItem(TOKEN_KEY) && JSON.parse(storage.getItem(USER_KEY) || '{}').role === 'ADMIN') return true
-  } catch { /* malformed cached session */ }
+  } catch {
+    /* malformed cached session */
+  }
   clearSession(storage)
   return false
 }

@@ -20,12 +20,12 @@ export default defineConfig({
     vue(),
     AutoImport({
       resolvers: [ElementPlusResolver()],
-      dts: "src/auto-imports.d.ts",
+      dts: 'src/auto-imports.d.ts'
     }),
     Components({
       resolvers: [ElementPlusResolver()],
-      dts: "src/components.d.ts",
-    }),
+      dts: 'src/components.d.ts'
+    })
   ],
   build: {
     // 按需引入后 element-plus ≈543kB、echarts≈530kB（dashboard 图表已 tree-shake）；

@@ -1,67 +1,69 @@
 <template>
   <div class="staff-container">
-    <PageHeader eyebrow="服务人员" title="让合适的人，做好每一项服务" description="核验人员资质，管理技能、工作状态与服务排班。" />
+    <PageHeader
+      eyebrow="服务人员"
+      title="让合适的人，做好每一项服务"
+      description="核验人员资质，管理技能、工作状态与服务排班。"
+    />
     <el-card shadow="never" class="main-card">
       <div class="header-bar flex-between">
-        <span style="font-weight: bold; font-size: 16px;">社区养老服务队伍与排班调度</span>
+        <span style="font-weight: bold; font-size: 16px">社区养老服务队伍与排班调度</span>
       </div>
 
       <el-skeleton :loading="loading && !tableData.length" animated :rows="6">
-      <template #default>
-      <el-table :data="tableData" v-loading="loading && tableData.length > 0" stripe style="width: 100%">
-        <el-table-column label="姓名" width="140">
-          <template #default="{ row }">
-            <span style="font-weight: bold;">{{ row.user ? row.user.realName : '' }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="联系电话" width="140">
-          <template #default="{ row }">
-            {{ row.user ? row.user.phone : '' }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="profile.serviceArea" label="服务网格" width="140" />
-        <el-table-column prop="profile.baseStationName" label="出发站点" min-width="160" show-overflow-tooltip />
-        <el-table-column prop="profile.currentStatus" label="工作状态" width="120">
-          <template #default="{ row }">
-            <el-tag :type="row.profile.currentStatus === 'AVAILABLE' ? 'success' : 'info'">
-              {{ row.profile.currentStatus === 'AVAILABLE' ? '接单中' : '休息中' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="profile.auditStatus" label="审核状态" width="110">
-          <template #default="{ row }">
-            <el-tag :type="row.profile.auditStatus === 'APPROVED' ? 'success' : 'warning'">
-              {{ row.profile.auditStatus === 'APPROVED' ? '通过' : '待审' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="专业技能" min-width="200">
-          <template #default="{ row }">
-            <el-tag v-for="sk in row.skills" :key="sk.id" size="small" style="margin-right: 6px;">
-              {{ sk.skillName }}
-            </el-tag>
-            <span v-if="!row.skills || row.skills.length === 0" style="color: #bfbfbf; font-size: 12px;">暂无资质</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="服务评分" width="110">
-          <template #default="{ row }">
-            <span style="color: #9b691d; font-weight: bold;">{{ row.profile.priorRating }} 分</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
-          <template #default="{ row }">
-            <el-button type="primary" link @click="openManageModal(row)">资质与班次</el-button>
-            <el-button
-              type="warning"
-              link
-              @click="toggleWorkStatus(row.profile.id, row.profile.currentStatus)"
-            >
-              {{ row.profile.currentStatus === 'AVAILABLE' ? '设为休息' : '设为接单' }}
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-      </template>
+        <template #default>
+          <el-table v-loading="loading && tableData.length > 0" :data="tableData" stripe style="width: 100%">
+            <el-table-column label="姓名" width="140">
+              <template #default="{ row }">
+                <span style="font-weight: bold">{{ row.user ? row.user.realName : '' }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="联系电话" width="140">
+              <template #default="{ row }">
+                {{ row.user ? row.user.phone : '' }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="profile.serviceArea" label="服务网格" width="140" />
+            <el-table-column prop="profile.baseStationName" label="出发站点" min-width="160" show-overflow-tooltip />
+            <el-table-column prop="profile.currentStatus" label="工作状态" width="120">
+              <template #default="{ row }">
+                <el-tag :type="row.profile.currentStatus === 'AVAILABLE' ? 'success' : 'info'">
+                  {{ row.profile.currentStatus === 'AVAILABLE' ? '接单中' : '休息中' }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="profile.auditStatus" label="审核状态" width="110">
+              <template #default="{ row }">
+                <el-tag :type="row.profile.auditStatus === 'APPROVED' ? 'success' : 'warning'">
+                  {{ row.profile.auditStatus === 'APPROVED' ? '通过' : '待审' }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="专业技能" min-width="200">
+              <template #default="{ row }">
+                <el-tag v-for="sk in row.skills" :key="sk.id" size="small" style="margin-right: 6px">
+                  {{ sk.skillName }}
+                </el-tag>
+                <span v-if="!row.skills || row.skills.length === 0" style="color: #bfbfbf; font-size: 12px">
+                  暂无资质
+                </span>
+              </template>
+            </el-table-column>
+            <el-table-column label="服务评分" width="110">
+              <template #default="{ row }">
+                <span style="color: #9b691d; font-weight: bold">{{ row.profile.priorRating }} 分</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="200" fixed="right">
+              <template #default="{ row }">
+                <el-button type="primary" link @click="openManageModal(row)">资质与班次</el-button>
+                <el-button type="warning" link @click="toggleWorkStatus(row.profile.id, row.profile.currentStatus)">
+                  {{ row.profile.currentStatus === 'AVAILABLE' ? '设为休息' : '设为接单' }}
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </template>
       </el-skeleton>
     </el-card>
 
@@ -76,9 +78,9 @@
         </el-descriptions>
 
         <!-- 技能列表 -->
-        <div style="margin-top: 24px;">
-          <div class="flex-between" style="margin-bottom: 12px;">
-            <span style="font-weight: bold;">专业资质与技能</span>
+        <div style="margin-top: 24px">
+          <div class="flex-between" style="margin-bottom: 12px">
+            <span style="font-weight: bold">专业资质与技能</span>
             <el-button type="primary" plain @click="skillModalVisible = true">+ 录入新资质</el-button>
           </div>
           <el-table :data="selectedStaff.skills || []" size="small" border>
@@ -94,9 +96,9 @@
         </div>
 
         <!-- 排班班次列表 -->
-        <div style="margin-top: 24px;">
-          <div class="flex-between" style="margin-bottom: 12px;">
-            <span style="font-weight: bold;">有效工作排班班次</span>
+        <div style="margin-top: 24px">
+          <div class="flex-between" style="margin-bottom: 12px">
+            <span style="font-weight: bold">有效工作排班班次</span>
             <el-button type="success" plain @click="shiftModalVisible = true">+ 添加排班</el-button>
           </div>
           <el-table :data="selectedStaff.shifts || []" size="small" border max-height="250">
@@ -117,7 +119,7 @@
     <el-dialog v-model="skillModalVisible" title="录入专业技能资质" width="450px">
       <el-form :model="skillForm" label-width="100px">
         <el-form-item label="技能分类">
-          <el-select v-model="skillForm.skillCode" style="width: 100%;">
+          <el-select v-model="skillForm.skillCode" style="width: 100%">
             <el-option label="助餐烹饪" value="COOKING" />
             <el-option label="居家保洁" value="CLEANING" />
             <el-option label="跑腿代办" value="ERRAND" />
@@ -142,13 +144,13 @@
     <el-dialog v-model="shiftModalVisible" title="安排人员工作班次" width="450px">
       <el-form :model="shiftForm" label-width="100px">
         <el-form-item label="排班日期">
-          <el-date-picker v-model="shiftForm.shiftDate" type="date" value-format="YYYY-MM-DD" style="width: 100%;" />
+          <el-date-picker v-model="shiftForm.shiftDate" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
         </el-form-item>
         <el-form-item label="上班时间">
-          <el-time-picker v-model="shiftForm.startTime" value-format="HH:mm:ss" style="width: 100%;" />
+          <el-time-picker v-model="shiftForm.startTime" value-format="HH:mm:ss" style="width: 100%" />
         </el-form-item>
         <el-form-item label="下班时间">
-          <el-time-picker v-model="shiftForm.endTime" value-format="HH:mm:ss" style="width: 100%;" />
+          <el-time-picker v-model="shiftForm.endTime" value-format="HH:mm:ss" style="width: 100%" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -188,14 +190,17 @@ const shiftForm = reactive({
 
 const fetchData = () => {
   loading.value = true
-  request.get('/staff/page', { params: { pageNum: 1, pageSize: 50 } }).then(res => {
-    tableData.value = res.records || []
-  }).finally(() => {
-    loading.value = false
-  })
+  request
+    .get('/staff/page', { params: { pageNum: 1, pageSize: 50 } })
+    .then(res => {
+      tableData.value = res.records || []
+    })
+    .finally(() => {
+      loading.value = false
+    })
 }
 
-const openManageModal = (row) => {
+const openManageModal = row => {
   selectedStaff.value = row
   manageVisible.value = true
   skillForm.staffId = row.profile.id
@@ -218,7 +223,7 @@ const saveSkill = () => {
   })
 }
 
-const deleteSkill = (skillId) => {
+const deleteSkill = skillId => {
   request.delete(`/staff/skill/${skillId}`).then(() => {
     ElMessage.success('资质已删除')
     refreshSelectedStaff()

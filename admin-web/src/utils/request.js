@@ -19,7 +19,9 @@ async function expireSession() {
     const { default: router } = await import('../router/index.js')
     const current = router.currentRoute.value
     if (current.path !== '/login') await router.replace({ path: '/login', query: { redirect: current.fullPath } })
-  } finally { expiring = false }
+  } finally {
+    expiring = false
+  }
 }
 
 function fail(error, config) {
