@@ -355,9 +355,9 @@ page { --swipe-tab-width: 144rpx; --motion-fast: 120ms; --motion-standard: 200ms
     margin-right: 0;
     white-space: nowrap;
   }
-  .btn-primary:not(.btn-inline):not(.book-button):not(.btn-action):not(.tag),
-  .btn-secondary:not(.btn-inline):not(.book-button):not(.btn-action):not(.tag),
-  .btn-danger:not(.btn-inline):not(.book-button):not(.btn-action):not(.tag) {
+  .btn-primary:not(.btn-inline):not(.book-button):not(.btn-action):not(.tag):not(.state-view-action),
+  .btn-secondary:not(.btn-inline):not(.book-button):not(.btn-action):not(.tag):not(.state-view-action),
+  .btn-danger:not(.btn-inline):not(.book-button):not(.btn-action):not(.tag):not(.state-view-action) {
     padding: 14px 24px;
     border-radius: 14px;
     white-space: nowrap;

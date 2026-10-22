@@ -340,4 +340,28 @@ page {
     white-space: nowrap;
     flex-shrink: 0;
   }
+  .page-shell .state-view-action,
+  .page-shell button.state-view-action {
+    width: auto !important;
+    min-width: 140px;
+    max-width: 220px;
+    min-height: 44px;
+    height: 44px;
+    line-height: 44px;
+    padding: 0 28px;
+    margin-top: 20px;
+    font-size: 16px;
+    border-radius: 22px;
+  }
+  .page-shell .unlogin-action-btn,
+  .page-shell button.unlogin-action-btn {
+    width: auto !important;
+    max-width: 280px;
+    min-height: 48px;
+    height: 48px;
+    line-height: 48px;
+    padding: 0 32px;
+    font-size: 16px;
+    border-radius: 24px;
+  }
 }
