@@ -19,7 +19,7 @@ jobs:
           cache: npm
           cache-dependency-path: admin-web/package-lock.json
       - run: mvn -B -f backend/pom.xml verify
-      - run: npm ci && npm test && npm run build
+      - run: npm ci && npm run lint && npm test && npm run build
         working-directory: admin-web
       - run: node --test miniprogram/tests/*.test.cjs
       - run: docker build -f backend/Dockerfile . && docker build -f admin-web/Dockerfile .
