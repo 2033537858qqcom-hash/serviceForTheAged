@@ -8,6 +8,12 @@
         <view class="brand-community">阳光花园社区</view>
       </view>
     </view>
+    <!-- 留白区域典雅线条与微点装饰 -->
+    <view class="home-header-deco" aria-hidden="true">
+      <view class="header-deco-line header-deco-line-left"></view>
+      <view class="header-deco-point"></view>
+      <view class="header-deco-line header-deco-line-right"></view>
+    </view>
     <button class="care-mode-control" hover-class="care-mode-pressed" hover-stay-time="80" bindtap="toggleMode">
       <image src="/assets/icons/care.png" />
       <text>{{isElderMode ? '标准版' : '大字版'}}</text>

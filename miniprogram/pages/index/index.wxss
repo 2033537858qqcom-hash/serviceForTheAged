@@ -1,6 +1,12 @@
 .home-page { padding: 32rpx; padding-bottom: calc(var(--tab-bar-height) + 32rpx + env(safe-area-inset-bottom)); }
-.home-header { display: flex; justify-content: space-between; gap: 20rpx; align-items: center; padding: 0 0 28rpx; }
-.home-brand { display: flex; flex: 1; min-width: 0; align-items: center; gap: 16rpx; }
+.home-header { position: relative; display: flex; justify-content: space-between; gap: 16rpx; align-items: center; padding: 0 0 28rpx; }
+.home-header::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1rpx; background: linear-gradient(90deg, rgba(23,107,93,0.02) 0%, rgba(23,107,93,0.12) 25%, rgba(23,107,93,0.12) 75%, rgba(23,107,93,0.02) 100%); }
+.home-brand { display: flex; flex: 0 0 auto; min-width: 0; align-items: center; gap: 16rpx; }
+.home-header-deco { flex: 1; display: flex; align-items: center; justify-content: center; gap: 10rpx; padding: 0 16rpx; min-width: 40rpx; }
+.header-deco-line { flex: 1; height: 2rpx; border-radius: 2rpx; }
+.header-deco-line-left { background: linear-gradient(90deg, rgba(23,107,93,0.04), rgba(23,107,93,0.22) 75%, rgba(23,107,93,0.36)); }
+.header-deco-line-right { background: linear-gradient(90deg, rgba(23,107,93,0.36), rgba(23,107,93,0.22) 25%, rgba(23,107,93,0.04)); }
+.header-deco-point { width: 8rpx; height: 8rpx; border-radius: 50%; background: var(--primary-color, #176b5d); opacity: 0.45; box-shadow: 0 0 8rpx rgba(23,107,93,0.22); flex-shrink: 0; }
 .home-brand-copy { min-width: 0; }
 .home-brand-icon {
   flex-shrink: 0;
@@ -108,6 +114,7 @@
 .elder-mode .welcome-contact { flex-wrap: wrap; padding: 18rpx 0; }
 .elder-mode .contact-hours { margin-left: 0; }
 .elder-mode .home-brand-icon { width: 88rpx; height: 88rpx; border-radius: 22rpx; }
+.elder-mode .home-header-deco { display: none; }
 
 
 /* 进行中订单主卡片 + 一键进度 */
