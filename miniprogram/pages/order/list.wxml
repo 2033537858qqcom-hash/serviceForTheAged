@@ -118,9 +118,12 @@
           </view>
 
           <!-- 空状态 -->
-          <state-view wx:if="{{tabData[index].loaded && !tabData[index].error && !tabData[index].loading && tabData[index].list.length === 0}}" icon="/assets/icons/order.png" title="暂无此类订单记录" action-text="去预约服务" bindaction="goToServices" />
+          <block wx:if="{{tabData[index].loaded && !tabData[index].error && !tabData[index].loading && tabData[index].list.length === 0}}">
+            <state-view wx:if="{{index === 0}}" icon="/assets/icons/order.png" title="还没有预约记录" description="全部订单包含进行中、已完成和已取消的服务。您可以下拉刷新，或预约新的服务。" action-text="去预约服务" bindaction="goToServices" />
+            <state-view wx:else icon="/assets/icons/order.png" title="暂无{{item.label}}订单" description="可以查看全部订单，了解其他服务的安排和进度。" action-text="查看全部订单" bindaction="showAllOrders" />
+          </block>
 
-          <state-view wx:if="{{tabData[index].error}}" type="error" title="订单暂时未能加载" description="已有订单仍可查看" data-index="{{index}}" bindaction="retryTab" />
+          <state-view wx:if="{{tabData[index].error}}" type="error" title="订单暂时未能加载" description="请重试，或检查当前服务连接是否正常。" data-index="{{index}}" bindaction="retryTab" />
           <view wx:if="{{!tabData[index].loaded && !tabData[index].loading && !tabData[index].error}}" class="loading-more">选择此分类查看订单</view>
           <!-- 底部提示 -->
           <view class="loading-more" wx:if="{{tabData[index].loading && !tabData[index].isRefreshing}}">

@@ -240,14 +240,18 @@ Page({
     entry.requestVersion = version;
     this.publishTab(index);
 
-    const task = request.get('/orders/page', { pageNum, pageSize: PAGE_SIZE, status: TABS[index].key || null })
+    const query = { pageNum, pageSize: PAGE_SIZE };
+    // “全部”必须省略参数，避免真机把 null 编码为 status=null 后被当作状态筛选。
+    if (TABS[index].key) query.status = TABS[index].key;
+    const task = request.get('/orders/page', query)
       .then(data => {
         if (!valid()) return;
         if (version !== (app.globalData?.ordersVersion || 0)) {
           entry.refreshAfter = true;
           return;
         }
-        const records = (data?.records || []).map(orderCard);
+        if (!Array.isArray(data?.records)) throw new Error('订单列表响应格式异常');
+        const records = data.records.map(orderCard);
         if (reset) {
           entry.rows = records;
           entry.replace = true;
@@ -282,7 +286,12 @@ Page({
   },
 
   goToServices() {
-    wx.switchTab({ url: '/pages/service/list' });
+    navigation.switchTab({ url: '/pages/service/list' });
+  },
+
+  showAllOrders() {
+    this.selectTab(0, this.data.currentTabIndex !== 0);
+    return this.ensureTab(0, { force: true });
   },
 
   goToLogin() {

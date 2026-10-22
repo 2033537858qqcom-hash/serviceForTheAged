@@ -7,6 +7,8 @@
     />
     <el-card shadow="never" class="main-card">
       <div class="header-bar toolbar-end">
+        <el-button type="primary" @click="applicationsVisible = true">入驻申请审核</el-button>
+        <el-button type="primary" plain @click="openPendingCredentials">待审核资质</el-button>
         <el-form :inline="true" :model="list.filters" class="staff-filter" @submit.prevent="list.search">
           <el-input
             v-model="list.filters.name"
@@ -54,8 +56,15 @@
         </el-table-column>
         <el-table-column label="专业技能" min-width="200">
           <template #default="{ row }">
-            <el-tag v-for="sk in row.skills" :key="sk.id" size="small" style="margin-right: 6px">
-              {{ sk.skillName }}
+            <el-tag
+              v-for="sk in row.skills"
+              :key="sk.id"
+              :type="sk.auditStatus === 'APPROVED' ? 'success' : 'warning'"
+              size="small"
+              style="margin-right: 6px"
+            >
+              {{ sk.skillName
+              }}{{ sk.auditStatus === 'PENDING' ? ' · 待审核' : sk.auditStatus === 'REJECTED' ? ' · 已退回' : '' }}
             </el-tag>
             <span v-if="!row.skills || row.skills.length === 0" class="text-muted text-xs">暂无资质</span>
           </template>
@@ -103,8 +112,14 @@
             <el-table-column prop="skillCode" label="代码" width="120" />
             <el-table-column prop="skillName" label="技能名称" width="160" />
             <el-table-column prop="certificateNo" label="证书编号" min-width="160" />
-            <el-table-column label="操作" width="90">
+            <el-table-column label="审核状态" width="100">
+              <template #default="{ row }">{{ credentialStatuses[row.auditStatus] || row.auditStatus }}</template>
+            </el-table-column>
+            <el-table-column label="操作" width="180">
               <template #default="{ row }">
+                <el-button type="primary" link @click="credentialId = row.id">
+                  {{ row.auditStatus === 'PENDING' ? '查看并审核' : '查看材料' }}
+                </el-button>
                 <el-button
                   type="danger"
                   link
@@ -137,6 +152,35 @@
         </div>
       </div>
     </el-dialog>
+
+    <el-dialog v-model="pendingCredentialsVisible" title="待审核资质" width="min(900px, 96vw)">
+      <el-alert v-if="pendingFailed" title="待审核资质加载失败" type="error" :closable="false">
+        <el-button link type="primary" @click="loadPendingCredentials">重新加载</el-button>
+      </el-alert>
+      <el-table
+        v-loading="pendingLoading"
+        :data="pendingCredentials"
+        :empty-text="pendingFailed ? '请重试加载' : '暂无待审核资质'"
+      >
+        <el-table-column prop="staffName" label="工作人员" min-width="120" />
+        <el-table-column prop="skillName" label="资质名称" min-width="180" />
+        <el-table-column prop="submittedAt" label="提交时间" min-width="170" />
+        <el-table-column label="操作" width="120">
+          <template #default="{ row }">
+            <el-button link type="primary" @click="credentialId = row.id">查看并审核</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+      <el-pagination
+        v-model:current-page="pendingPage"
+        :page-size="20"
+        :total="pendingTotal"
+        layout="prev, pager, next, total"
+        @current-change="loadPendingCredentials"
+      />
+    </el-dialog>
+    <CredentialReview :skill-id="credentialId" @close="credentialId = null" @reviewed="credentialsReviewed" />
+    <StaffApplications :visible="applicationsVisible" @close="applicationsVisible = false" @reviewed="list.load" />
 
     <!-- 录入新技能资质弹窗 -->
     <el-dialog
@@ -201,6 +245,8 @@ import PageHeader from '../../components/PageHeader.vue'
 import DataTable from '../../components/DataTable.vue'
 import StatusTag from '../../components/StatusTag.vue'
 import MaskedText from '../../components/MaskedText.vue'
+import CredentialReview from '../../components/CredentialReview.vue'
+import StaffApplications from '../../components/StaffApplications.vue'
 import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
 import request from '../../utils/request'
@@ -216,6 +262,47 @@ const list = usePagedQuery({
 })
 
 const manageVisible = ref(false)
+const applicationsVisible = ref(false)
+const credentialId = ref(null)
+const credentialStatuses = { PENDING: '待审核', APPROVED: '已通过', REJECTED: '已退回' }
+const pendingCredentialsVisible = ref(false),
+  pendingCredentials = ref([]),
+  pendingLoading = ref(false),
+  pendingTotal = ref(0),
+  pendingPage = ref(1)
+const pendingFailed = ref(false)
+let pendingSequence = 0
+async function loadPendingCredentials() {
+  const sequence = ++pendingSequence
+  pendingLoading.value = true
+  pendingFailed.value = false
+  try {
+    const data = await request.get('/staff/credentials/page', {
+      params: { status: 'PENDING', pageNum: pendingPage.value, pageSize: 20 }
+    })
+    if (sequence !== pendingSequence) return
+    pendingCredentials.value = data.records || []
+    pendingTotal.value = data.total || 0
+    if (!pendingCredentials.value.length && pendingPage.value > 1) {
+      pendingPage.value = Math.max(1, Math.ceil(pendingTotal.value / 20))
+      return loadPendingCredentials()
+    }
+  } catch {
+    if (sequence === pendingSequence) pendingFailed.value = true
+  } finally {
+    if (sequence === pendingSequence) pendingLoading.value = false
+  }
+}
+function openPendingCredentials() {
+  pendingPage.value = 1
+  pendingCredentialsVisible.value = true
+  loadPendingCredentials()
+}
+function credentialsReviewed() {
+  if (selectedStaff.value) refreshSelectedStaff()
+  else list.load()
+  if (pendingCredentialsVisible.value) loadPendingCredentials()
+}
 const selectedStaff = ref(null)
 const skillModalVisible = ref(false)
 const shiftModalVisible = ref(false)

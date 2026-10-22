@@ -70,7 +70,7 @@ public class AuthInterceptor implements HandlerInterceptor {
         if (!Arrays.asList("ADMIN", "STAFF", "RESIDENT").contains(dbUser.getRole()))
             throw new BusinessException(ResultCode.FORBIDDEN);
         user.setRole(dbUser.getRole());
-        if ("POST".equals(request.getMethod()) && (uri.endsWith("/upload/image") || uri.endsWith("/service-items/image"))) {
+        if ("POST".equals(request.getMethod()) && (uri.endsWith("/upload/image") || uri.endsWith("/service-items/image") || uri.endsWith("/staff/credentials/upload"))) {
             uploadRateLimiter.check(user.getId());
         }
 

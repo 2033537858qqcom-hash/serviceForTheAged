@@ -316,6 +316,10 @@ public class StaffService {
         }
         vo.setSkills(staffSkillMapper.selectList(new LambdaQueryWrapper<StaffSkill>()
                 .eq(StaffSkill::getStaffId, profile.getId())));
+        LoginUser viewer = UserContext.getUser();
+        boolean privateView = viewer != null && ("ADMIN".equals(viewer.getRole()) || ("STAFF".equals(viewer.getRole()) && profile.getUserId().equals(viewer.getId())));
+        if (!privateView) vo.setSkills(vo.getSkills().stream().filter(skill -> "APPROVED".equals(skill.getAuditStatus()))
+                .map(skill -> StaffSkill.builder().skillCode(skill.getSkillCode()).skillName(skill.getSkillName()).auditStatus("APPROVED").build()).toList());
         vo.setShifts(staffShiftMapper.selectList(new LambdaQueryWrapper<StaffShift>()
                 .eq(StaffShift::getStaffId, profile.getId())
                 .ge(StaffShift::getShiftDate, LocalDate.now())

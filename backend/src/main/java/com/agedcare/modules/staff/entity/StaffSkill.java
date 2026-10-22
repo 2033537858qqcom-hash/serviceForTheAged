@@ -24,5 +24,13 @@ public class StaffSkill implements Serializable {
     private String skillName;
     private String certificateNo;
     private String auditStatus; // PENDING, APPROVED, REJECTED
+    private String proofUrlsJson;
+    private String auditReason;
+    private Long auditUserId;
+    private LocalDateTime auditTime;
+    private LocalDateTime submittedAt;
+    private Integer revision;
+    @com.baomidou.mybatisplus.annotation.TableField(exist=false)
+    private String staffName;
     private LocalDateTime createdAt;
 }

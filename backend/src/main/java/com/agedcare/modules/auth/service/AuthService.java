@@ -26,6 +26,9 @@ import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Set;
+import com.agedcare.common.security.OrderAccessPolicy;
 
 @Slf4j
 @Service
@@ -78,18 +81,65 @@ public class AuthService {
             throw new BusinessException(400, "必须指定具体的演示用户名或角色");
         }
 
-        LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<>();
-        if (StringUtils.hasText(username)) {
-            wrapper.eq(SysUser::getUsername, username);
-        } else {
-            wrapper.eq(SysUser::getRole, role.toUpperCase()).last("LIMIT 1");
-        }
+        String selected = StringUtils.hasText(username) ? username : switch (role.toUpperCase()) {
+            case "RESIDENT" -> "resident01";
+            case "STAFF" -> "staff01";
+            default -> throw new BusinessException(403, "演示入口仅支持居民和工作人员");
+        };
+        if (!isDemoUsername(selected)) throw new BusinessException(403, "只能切换指定的演示账号");
+        LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<SysUser>().eq(SysUser::getUsername, selected);
 
         SysUser user = userMapper.selectOne(wrapper);
         if (user == null) {
             throw new BusinessException("未找到对应的演示测试账号");
         }
+        if (!Set.of("RESIDENT", "STAFF").contains(user.getRole()) || !Integer.valueOf(1).equals(user.getStatus()))
+            throw new BusinessException(403, "演示账号已停用或身份不适用");
+        return createAuthResponse(user);
+    }
 
+    public static boolean isDemoUsername(String value) {
+        return value != null && (Set.of("resident01", "family01", "staff01").contains(value) || value.matches("demo_reg_[a-f0-9]{32}"));
+    }
+
+    public List<DemoAccount> demoAccounts() {
+        if (!devMode) throw new BusinessException(403, "演示模式未开启");
+        return userMapper.selectList(new LambdaQueryWrapper<SysUser>()
+                .eq(SysUser::getStatus, 1).in(SysUser::getRole, "RESIDENT", "STAFF")
+                .and(q -> q.in(SysUser::getUsername, "resident01", "family01", "staff01").or().likeRight(SysUser::getUsername, "demo_reg_"))
+                .orderByDesc(SysUser::getCreatedAt).last("LIMIT 50")).stream()
+                .filter(u -> isDemoUsername(u.getUsername())).map(u -> new DemoAccount(u.getUsername(), u.getRealName(), u.getRole())).toList();
+    }
+    public record DemoAccount(String username, String realName, String role) {}
+
+    @Transactional(rollbackFor = Exception.class)
+    public AuthResponse demoRegister(String requestId, String realName) {
+        if (!devMode) throw new BusinessException(403, "演示模式未开启");
+        if (requestId == null || !requestId.matches("[a-f0-9]{32}") || !StringUtils.hasText(realName) || realName.trim().length() > 32)
+            throw new BusinessException("请填写演示姓名并重新提交");
+        String username = "demo_reg_" + requestId;
+        SysUser existing = userMapper.selectOne(new LambdaQueryWrapper<SysUser>().eq(SysUser::getUsername, username));
+        if (existing != null) return mockLogin(null, username);
+        SysUser user = SysUser.builder().username(username).realName(realName.trim())
+                .password(passwordEncoder.encode(java.util.UUID.randomUUID().toString()))
+                .role("RESIDENT").status(1).phone(null).openid(null).avatar("")
+                .createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now()).build();
+        try { userMapper.insert(user); }
+        catch (org.springframework.dao.DuplicateKeyException e) {
+            // Current read also sees a concurrent retry that committed after our initial snapshot.
+            var retried = userMapper.selectOne(new LambdaQueryWrapper<SysUser>().eq(SysUser::getUsername, username).last("FOR UPDATE"));
+            if (retried == null || !Set.of("RESIDENT", "STAFF").contains(retried.getRole()) || !Integer.valueOf(1).equals(retried.getStatus()))
+                throw new BusinessException("演示账号状态已变化，请重新创建");
+            return createAuthResponse(retried);
+        }
+        var response = createAuthResponse(user);
+        response.setNewUser(true);
+        return response;
+    }
+
+    public AuthResponse refresh() {
+        SysUser user = userMapper.selectById(OrderAccessPolicy.user().getId());
+        if (user == null || !Integer.valueOf(1).equals(user.getStatus())) throw new BusinessException(ResultCode.UNAUTHORIZED);
         return createAuthResponse(user);
     }
 
@@ -102,6 +152,7 @@ public class AuthService {
 
         SysUser user = userMapper.selectOne(new LambdaQueryWrapper<SysUser>()
                 .eq(SysUser::getOpenid, openid));
+        boolean newUser = user == null;
 
         if (user != null) {
             if (user.getStatus() != null && user.getStatus() == 0) {
@@ -128,7 +179,9 @@ public class AuthService {
             userMapper.insert(user);
         }
 
-        return createAuthResponse(user);
+        var response = createAuthResponse(user);
+        response.setNewUser(newUser);
+        return response;
     }
 
     private String fetchWechatOpenid(String code) {

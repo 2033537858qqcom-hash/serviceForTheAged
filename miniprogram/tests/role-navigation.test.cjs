@@ -148,7 +148,7 @@ test('STAFF profile page loads staff stats and switches to workbench', async () 
       if (url === '/staff/my-profile') {
         return Promise.resolve({
           profile: { id: 1, priorRating: 4.95, totalOrders: 42, baseStationName: '阳光助老站', currentStatus: 'AVAILABLE' },
-          skills: [{ skillName: '生活照料', certificateNo: 'CERT-001' }]
+          skills: [{ skillName: '生活照料', certificateNo: 'CERT-001', auditStatus: 'APPROVED' }, { skillName: '待审技能', auditStatus: 'PENDING' }]
         });
       }
       return Promise.resolve({});

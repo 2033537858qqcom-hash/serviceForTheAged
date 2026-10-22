@@ -20,7 +20,8 @@ const props = defineProps({
   width: { type: Number, default: 112 },
   height: { type: Number, default: 88 }
 })
-const PRIVATE_PHOTO = /^\/media\/private\/fulfillment\/\d+\/\d+\/[a-f0-9-]{36}\.(jpg|jpeg|png|webp)$/
+const PRIVATE_PHOTO =
+  /^\/media\/private\/(?:fulfillment\/\d+\/\d+|credentials\/\d+)\/[a-f0-9-]{36}\.(jpg|jpeg|png|webp)$/
 const url = ref('')
 const failed = ref(false)
 const sizeStyle = computed(() => ({ width: `${props.width}px`, height: `${props.height}px` }))

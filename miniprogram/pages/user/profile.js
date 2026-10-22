@@ -21,6 +21,7 @@ Page({
     staffSkillsDesc: '',
     isElderMode: false,
     isDevMode: false,
+    demoEnabled: false,
     currentBaseUrl: 'http://localhost:8080/api',
     logoutSheet: false,
     roleTextMap: {
@@ -46,12 +47,28 @@ Page({
     }
     this._shownState = state;
     if (Object.keys(patch).length) this.setData(patch);
+    this.loadDemoCapability();
     if (state.userInfo?.role === 'STAFF') {
       this.loadStaffProfile();
     } else if (state.userInfo && app.globalData?.token) {
       this.loadHubCounts();
     }
   },
+
+  loadDemoCapability() {
+    const state = getAppSafe().globalData;
+    const key = `${state.baseUrl}|${state.token}|${state.envVersion || 'develop'}`;
+    const token = state.token, baseUrl = state.baseUrl;
+    if (key === this._demoKey) return;
+    this._demoKey = key;
+    this.setData({ demoEnabled: false });
+    if (!state.token || ['trial', 'release'].includes(state.envVersion)) return;
+    return request.get('/auth/demo-capabilities', {}, { silent: true }).then(result => {
+      if (this._demoKey === key && getAppSafe().globalData.token === token && getAppSafe().globalData.baseUrl === baseUrl) this.setData({ demoEnabled: result?.enabled === true });
+    }).catch(() => { if (this._demoKey === key) this._demoKey = null; });
+  },
+
+  goToStaffApplication() { navigation.navigateTo({ url: '/pages/staff/apply' }); },
 
   // 每个状态只取 total；失败时不显示角标，不打扰页面
   loadHubCounts() {
@@ -73,12 +90,12 @@ Page({
     return request.get('/staff/my-profile').then(res => {
       if (!res) return;
       const profile = res.profile || null;
-      const skills = res.skills || [];
+        const skills = (res.skills || []).filter(skill => skill.auditStatus === 'APPROVED');
       const skillsDesc = skills.map(s => s.skillName).join(' · ');
       this.setData({
         staffProfile: profile,
         staffSkills: skills,
-        staffSkillsDesc: skillsDesc || '养老照护专业认证 · 社区审核合格'
+          staffSkillsDesc: skillsDesc || '上传证明材料，等待社区审核'
       });
     }).catch(() => {});
   },
@@ -181,38 +198,7 @@ Page({
    * ActionSheet 1: 演示账号角色一键切换 (答辩与评测利器)
    */
   openRoleSwitchSheet() {
-    const roles = [
-      { username: 'resident01', name: '赵大爷', desc: '老人本人 (阳光社区长辈)' },
-      { username: 'family01', name: '赵志强', desc: '家属代约 (社区居民)' },
-      { username: 'staff01', name: '张玉兰', desc: '服务师傅 (专业居家护理)' }
-    ];
-
-    const that = this;
-    wx.showActionSheet({
-      itemList: roles.map(r => `${r.name} · ${r.desc}`),
-      success(res) {
-        const target = roles[res.tapIndex];
-        if (target) {
-          wx.showLoading({ title: `正在切换至${target.name}...` });
-          request.post('/auth/mock-login?username=' + encodeURIComponent(target.username)).then(loginRes => {
-            wx.hideLoading();
-            app.globalData.token = loginRes.token;
-            app.globalData.userInfo = loginRes.userInfo;
-            app.globalData.role = loginRes.userInfo.role;
-            wx.setStorageSync('token', loginRes.token);
-            wx.setStorageSync('userInfo', loginRes.userInfo);
-
-            that.setData({ userInfo: loginRes.userInfo });
-            wx.showToast({ title: `已登录为 ${loginRes.userInfo.realName}`, icon: 'success' });
-
-            const dest = loginRes.userInfo.role === 'STAFF' ? '/pages/staff/workbench' : '/pages/index/index';
-            navigation.switchTab({ url: dest, fail: () => navigation.redirectTo({ url: dest }) });
-          }).catch(() => {
-            wx.hideLoading();
-          });
-        }
-      }
-    });
+    if (this.data.demoEnabled) navigation.navigateTo({ url: '/pages/auth/demo' });
   },
 
   /**
@@ -369,15 +355,6 @@ Page({
   },
 
   showSkillsModal() {
-    const skills = this.data.staffSkills || [];
-    const skillList = skills.length 
-      ? skills.map(s => `· ${s.skillName}${s.certificateNo ? ' (' + s.certificateNo + ')' : ''}`).join('\n') 
-      : '· 居家养老专业照护资格认证\n· 助餐、助洁规范操作达标\n· 应急救护常识合格认证';
-    wx.showModal({
-      title: '服务人员执业资质',
-      content: `姓名：${this.data.userInfo?.realName || '认证服务人员'}\n社区核验：已审核通过\n\n认证资质：\n${skillList}`,
-      showCancel: false,
-      confirmText: '确定'
-    });
+    navigation.navigateTo({ url: '/pages/staff/credentials' });
   }
 });

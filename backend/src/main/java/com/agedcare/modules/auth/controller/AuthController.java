@@ -38,4 +38,7 @@ public class AuthController {
     public Result<LoginUser> getCurrentUser() {
         return Result.success(UserContext.getUser());
     }
+
+    @PostMapping("/refresh")
+    public Result<AuthResponse> refresh() { return Result.success(authService.refresh()); }
 }

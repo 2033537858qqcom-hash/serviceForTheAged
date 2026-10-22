@@ -11,6 +11,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    CredentialReview: typeof import('./components/CredentialReview.vue')['default']
     DataTable: typeof import('./components/DataTable.vue')['default']
     ElAlert: typeof import('element-plus/es')['ElAlert']
     ElButton: typeof import('element-plus/es')['ElButton']
@@ -26,6 +27,7 @@ declare module 'vue' {
     ElDropdown: typeof import('element-plus/es')['ElDropdown']
     ElDropdownItem: typeof import('element-plus/es')['ElDropdownItem']
     ElDropdownMenu: typeof import('element-plus/es')['ElDropdownMenu']
+    ElEmpty: typeof import('element-plus/es')['ElEmpty']
     ElForm: typeof import('element-plus/es')['ElForm']
     ElFormItem: typeof import('element-plus/es')['ElFormItem']
     ElIcon: typeof import('element-plus/es')['ElIcon']
@@ -53,6 +55,7 @@ declare module 'vue' {
     PrivatePhoto: typeof import('./components/PrivatePhoto.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    StaffApplications: typeof import('./components/StaffApplications.vue')['default']
     StaffSelect: typeof import('./components/StaffSelect.vue')['default']
     StatusTag: typeof import('./components/StatusTag.vue')['default']
   }

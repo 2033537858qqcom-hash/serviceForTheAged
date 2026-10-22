@@ -1,8 +1,9 @@
 // 构建后体积门槛：单个 JS chunk 或 JS 总量超限时让构建失败（E3）
 import { readdirSync, statSync } from 'node:fs'
 import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const dir = new URL('../dist/assets/', import.meta.url).pathname
+const dir = fileURLToPath(new URL('../dist/assets/', import.meta.url))
 const CHUNK_LIMIT = 600 * 1024
 const TOTAL_LIMIT = 1600 * 1024
 const files = readdirSync(dir).filter(name => name.endsWith('.js'))

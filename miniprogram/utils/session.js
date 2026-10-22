@@ -20,4 +20,16 @@ function clearSession(app) {
   }
 }
 
-module.exports = { getRole, isLoggedIn, clearSession };
+function applySession(app, data) {
+  if (!app?.globalData || !data?.token || !data.userInfo || !['RESIDENT', 'STAFF'].includes(data.userInfo.role)) throw new Error('登录身份无效');
+  require('./media-url.js').clearPrivateMedia();
+  app.globalData.token = data.token;
+  app.globalData.userInfo = data.userInfo;
+  app.globalData.role = data.userInfo.role;
+  app.globalData.pendingTabQuery = null;
+  app.globalData.ordersVersion = (app.globalData.ordersVersion || 0) + 1;
+  wx.setStorageSync('token', data.token);
+  wx.setStorageSync('userInfo', data.userInfo);
+}
+
+module.exports = { getRole, isLoggedIn, clearSession, applySession };

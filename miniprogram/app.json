@@ -1,6 +1,9 @@
 {
   "pages": [
     "pages/auth/login",
+    "pages/auth/demo",
+    "pages/user/welcome",
+    "pages/staff/apply",
     "pages/index/index",
     "pages/service/list",
     "pages/service/detail",
@@ -9,6 +12,7 @@
     "pages/order/detail",
     "pages/order/confirm",
     "pages/staff/workbench",
+    "pages/staff/credentials",
     "pages/user/profile",
     "pages/user/family",
     "pages/user/elder-form",

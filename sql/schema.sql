@@ -127,6 +127,12 @@ CREATE TABLE `staff_skill` (
     `skill_code` VARCHAR(32) NOT NULL COMMENT '技能代码(如: CLEANING, COOKING, ESCORT, NURSING)',
     `skill_name` VARCHAR(64) NOT NULL COMMENT '技能名称',
     `certificate_no` VARCHAR(64) DEFAULT '' COMMENT '相关证书编号',
+    `proof_urls_json` TEXT DEFAULT NULL COMMENT '私有资质证明图片列表',
+    `audit_reason` VARCHAR(200) DEFAULT NULL COMMENT '审核意见或退回原因',
+    `audit_user_id` BIGINT DEFAULT NULL COMMENT '审核管理员',
+    `audit_time` DATETIME DEFAULT NULL COMMENT '审核时间',
+    `submitted_at` DATETIME DEFAULT NULL COMMENT '工作人员提交时间',
+    `revision` INT NOT NULL DEFAULT 0 COMMENT '申请材料版本，防止审核旧材料',
     `audit_status` VARCHAR(20) NOT NULL DEFAULT 'APPROVED' COMMENT '审核状态: PENDING, APPROVED, REJECTED',
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     PRIMARY KEY (`id`),
@@ -357,5 +363,27 @@ CREATE TABLE `operation_log` (
     PRIMARY KEY (`id`),
     KEY `idx_op_log_action` (`action`, `created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='管理操作审计日志表';
+
+-- 工作人员入驻申请（与技能资质审核分开）
+DROP TABLE IF EXISTS `staff_application`;
+CREATE TABLE `staff_application` (
+    `id` BIGINT NOT NULL,
+    `user_id` BIGINT NOT NULL,
+    `real_name` VARCHAR(32) NOT NULL,
+    `phone` VARCHAR(20) NOT NULL,
+    `service_area` VARCHAR(100) NOT NULL,
+    `introduction` VARCHAR(500) NOT NULL,
+    `status` VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    `revision` INT NOT NULL DEFAULT 1,
+    `audit_reason` VARCHAR(200) DEFAULT NULL,
+    `audit_user_id` BIGINT DEFAULT NULL,
+    `audit_time` DATETIME DEFAULT NULL,
+    `submitted_at` DATETIME NOT NULL,
+    `created_at` DATETIME NOT NULL,
+    `updated_at` DATETIME NOT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_application_user` (`user_id`),
+    KEY `idx_application_status` (`status`, `submitted_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='工作人员入驻申请';
 
 SET FOREIGN_KEY_CHECKS = 1;

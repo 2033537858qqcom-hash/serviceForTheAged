@@ -44,7 +44,7 @@ function request(options) {
     const app = getApp();
     const token = app?.globalData?.token || '';
     const baseUrl = (app && app.globalData && app.globalData.baseUrl) || wx.getStorageSync('customBaseUrl') || 'http://localhost:8080/api';
-    const isAuthUrl = options.url.startsWith('/auth/');
+    const isAuthUrl = ['/auth/login', '/auth/wechat-login', '/auth/mock-login'].includes(options.url.split('?')[0]);
     // silent: 轮询、角标等后台请求失败时不打扰用户（登录过期仍会提示并跳转）。
     const toast = (title, duration) => { if (!options.silent) wx.showToast({ title, icon: 'none', duration: duration || 1500 }); };
     const fail = (kind, message, extra) => reject(new ApiError(kind, message, extra));

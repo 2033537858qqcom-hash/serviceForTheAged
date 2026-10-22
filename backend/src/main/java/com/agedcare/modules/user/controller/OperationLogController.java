@@ -63,6 +63,11 @@ public class OperationLogController {
             Map.entry("AuthController.login", "账号密码登录"),
             Map.entry("AuthController.wechatLogin", "微信授权登录"),
             Map.entry("MockAuthController.mockLogin", "模拟快速登录"),
+            Map.entry("MockAuthController.register", "创建答辩演示用户"),
+            Map.entry("StaffApplicationController.submit", "提交服务人员入驻申请"),
+            Map.entry("StaffApplicationController.audit", "审核服务人员入驻申请"),
+            Map.entry("StaffCredentialController.submit", "提交专业资质材料"),
+            Map.entry("StaffCredentialController.audit", "审核专业资质证明"),
             Map.entry("LEGACY_PHOTO_PENDING", "历史私有图片待清理"),
             Map.entry("LEGACY_PHOTO_CLEANED", "历史私有图片已清理归档")
     );

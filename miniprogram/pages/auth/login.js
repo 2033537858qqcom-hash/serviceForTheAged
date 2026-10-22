@@ -106,19 +106,14 @@ Page({
       wx.showToast({ title: '管理员请前往电脑端管理平台', icon: 'none', duration: 2500 });
       return;
     }
-    app.globalData.token = data.token;
-    app.globalData.userInfo = data.userInfo;
-    app.globalData.role = data.userInfo.role;
-
-    wx.setStorageSync('token', data.token);
-    wx.setStorageSync('userInfo', data.userInfo);
+    require('../../utils/session.js').applySession(app, data);
 
     wx.showToast({
       title: `欢迎，${data.userInfo.realName || data.userInfo.username}`,
       icon: 'success'
     });
 
-    navigation.afterLogin(this.redirectUrl);
+    navigation.afterLogin(this.redirectUrl || (data.newUser ? '/pages/user/welcome' : ''));
   },
 
   // 打开协议条款弹窗
