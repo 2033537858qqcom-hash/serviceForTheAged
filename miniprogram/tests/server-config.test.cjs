@@ -18,7 +18,7 @@ function launch(platform, saved = {}, legacy = false, envVersion = 'develop', lo
   };
   const rt = createRuntime(app, wx, undefined, {
     App: value => Object.assign(app, value, { globalData: structuredClone(value.globalData) }),
-    __stubModules: local ? { 'config/local.js': local } : {}
+    __stubModules: { 'config/local.js': local || {} }
   });
   rt.require('app'); app.onLaunch();
   return { app, storage, rt };

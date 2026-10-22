@@ -1,4 +1,4 @@
-<view class="custom-tab-bar {{isElderMode ? 'is-elder' : ''}}">
+<view wx:if="{{!overlayHidden}}" class="custom-tab-bar {{isElderMode ? 'is-elder' : ''}}">
   <view class="tab-bar-content">
     <view class="tab-indicator" style="width: {{100 / (list.length || 1)}}%; transform: translateX({{selected * 100}}%);" aria-hidden="true">
       <view class="indicator-pill"></view>

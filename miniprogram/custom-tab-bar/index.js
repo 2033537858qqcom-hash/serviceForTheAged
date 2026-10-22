@@ -45,6 +45,7 @@ const STAFF_LIST = [
 Component({
   data: {
     selected: 0,
+    overlayHidden: false,
     isElderMode: false,
     list: RESIDENT_LIST
   },
@@ -59,6 +60,13 @@ Component({
     }
   },
   methods: {
+    setOverlayVisible(owner, visible) {
+      if (!this._overlayOwners) this._overlayOwners = new Set();
+      if (visible) this._overlayOwners.add(owner);
+      else this._overlayOwners.delete(owner);
+      const overlayHidden = this._overlayOwners.size > 0;
+      if (this.data.overlayHidden !== overlayHidden) this.setData({ overlayHidden });
+    },
     getRole() {
       try {
         const app = typeof getApp === 'function' ? getApp() : null;
@@ -108,7 +116,7 @@ Component({
     switchTab(e) {
       const index = Number(e.currentTarget.dataset.index);
       const item = this.data.list[index];
-      if (!item || this._switching || index === this.data.selected) return;
+      if (!item || this.data.overlayHidden || this._switching || index === this.data.selected) return;
       const previous = this.data.selected;
       this._switching = true;
       this.syncState(index);

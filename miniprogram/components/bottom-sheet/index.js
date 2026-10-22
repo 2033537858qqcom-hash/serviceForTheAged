@@ -18,7 +18,14 @@ Component({
   },
   data: { rendered: false, drag: 0, dragging: false },
   lifetimes: {
-    detached() { clearTimeout(this._closeTimer); }
+    detached() {
+      clearTimeout(this._closeTimer);
+      this.setTabBarBlocked(false);
+    }
+  },
+  pageLifetimes: {
+    hide() { this.setTabBarBlocked(false); },
+    show() { if (this.properties.show) this.setTabBarBlocked(true); }
   },
   observers: {
     show(show) {
@@ -26,6 +33,7 @@ Component({
       this._startY = null;
       if (show) {
         this._opened = true;
+        this.setTabBarBlocked(true);
         this.setData({ rendered: true, dragging: false, drag: 420 }, () => this.setData({ drag: 0 }));
         return;
       }
@@ -33,6 +41,22 @@ Component({
     }
   },
   methods: {
+    // 自定义 TabBar 位于独立渲染层，弹层期间移除底栏，关闭后恢复。
+    setTabBarBlocked(blocked) {
+      if (!blocked) {
+        if (this._overlayBar) this._overlayBar.setOverlayVisible(this, false);
+        this._overlayBar = null;
+        return;
+      }
+      if (typeof getCurrentPages !== 'function') return;
+      const pages = getCurrentPages();
+      const page = pages[pages.length - 1];
+      const bar = page && typeof page.getTabBar === 'function' ? page.getTabBar() : null;
+      if (!bar || typeof bar.setOverlayVisible !== 'function') return;
+      if (this._overlayBar && this._overlayBar !== bar) this._overlayBar.setOverlayVisible(this, false);
+      this._overlayBar = bar;
+      bar.setOverlayVisible(this, true);
+    },
     noop() {},
     // scrollable 模式下内容区的 touchmove 不参与拖拽
     onContentMove() {},
@@ -69,7 +93,7 @@ Component({
       clearTimeout(this._closeTimer);
       this.setData({ drag: 640, dragging: false });
       this._closeTimer = setTimeout(() => {
-        if (!this._opened) this.setData({ rendered: false, drag: 0 });
+        if (!this._opened) this.setData({ rendered: false, drag: 0 }, () => this.setTabBarBlocked(false));
       }, 280);
     },
     onCancel() {

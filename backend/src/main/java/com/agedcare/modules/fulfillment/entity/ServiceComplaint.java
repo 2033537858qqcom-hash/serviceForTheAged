@@ -21,7 +21,6 @@ import java.time.LocalDateTime;
 public class ServiceComplaint implements Serializable {
     @TableId(type = IdType.ASSIGN_ID)
     private Long id;
-    @NotNull @Positive
     private Long orderId;
     private Long complainantId;
     @NotBlank @Size(max=128)

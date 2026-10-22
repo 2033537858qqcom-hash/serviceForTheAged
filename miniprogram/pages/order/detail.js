@@ -422,5 +422,14 @@ Page({
     navigation.navigateTo({
       url: `/pages/order/confirm?orderId=${this.data.orderId}${query}`
     });
+  },
+  goToOrderFeedback() {
+    const vo = this.data.orderVO;
+    if (!vo || !vo.order) return;
+    const orderId = vo.order.id;
+    const serviceName = encodeURIComponent(vo.order.serviceNameSnapshot || '');
+    navigation.navigateTo({
+      url: `/pages/user/feedback?orderId=${orderId}&serviceName=${serviceName}`
+    });
   }
 });

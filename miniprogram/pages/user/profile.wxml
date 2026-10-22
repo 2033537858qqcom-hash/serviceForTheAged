@@ -86,6 +86,15 @@
         </view>
         <image class="menu-arrow" src="/assets/icons/arrow.png" />
       </view>
+
+      <view class="menu-item" hover-class="spring-in" hover-stay-time="80" bindtap="goToFeedback">
+        <view class="menu-icon-wrap"><image src="/assets/icons/feedback.png" /></view>
+        <view class="menu-copy">
+          <view class="menu-label">工作建议与社区建言</view>
+          <view class="menu-description">一线照护反馈与平台优化建议，跟进处理答复</view>
+        </view>
+        <image class="menu-arrow" src="/assets/icons/arrow.png" />
+      </view>
     </view>
   </block>
 
@@ -136,6 +145,15 @@
         <view class="menu-copy">
           <view class="menu-label">家属代约绑定</view>
           <view class="menu-description">绑定父母长辈，远程代办与进度查看</view>
+        </view>
+        <image class="menu-arrow" src="/assets/icons/arrow.png" />
+      </view>
+
+      <view class="menu-item" hover-class="spring-in" hover-stay-time="80" bindtap="goToFeedback">
+        <view class="menu-icon-wrap"><image src="/assets/icons/feedback.png" /></view>
+        <view class="menu-copy">
+          <view class="menu-label">服务建议与反馈</view>
+          <view class="menu-description">向社区提交照护意见与建言，随时查看处置答复</view>
         </view>
         <image class="menu-arrow" src="/assets/icons/arrow.png" />
       </view>

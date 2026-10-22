@@ -12,7 +12,8 @@
     "pages/user/profile",
     "pages/user/family",
     "pages/user/elder-form",
-    "pages/user/elder-list"
+    "pages/user/elder-list",
+    "pages/user/feedback"
   ],
   "window": {
     "backgroundTextStyle": "light",

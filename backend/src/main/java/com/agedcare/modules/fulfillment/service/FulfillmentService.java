@@ -342,7 +342,7 @@ public class FulfillmentService {
     }
 
     /**
-     * 提交投诉
+     * 提交投诉或建议
      */
     @Transactional(rollbackFor = Exception.class)
     public void submitComplaint(ServiceComplaint complaint) {
@@ -350,20 +350,33 @@ public class FulfillmentService {
         if (currentUser == null) {
             throw new BusinessException(ResultCode.UNAUTHORIZED);
         }
-        if (complaint.getOrderId() == null) {
-            throw new BusinessException("请指定所要投诉的订单编号");
+        if (complaint.getOrderId() != null && complaint.getOrderId() > 0) {
+            ServiceOrder order = serviceOrderMapper.selectById(complaint.getOrderId());
+            if (order == null) {
+                throw new BusinessException("目标订单不存在");
+            }
+            OrderAccessPolicy.customer(order, elderProfileMapper, elderProfileService, false);
+        } else {
+            complaint.setOrderId(0L);
         }
-        ServiceOrder order = serviceOrderMapper.selectById(complaint.getOrderId());
-        if (order == null) {
-            throw new BusinessException("目标订单不存在");
-        }
-        OrderAccessPolicy.customer(order, elderProfileMapper, elderProfileService, false);
 
         complaint.setComplainantId(currentUser.getId());
         complaint.setStatus("PENDING");
         complaint.setCreatedAt(LocalDateTime.now());
         complaint.setUpdatedAt(LocalDateTime.now());
         serviceComplaintMapper.insert(complaint);
+    }
+
+    public Page<ServiceComplaint> pageMyComplaints(int pageNum, int pageSize) {
+        LoginUser currentUser = UserContext.getUser();
+        if (currentUser == null) {
+            throw new BusinessException(ResultCode.UNAUTHORIZED);
+        }
+        Page<ServiceComplaint> page = new Page<>(pageNum, pageSize);
+        LambdaQueryWrapper<ServiceComplaint> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ServiceComplaint::getComplainantId, currentUser.getId());
+        wrapper.orderByDesc(ServiceComplaint::getCreatedAt);
+        return serviceComplaintMapper.selectPage(page, wrapper);
     }
 
     public Page<ServiceComplaint> pageComplaints(int pageNum, int pageSize, String status) {

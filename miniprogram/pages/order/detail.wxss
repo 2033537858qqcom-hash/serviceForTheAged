@@ -264,3 +264,7 @@
   .container.elder-mode .label { flex-basis: auto; }
   .container .btn-dial, .container .btn-map-action { min-height: var(--control-height); padding: 12px 20px; }
 }
+
+.order-feedback-item { cursor: pointer; }
+.feedback-action-link { gap: 6rpx; }
+.feedback-link-text { color: var(--primary-dark); font-size: var(--font-caption); font-weight: 500; }

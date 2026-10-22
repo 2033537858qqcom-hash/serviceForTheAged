@@ -11,7 +11,12 @@
       <template #default>
       <el-table :data="tableData" v-loading="loading && tableData.length > 0" stripe style="width: 100%">
         <el-table-column prop="id" label="编号" width="100" />
-        <el-table-column prop="orderId" label="关联订单编号" width="180" />
+        <el-table-column prop="orderId" label="关联订单编号" width="180">
+          <template #default="{ row }">
+            <span v-if="row.orderId && row.orderId !== '0'">{{ row.orderId }}</span>
+            <el-tag v-else size="small" type="info">平台/社区通用建议</el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="complaintTitle" label="投诉主题" width="180">
           <template #default="{ row }">
             <span style="font-weight: bold;">{{ row.complaintTitle }}</span>

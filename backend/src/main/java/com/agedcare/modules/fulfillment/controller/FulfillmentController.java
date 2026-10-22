@@ -75,12 +75,22 @@ public class FulfillmentController {
         return Result.success();
     }
 
-    @Operation(summary = "提交服务投诉或建议(仅限订单关联居民)")
+    @Operation(summary = "提交服务投诉或建议(仅限居民)")
     @PostMapping("/complaint")
     @RequireRole(UserRole.RESIDENT)
     public Result<Void> submitComplaint(@Valid @RequestBody ServiceComplaint complaint) {
         fulfillmentService.submitComplaint(complaint);
         return Result.success();
+    }
+
+    @Operation(summary = "查询我的投诉与建议列表(居民)")
+    @GetMapping("/complaints/my")
+    @RequireRole(UserRole.RESIDENT)
+    public Result<Page<ServiceComplaint>> pageMyComplaints(
+            @RequestParam(defaultValue = "1") @jakarta.validation.constraints.Min(1) int pageNum,
+            @RequestParam(defaultValue = "10") @jakarta.validation.constraints.Min(1) @jakarta.validation.constraints.Max(100) int pageSize
+    ) {
+        return Result.success(fulfillmentService.pageMyComplaints(pageNum, pageSize));
     }
 
     @Operation(summary = "分页查询投诉列表(管理员)")

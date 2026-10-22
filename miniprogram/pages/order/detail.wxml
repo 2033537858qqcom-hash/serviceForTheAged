@@ -151,6 +151,13 @@
       <text class="label">订单编号</text>
       <text class="value code">{{orderVO.order.orderNo}}</text>
     </view>
+    <view class="info-item flex-between order-feedback-item" bindtap="goToOrderFeedback">
+      <text class="label">服务监督</text>
+      <view class="flex-row items-center feedback-action-link">
+        <text class="feedback-link-text">投诉与建议</text>
+        <image class="menu-arrow" src="/assets/icons/arrow.png" />
+      </view>
+    </view>
   </view>
 
   <!-- 履约上门记录 (服务人员提交后展示) -->

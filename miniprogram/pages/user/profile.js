@@ -353,6 +353,14 @@ Page({
     navigation.navigateTo({ url: '/pages/user/family' });
   },
 
+  goToFeedback() {
+    if (!this.data.userInfo) {
+      navigation.toLogin('/pages/user/feedback');
+      return;
+    }
+    navigation.navigateTo({ url: '/pages/user/feedback' });
+  },
+
   goToWorkbench() {
     navigation.switchTab({
       url: '/pages/staff/workbench',
