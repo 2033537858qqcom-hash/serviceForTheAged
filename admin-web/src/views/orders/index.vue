@@ -1,34 +1,47 @@
 <template>
   <div class="orders-container">
-    <PageHeader eyebrow="服务订单" title="每一次服务，都有迹可循" description="查看预约进度、协调人员安排，跟进服务完成情况。" />
+    <PageHeader
+      eyebrow="服务订单"
+      title="每一次服务，都有迹可循"
+      description="查看预约进度、协调人员安排，跟进服务完成情况。"
+    />
     <el-card shadow="never" class="filter-card">
-      <el-form :inline="true" :model="queryForm">
+      <el-form :inline="true" :model="list.filters" @submit.prevent="list.search">
         <el-form-item label="订单编号">
-          <el-input v-model="queryForm.orderNo" placeholder="输入订单号" clearable />
+          <el-input v-model="list.filters.orderNo" placeholder="输入订单号，回车查询" clearable @clear="list.search" />
         </el-form-item>
         <el-form-item label="订单状态">
-          <el-select v-model="queryForm.status" placeholder="全部状态" clearable style="width: 160px;">
-            <el-option label="等待安排" value="WAIT_DISPATCH" />
-            <el-option label="等待接单" value="WAIT_ACCEPT" />
-            <el-option label="待上门" value="WAIT_VISIT" />
-            <el-option label="服务中" value="IN_SERVICE" />
-            <el-option label="待确认" value="WAIT_CONFIRM" />
-            <el-option label="已完成" value="COMPLETED" />
-            <el-option label="需要协调" value="WAIT_MANUAL" />
-            <el-option label="已取消" value="CANCELLED" />
+          <el-select
+            v-model="list.filters.status"
+            placeholder="全部状态"
+            clearable
+            style="width: 160px"
+            @change="list.search"
+          >
+            <el-option v-for="option in orderStatusOptions" :key="option.value" v-bind="option" />
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" icon="Search" @click="handleSearch">查询</el-button>
-          <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+          <el-button type="primary" icon="Search" native-type="submit">查询</el-button>
+          <el-button icon="Refresh" @click="list.reset">重置</el-button>
         </el-form-item>
       </el-form>
     </el-card>
 
     <el-card shadow="never" class="table-card">
-      <el-skeleton :loading="loading && !tableData.length" animated :rows="6">
-      <template #default>
-      <el-table :data="tableData" v-loading="loading && tableData.length > 0" stripe style="width: 100%">
+      <DataTable
+        :rows="list.rows.value"
+        :loading="list.loading.value"
+        :error="list.error.value"
+        :total="list.total.value"
+        :page-num="list.pageNum.value"
+        :page-size="list.pageSize.value"
+        empty-text="没有符合条件的订单"
+        error-text="订单暂时未能加载"
+        @update:page-num="list.setPage"
+        @update:page-size="list.setPageSize"
+        @retry="list.load"
+      >
         <el-table-column prop="order.serviceNameSnapshot" label="服务项目 / 订单编号" min-width="215">
           <template #default="{ row }">
             <div class="cell-title">{{ row.order.serviceNameSnapshot }}</div>
@@ -43,70 +56,76 @@
         <el-table-column prop="order.plannedStartAt" label="预约时间" width="170" />
         <el-table-column prop="order.status" label="状态" width="120">
           <template #default="{ row }">
-            <el-tag :type="statusTagMap[row.order.status] || 'info'">
-              {{ statusTextMap[row.order.status] || row.order.status }}
-            </el-tag>
+            <StatusTag kind="order" :value="row.order.status" />
           </template>
         </el-table-column>
         <el-table-column label="服务人员" width="120">
           <template #default="{ row }">
             <span v-if="row.currentStaff">{{ row.currentStaff.user.realName }}</span>
-            <span v-else style="color: var(--muted);">尚未分配</span>
+            <span v-else style="color: var(--muted)">尚未分配</span>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="145" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" link @click="openDetail(row.order.id)">查看</el-button>
-            <el-dropdown v-if="canReassign(row.order.status) || canCancel(row.order.status) || row.order.status === 'WAIT_CONFIRM'" trigger="click" class="row-more">
-              <el-button link aria-label="更多订单操作">更多</el-button>
-              <template #dropdown><el-dropdown-menu>
-                <el-dropdown-item v-if="canReassign(row.order.status)" @click="openReassign(row)">安排改派</el-dropdown-item>
-                <el-dropdown-item v-if="row.order.status === 'WAIT_CONFIRM'" @click="adminConfirm(row.order.id)">代确认完成</el-dropdown-item>
-                <el-dropdown-item v-if="canCancel(row.order.status)" @click="handleCancel(row.order.id)">取消订单</el-dropdown-item>
-              </el-dropdown-menu></template>
+            <el-dropdown
+              v-if="canReassign(row.order.status) || canCancel(row.order.status) || row.order.status === 'WAIT_CONFIRM'"
+              trigger="click"
+              class="row-more"
+            >
+              <el-button link aria-label="更多订单操作" :loading="rowAction.pendingKey.value === row.order.id">
+                更多
+              </el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item v-if="canReassign(row.order.status)" @click="openReassign(row)">
+                    安排改派
+                  </el-dropdown-item>
+                  <el-dropdown-item v-if="row.order.status === 'WAIT_CONFIRM'" @click="adminConfirm(row.order.id)">
+                    代确认完成
+                  </el-dropdown-item>
+                  <el-dropdown-item
+                    v-if="canCancel(row.order.status)"
+                    divided
+                    class="is-danger"
+                    @click="handleCancel(row.order.id)"
+                  >
+                    取消订单
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
             </el-dropdown>
           </template>
         </el-table-column>
-      </el-table>
-      </template>
-      </el-skeleton>
-
-      <div class="pagination-box">
-        <el-pagination
-          v-model:current-page="queryForm.pageNum"
-          v-model:page-size="queryForm.pageSize"
-          :total="total"
-          :page-sizes="[10, 20, 50]"
-          layout="total, sizes, prev, pager, next, jumper"
-          @size-change="fetchData"
-          @current-change="fetchData"
-        />
-      </div>
+      </DataTable>
     </el-card>
 
     <!-- 订单详情抽屉 -->
-    <el-drawer v-model="drawerVisible" title="订单全流程追踪与详情" size="600px">
+    <el-drawer v-model="drawerVisible" title="订单全流程追踪与详情" size="600px" @closed="closeDetail">
       <div v-if="detailData" class="drawer-body">
         <el-descriptions title="基本信息" :column="2" border>
           <el-descriptions-item label="订单号">{{ detailData.order.orderNo }}</el-descriptions-item>
           <el-descriptions-item label="当前状态">
-            <el-tag :type="statusTagMap[detailData.order.status] || 'info'">
-              {{ statusTextMap[detailData.order.status] || detailData.order.status }}
-            </el-tag>
+            <StatusTag kind="order" :value="detailData.order.status" />
           </el-descriptions-item>
           <el-descriptions-item label="服务项目">{{ detailData.order.serviceNameSnapshot }}</el-descriptions-item>
           <el-descriptions-item label="预计费用">¥{{ detailData.order.priceSnapshot }}</el-descriptions-item>
           <el-descriptions-item label="费用协调人">{{ detailData.payerName || '下单人' }}</el-descriptions-item>
           <el-descriptions-item label="结算说明" :span="2">{{ detailData.settlementNote }}</el-descriptions-item>
-          <el-descriptions-item label="服务对象">{{ detailData.elder ? detailData.elder.name : '' }}</el-descriptions-item>
+          <el-descriptions-item label="服务对象">
+            {{ detailData.elder ? detailData.elder.name : '' }}
+          </el-descriptions-item>
           <el-descriptions-item label="预约开始">{{ detailData.order.plannedStartAt }}</el-descriptions-item>
           <el-descriptions-item label="上门地址" :span="2">{{ detailData.order.addressSnapshot }}</el-descriptions-item>
-          <el-descriptions-item label="联系人">{{ detailData.order.contactNameSnapshot }} ({{ detailData.order.contactPhoneSnapshot }})</el-descriptions-item>
+          <el-descriptions-item label="联系人">
+            {{ detailData.order.contactNameSnapshot }}
+            <MaskedText :value="detailData.order.contactPhoneSnapshot" />
+          </el-descriptions-item>
           <el-descriptions-item label="调度轮次">第 {{ detailData.order.dispatchRound }} 轮</el-descriptions-item>
         </el-descriptions>
 
         <!-- 履约记录 -->
-        <div v-if="detailData.serviceRecord" style="margin-top: 24px;">
+        <div v-if="detailData.serviceRecord" style="margin-top: 24px">
           <el-descriptions title="现场履约记录" :column="1" border>
             <el-descriptions-item label="实际起止时间">
               {{ detailData.serviceRecord.actualStartAt }} ~ {{ detailData.serviceRecord.actualEndAt }}
@@ -114,35 +133,39 @@
             <el-descriptions-item label="现场工作总结">
               {{ detailData.serviceRecord.serviceSummary }}
             </el-descriptions-item>
-            <el-descriptions-item v-if="photoPaths.length" label="现场照片"><PrivatePhoto v-for="source in photoPaths" :key="source" :source="source" /></el-descriptions-item>
+            <el-descriptions-item v-if="photoPaths.length" label="现场照片">
+              <PrivatePhoto v-for="source in photoPaths" :key="source" :source="source" />
+            </el-descriptions-item>
           </el-descriptions>
         </div>
 
         <!-- 评价反馈 -->
-        <div v-if="detailData.serviceReview" style="margin-top: 24px;">
+        <div v-if="detailData.serviceReview" style="margin-top: 24px">
           <el-descriptions title="客户评价" :column="1" border>
             <el-descriptions-item label="满意度星级">
               <el-rate :model-value="detailData.serviceReview.rating" disabled show-score text-color="#ff9900" />
             </el-descriptions-item>
             <el-descriptions-item label="评价内容">
               {{ detailData.serviceReview.content || '无文字评价' }}
-              <div v-if="detailData.serviceReview.tags" style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px;"><el-tag v-for="tag in detailData.serviceReview.tags.split(',')" :key="tag" size="small">{{ tag }}</el-tag></div>
+              <div
+                v-if="detailData.serviceReview.tags"
+                style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px"
+              >
+                <el-tag v-for="tag in detailData.serviceReview.tags.split(',')" :key="tag" size="small">
+                  {{ tag }}
+                </el-tag>
+              </div>
             </el-descriptions-item>
           </el-descriptions>
         </div>
 
         <!-- 状态流转日志时间线 -->
-        <div style="margin-top: 24px;">
-          <div style="font-weight: bold; margin-bottom: 16px;">状态流转轨迹与日志</div>
+        <div style="margin-top: 24px">
+          <div style="font-weight: bold; margin-bottom: 16px">状态流转轨迹与日志</div>
           <el-timeline>
-            <el-timeline-item
-              v-for="log in detailData.logs"
-              :key="log.id"
-              :timestamp="log.createdAt"
-              type="primary"
-            >
-              <strong>{{ statusTextMap[log.toStatus] || log.toStatus }}</strong>
-              <div style="color: #54645a; font-size: 13px; margin-top: 4px;">{{ log.reason }}</div>
+            <el-timeline-item v-for="log in detailData.logs" :key="log.id" :timestamp="log.createdAt" type="primary">
+              <strong>{{ statusText('order', log.toStatus) }}</strong>
+              <div style="color: #54645a; font-size: 13px; margin-top: 4px">{{ log.reason }}</div>
             </el-timeline-item>
           </el-timeline>
         </div>
@@ -150,25 +173,24 @@
     </el-drawer>
 
     <!-- 改派对话框 -->
-    <el-dialog v-model="reassignVisible" title="人工调度改派" width="500px">
-      <el-form :model="reassignForm" label-width="100px">
-        <el-form-item label="改派给人员">
-          <el-select v-model="reassignForm.newStaffId" placeholder="选择目标服务人员" style="width: 100%;">
-            <el-option
-              v-for="s in staffList"
-              :key="s.profile.id"
-              :label="`${s.user.realName} (${s.profile.serviceArea} - ${s.profile.currentStatus === 'AVAILABLE' ? '接单中' : '休息中'})`"
-              :value="s.profile.id"
-            />
-          </el-select>
+    <el-dialog v-model="reassignVisible" title="人工调度改派" width="500px" @closed="reassignFormRef?.clearValidate()">
+      <el-form ref="reassignFormRef" :model="reassignForm" :rules="reassignRules" label-width="100px">
+        <el-form-item label="改派给人员" prop="newStaffId">
+          <StaffSelect v-model="reassignForm.newStaffId" />
         </el-form-item>
-        <el-form-item label="改派原因">
-          <el-input v-model="reassignForm.reason" type="textarea" placeholder="填写人工改派原因留档" />
+        <el-form-item label="改派原因" prop="reason">
+          <el-input
+            v-model="reassignForm.reason"
+            type="textarea"
+            maxlength="200"
+            show-word-limit
+            placeholder="填写人工改派原因留档（至少 4 个字）"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="reassignVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitReassign">确认改派</el-button>
+        <el-button type="primary" :loading="reassign.pending.value" @click="reassign.run">确认改派</el-button>
       </template>
     </el-dialog>
   </div>
@@ -176,150 +198,131 @@
 
 <script setup>
 import PageHeader from '../../components/PageHeader.vue'
-import { ref, reactive, onMounted, computed } from 'vue'
+import DataTable from '../../components/DataTable.vue'
+import StatusTag from '../../components/StatusTag.vue'
+import MaskedText from '../../components/MaskedText.vue'
+import StaffSelect from '../../components/StaffSelect.vue'
 import PrivatePhoto from '../../components/PrivatePhoto.vue'
-import { useRoute } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ref, reactive, computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import request from '../../utils/request'
+import { statusOptions, statusText } from '../../utils/presentation.js'
+import { usePagedQuery } from '../../composables/usePagedQuery.js'
+import { useRowSubmit, useSubmit } from '../../composables/useSubmit.js'
+import { confirmDanger, promptReason } from '../../utils/confirm.js'
+import { required } from '../../utils/validators.js'
 
 const route = useRoute()
-const loading = ref(false)
-const tableData = ref([])
-const total = ref(0)
+const router = useRouter()
+const orderStatusOptions = statusOptions('order')
+const list = usePagedQuery({
+  fetcher: (params, { signal }) => request.get('/orders/page', { params, signal }),
+  defaults: { orderNo: '', status: '' },
+  pageSize: 10
+})
+
 const drawerVisible = ref(false)
 const detailData = ref(null)
 const photoPaths = computed(() => {
   try {
     const values = JSON.parse(detailData.value?.serviceRecord?.attachmentsJson || '[]')
     return Array.isArray(values) ? values.filter(value => typeof value === 'string').slice(0, 4) : []
-  } catch { return [] }
-})
-const reassignVisible = ref(false)
-const staffList = ref([])
-
-const queryForm = reactive({
-  pageNum: 1,
-  pageSize: 10,
-  orderNo: '',
-  status: ''
-})
-
-const reassignForm = reactive({
-  orderId: null,
-  newStaffId: null,
-  reason: '管理员人工协调重派'
-})
-
-const statusTextMap = {
-  'WAIT_DISPATCH': '待派单',
-  'WAIT_ACCEPT': '待接单',
-  'WAIT_VISIT': '待上门',
-  'IN_SERVICE': '服务中',
-  'WAIT_CONFIRM': '待确认',
-  'COMPLETED': '已完成',
-  'WAIT_MANUAL': '待人工处理',
-  'CANCELLED': '已取消'
-}
-
-const statusTagMap = {
-  'WAIT_DISPATCH': 'warning',
-  'WAIT_ACCEPT': 'warning',
-  'WAIT_VISIT': 'primary',
-  'IN_SERVICE': 'primary',
-  'WAIT_CONFIRM': 'warning',
-  'COMPLETED': 'success',
-  'WAIT_MANUAL': 'danger',
-  'CANCELLED': 'info'
-}
-
-const canCancel = (status) => ['WAIT_DISPATCH', 'WAIT_ACCEPT', 'WAIT_VISIT', 'WAIT_MANUAL'].includes(status)
-const canReassign = (status) => ['WAIT_DISPATCH', 'WAIT_ACCEPT', 'WAIT_VISIT', 'WAIT_MANUAL'].includes(status)
-
-const fetchData = () => {
-  loading.value = true
-  request.get('/orders/page', { params: queryForm }).then(res => {
-    tableData.value = res.records || []
-    total.value = Number(res.total || 0)
-  }).finally(() => {
-    loading.value = false
-  })
-}
-
-const handleSearch = () => {
-  queryForm.pageNum = 1
-  fetchData()
-}
-
-const resetQuery = () => {
-  queryForm.orderNo = ''
-  queryForm.status = ''
-  queryForm.pageNum = 1
-  fetchData()
-}
-
-const openDetail = (id) => {
-  request.get(`/orders/${id}`).then(res => {
-    detailData.value = res
-    drawerVisible.value = true
-  })
-}
-
-const openReassign = (row) => {
-  reassignForm.orderId = row.order.id
-  reassignForm.newStaffId = null
-  reassignForm.reason = '管理员人工协调调度'
-  reassignVisible.value = true
-  loadStaffList()
-}
-
-const loadStaffList = () => {
-  request.get('/staff/page', { params: { pageNum: 1, pageSize: 50, auditStatus: 'APPROVED' } }).then(res => {
-    staffList.value = res.records || []
-  })
-}
-
-const submitReassign = () => {
-  if (!reassignForm.newStaffId) {
-    ElMessage.warning('请选择目标服务人员')
-    return
+  } catch {
+    return []
   }
-  request.post('/dispatch/reassign', reassignForm).then(() => {
+})
+
+const reassignVisible = ref(false)
+const reassignFormRef = ref(null)
+const reassignForm = reactive({ orderId: null, newStaffId: null, reason: '' })
+const reassignRules = {
+  newStaffId: [required('请选择改派的服务人员', 'change')],
+  reason: [required('请填写改派原因'), { min: 4, max: 200, message: '改派原因为 4 至 200 字', trigger: 'blur' }]
+}
+
+const ACTIVE = ['WAIT_DISPATCH', 'WAIT_ACCEPT', 'WAIT_VISIT', 'WAIT_MANUAL']
+const canCancel = status => ACTIVE.includes(status)
+const canReassign = status => ACTIVE.includes(status)
+
+// 详情抽屉与 ?orderId= 同步：可分享、可后退关闭，同页切换订单也会更新（RT4）
+let detailSeq = 0
+async function loadDetail(id) {
+  const seq = ++detailSeq
+  try {
+    const data = await request.get(`/orders/${id}`)
+    if (seq !== detailSeq) return
+    detailData.value = data
+    drawerVisible.value = true
+  } catch {
+    if (seq === detailSeq) closeDetail()
+  }
+}
+function openDetail(id) {
+  router.push({ query: { ...route.query, orderId: String(id) } })
+}
+function closeDetail() {
+  drawerVisible.value = false
+  if (route.query.orderId) {
+    const query = { ...route.query }
+    delete query.orderId
+    router.replace({ query })
+  }
+}
+watch(
+  () => route.query.orderId,
+  id => {
+    if (id) loadDetail(String(id))
+    else drawerVisible.value = false
+  },
+  { immediate: true }
+)
+
+function openReassign(row) {
+  Object.assign(reassignForm, { orderId: row.order.id, newStaffId: null, reason: '' })
+  reassignVisible.value = true
+}
+
+const reassign = useSubmit(async () => {
+  const valid = await reassignFormRef.value.validate().catch(() => false)
+  if (!valid) return
+  try {
+    await request.post('/dispatch/reassign', { ...reassignForm, reason: reassignForm.reason.trim() })
     ElMessage.success('人工改派成功')
     reassignVisible.value = false
-    fetchData()
-  })
-}
-
-const adminConfirm = (orderId) => {
-  ElMessageBox.prompt('请输入管理员代为确认的依据与情况说明', '管理员代确认服务完成', {
-    confirmButtonText: '确认完成',
-    cancelButtonText: '取消',
-    inputValue: '',
-    inputPlaceholder: '填写实际核验方式、结果及代确认原因（10至220字）',
-    inputValidator: value => Boolean(value && value.trim().length >= 10 && value.length <= 220) || '请填写10至220字的真实核验依据'
-  }).then(({ value }) => {
-    request.post('/fulfillment/confirm', { orderId, note: value }).then(() => {
-      ElMessage.success('代确认完成成功')
-      fetchData()
-    })
-  })
-}
-
-const handleCancel = (orderId) => {
-  ElMessageBox.confirm('确定要取消该订单吗？生效的排班预留将立即释放。', '取消订单确认', {
-    type: 'warning'
-  }).then(() => {
-    request.post(`/orders/${orderId}/cancel?reason=管理员后台取消`).then(() => {
-      ElMessage.success('订单已取消')
-      fetchData()
-    })
-  })
-}
-
-onMounted(() => {
-  fetchData()
-  if (route.query.orderId) openDetail(String(route.query.orderId))
+    list.load()
+  } catch {}
 })
+
+const rowAction = useRowSubmit(async (orderId, action) => {
+  try {
+    await action(orderId)
+    list.load()
+  } catch {}
+})
+
+async function adminConfirm(orderId) {
+  const note = await promptReason('请输入管理员代为确认的依据与情况说明', '管理员代确认服务完成', {
+    confirmText: '确认完成',
+    min: 10,
+    max: 220,
+    placeholder: '填写实际核验方式、结果及代确认原因（10至220字）'
+  })
+  if (note === null) return
+  rowAction.run(orderId, async id => {
+    await request.post('/fulfillment/confirm', { orderId: id, note })
+    ElMessage.success('代确认完成成功')
+  })
+}
+
+async function handleCancel(orderId) {
+  const ok = await confirmDanger('取消后服务人员的排班预留会立即释放，居民会收到取消通知。', '取消订单', '确认取消订单')
+  if (!ok) return
+  rowAction.run(orderId, async id => {
+    await request.post(`/orders/${id}/cancel`, null, { params: { reason: '管理员后台取消' } })
+    ElMessage.success('订单已取消')
+  })
+}
 </script>
 
 <style scoped>

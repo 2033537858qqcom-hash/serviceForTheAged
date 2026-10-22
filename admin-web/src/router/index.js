@@ -1,10 +1,12 @@
 import { hasAdminSession } from '../utils/admin-session.js'
 import { createRouter, createWebHistory } from 'vue-router'
+import { loginGuard, pageTitle } from './guards.js'
 
 const routes = [
   {
     path: '/login',
     name: 'Login',
+    meta: { title: '登录' },
     component: () => import('../views/login/index.vue')
   },
   {
@@ -28,7 +30,7 @@ const routes = [
         path: 'dispatch',
         name: 'Dispatch',
         component: () => import('../views/dispatch/index.vue'),
-        meta: { title: '智能派单', icon: 'Operation' }
+        meta: { title: '智能派单', icon: 'Connection' }
       },
       {
         path: 'elders',
@@ -58,7 +60,7 @@ const routes = [
         path: 'operation-logs',
         name: 'OperationLogs',
         component: () => import('../views/operation-logs/index.vue'),
-        meta: { title: '操作日志' }
+        meta: { title: '操作日志', icon: 'Tickets' }
       }
     ]
   },
@@ -75,8 +77,9 @@ const router = createRouter({
   routes
 })
 
-router.beforeEach(to => {
-  if (to.path !== '/login' && !hasAdminSession(localStorage)) return '/login'
+router.beforeEach(to => loginGuard(to, hasAdminSession(localStorage)))
+router.afterEach(to => {
+  document.title = pageTitle(to)
 })
 
 export default router

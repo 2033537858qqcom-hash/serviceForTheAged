@@ -6,7 +6,10 @@ import * as all from '@element-plus/icons-vue'
 import { icons } from './icons.js'
 
 function files(dir) {
-  return readdirSync(dir).flatMap(n => { const p = join(dir, n); return statSync(p).isDirectory() ? files(p) : /\.(vue|js)$/.test(n) ? [p] : [] })
+  return readdirSync(dir).flatMap(n => {
+    const p = join(dir, n)
+    return statSync(p).isDirectory() ? files(p) : /\.(vue|js)$/.test(n) ? [p] : []
+  })
 }
 
 test('every Element Plus icon referenced in src is registered', () => {

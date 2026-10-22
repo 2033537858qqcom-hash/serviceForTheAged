@@ -5,6 +5,7 @@ import com.agedcare.common.enums.UserRole;
 import com.agedcare.common.security.RequireRole;
 import com.agedcare.modules.elder.entity.ElderProfile;
 import com.agedcare.modules.elder.dto.ElderSaveDTO;
+import com.agedcare.modules.elder.dto.ElderAdminVO;
 import jakarta.validation.Valid;
 import org.springframework.beans.BeanUtils;
 import com.agedcare.modules.elder.service.ElderProfileService;
@@ -28,13 +29,16 @@ public class ElderProfileController {
     @Operation(summary = "分页查询老人档案列表(管理员)")
     @GetMapping("/page")
     @RequireRole(UserRole.ADMIN)
-    public Result<Page<ElderProfile>> page(
+    public Result<Page<ElderAdminVO>> page(
             @RequestParam(defaultValue = "1") @jakarta.validation.constraints.Min(1) int pageNum,
             @RequestParam(defaultValue = "10") @jakarta.validation.constraints.Min(1) @jakarta.validation.constraints.Max(100) int pageSize,
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String community
     ) {
-        return Result.success(elderProfileService.pageElders(pageNum, pageSize, name, community));
+        Page<ElderProfile> source = elderProfileService.pageElders(pageNum, pageSize, name, community);
+        Page<ElderAdminVO> result = new Page<>(source.getCurrent(), source.getSize(), source.getTotal());
+        result.setRecords(source.getRecords().stream().map(ElderAdminVO::from).toList());
+        return Result.success(result);
     }
 
     @Operation(summary = "获取当前用户可访问的老人列表(本人及已授权家属)")
