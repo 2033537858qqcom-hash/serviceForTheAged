@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 36" fill="none">
+  <defs>
+    <!-- 渐变让主藤条向左右两端自然渐隐，与留白融为一体 -->
+    <linearGradient id="vineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#176b5d" stop-opacity="0.04" />
+      <stop offset="25%" stop-color="#176b5d" stop-opacity="0.45" />
+      <stop offset="50%" stop-color="#176b5d" stop-opacity="0.75" />
+      <stop offset="75%" stop-color="#176b5d" stop-opacity="0.45" />
+      <stop offset="100%" stop-color="#176b5d" stop-opacity="0.04" />
+    </linearGradient>
+  </defs>
+
+  <!-- 柔美主藤条曲线 -->
+  <path d="M 8 18 C 45 18, 68 14, 110 18 C 152 22, 175 18, 212 18" stroke="url(#vineGrad)" stroke-width="1.6" stroke-linecap="round" />
+
+  <!-- 左侧分枝与柔美嫩叶 -->
+  <path d="M 82 16.5 C 78 10, 68 8, 64 12 C 61 16, 71 18, 82 16.5 Z" fill="#176b5d" fill-opacity="0.32" stroke="#176b5d" stroke-width="1.1" stroke-opacity="0.65" stroke-linejoin="round" />
+  <path d="M 50 18 C 46 23, 37 24, 34 20 C 33 16, 42 16.5, 50 18 Z" fill="#176b5d" fill-opacity="0.25" stroke="#176b5d" stroke-width="1" stroke-opacity="0.55" stroke-linejoin="round" />
+  <circle cx="24" cy="18" r="1.8" fill="#176b5d" fill-opacity="0.4" />
+
+  <!-- 右侧分枝与柔美嫩叶 -->
+  <path d="M 138 19.5 C 142 13, 152 11, 156 15 C 159 19, 149 21, 138 19.5 Z" fill="#176b5d" fill-opacity="0.32" stroke="#176b5d" stroke-width="1.1" stroke-opacity="0.65" stroke-linejoin="round" />
+  <path d="M 170 18 C 174 23, 183 24, 186 20 C 187 16, 178 16.5, 170 18 Z" fill="#176b5d" fill-opacity="0.25" stroke="#176b5d" stroke-width="1" stroke-opacity="0.55" stroke-linejoin="round" />
+  <circle cx="196" cy="18" r="1.8" fill="#176b5d" fill-opacity="0.4" />
+
+  <!-- 中心雅致花草微绽核心 -->
+  <!-- 上侧嫩叶 -->
+  <path d="M 110 14 C 106 7, 114 7, 110 14 Z" fill="#176b5d" fill-opacity="0.5" stroke="#176b5d" stroke-width="1" stroke-opacity="0.75" />
+  <!-- 下侧嫩叶 -->
+  <path d="M 110 22 C 106 29, 114 29, 110 22 Z" fill="#176b5d" fill-opacity="0.5" stroke="#176b5d" stroke-width="1" stroke-opacity="0.75" />
+  <!-- 中心小暖色花蕊/生机圆点 (与颐邻Logo橘点相呼应) -->
+  <circle cx="110" cy="18" r="3.2" fill="#d97736" fill-opacity="0.85" />
+  <circle cx="110" cy="18" r="5" stroke="#d97736" stroke-width="0.8" stroke-opacity="0.4" />
+</svg>
