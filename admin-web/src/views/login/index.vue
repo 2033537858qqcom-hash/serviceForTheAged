@@ -92,10 +92,12 @@
 </template>
 <script setup>
 import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import request from '../../utils/request'
+import { safeRedirect, saveSession } from '../../utils/admin-session.js'
 const router = useRouter()
+const route = useRoute()
 const photoFailed = ref(false)
 const loginFormRef = ref(null),
   loading = ref(false)
@@ -132,10 +134,9 @@ function saveLogin(result) {
     ElMessage.warning('请使用管理员账号登录社区管理后台')
     return
   }
-  localStorage.setItem('admin_token', result.token)
-  localStorage.setItem('admin_user', JSON.stringify(result.userInfo))
+  saveSession(result)
   ElMessage.success('欢迎回来，' + (result.userInfo.realName || result.userInfo.username))
-  router.push('/dashboard')
+  router.replace(safeRedirect(route.query.redirect) || '/dashboard')
 }
 </script>
 <style scoped>

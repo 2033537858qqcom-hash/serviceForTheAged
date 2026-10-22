@@ -389,3 +389,13 @@ p {
     min-width: 76px;
   }
 }
+
+/* 危险操作：下拉菜单中的不可逆操作统一用危险色（L5） */
+.el-dropdown-menu__item.is-danger,
+.el-dropdown-menu__item.is-danger:not(.is-disabled):hover,
+.el-dropdown-menu__item.is-danger:not(.is-disabled):focus {
+  color: var(--danger);
+}
+.el-dropdown-menu__item.is-danger:not(.is-disabled):hover {
+  background: var(--el-color-danger-light-9);
+}

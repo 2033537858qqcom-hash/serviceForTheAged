@@ -11,81 +11,93 @@
         <el-button type="primary" icon="Plus" @click="openModal(null)">新增服务项目</el-button>
       </div>
 
-      <el-skeleton :loading="loading && !tableData.length" animated :rows="6">
-        <template #default>
-          <el-table v-loading="loading && tableData.length > 0" :data="tableData" stripe style="width: 100%">
-            <el-table-column label="服务图片" width="130">
-              <template #default="{ row }">
-                <img
-                  class="service-thumbnail"
-                  :src="imageFor(row.icon, row.category)"
-                  alt="服务展示图"
-                  @error="useDefaultImage($event, row.category)"
-                />
-              </template>
-            </el-table-column>
-            <el-table-column prop="name" label="项目名称" width="160">
-              <template #default="{ row }">
-                <span style="font-weight: bold">{{ row.name }}</span>
-              </template>
-            </el-table-column>
-            <el-table-column prop="category" label="服务类别" width="130">
-              <template #default="{ row }">
-                <el-tag :type="catTagMap[row.category] || 'info'">
-                  {{ catTextMap[row.category] || row.category }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="price" label="基准单价" width="120">
-              <template #default="{ row }">
-                <span style="color: var(--danger); font-weight: bold">¥{{ row.price }}</span>
-              </template>
-            </el-table-column>
-            <el-table-column prop="durationMinutes" label="预计时长" width="120">
-              <template #default="{ row }">{{ row.durationMinutes }} 分钟</template>
-            </el-table-column>
-            <el-table-column prop="requiredSkills" label="必需技能资质" width="160">
-              <template #default="{ row }">
-                <el-tag v-if="row.requiredSkills" size="small" type="info">
-                  {{ displaySkills(row.requiredSkills) }}
-                </el-tag>
-                <span v-else style="color: var(--muted)">无硬性要求</span>
-              </template>
-            </el-table-column>
-            <el-table-column prop="serviceArea" label="覆盖区域" width="140" />
-            <el-table-column prop="description" label="服务介绍" min-width="200" show-overflow-tooltip />
-            <el-table-column prop="status" label="状态" width="100">
-              <template #default="{ row }">
-                <el-tag :type="row.status === 'ON_SHELF' ? 'success' : 'info'">
-                  {{ row.status === 'ON_SHELF' ? '上架中' : '已下架' }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" width="160" fixed="right">
-              <template #default="{ row }">
-                <el-button type="primary" link @click="openModal(row)">编辑</el-button>
-                <el-button :type="row.status === 'ON_SHELF' ? 'warning' : 'success'" link @click="toggleStatus(row.id)">
-                  {{ row.status === 'ON_SHELF' ? '下架' : '上架' }}
-                </el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-        </template>
-      </el-skeleton>
+      <DataTable
+        :rows="list.rows.value"
+        :loading="list.loading.value"
+        :error="list.error.value"
+        :total="list.total.value"
+        :page-num="list.pageNum.value"
+        :page-size="list.pageSize.value"
+        empty-text="还没有服务项目"
+        empty-hint="点击右上角「新增服务项目」开始配置。"
+        error-text="服务项目暂时未能加载"
+        @update:page-num="list.setPage"
+        @update:page-size="list.setPageSize"
+        @retry="list.load"
+      >
+        <el-table-column label="服务图片" width="130">
+          <template #default="{ row }">
+            <img
+              class="service-thumbnail"
+              :src="imageFor(row.icon, row.category)"
+              alt="服务展示图"
+              @error="useDefaultImage($event, row.category)"
+            />
+          </template>
+        </el-table-column>
+        <el-table-column prop="name" label="项目名称" width="160">
+          <template #default="{ row }">
+            <span style="font-weight: bold">{{ row.name }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="category" label="服务类别" width="130">
+          <template #default="{ row }">
+            <StatusTag kind="category" :value="row.category" />
+          </template>
+        </el-table-column>
+        <el-table-column prop="price" label="基准单价" width="120">
+          <template #default="{ row }">
+            <span style="color: var(--danger); font-weight: bold">¥{{ row.price }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="durationMinutes" label="预计时长" width="120">
+          <template #default="{ row }">{{ row.durationMinutes }} 分钟</template>
+        </el-table-column>
+        <el-table-column prop="requiredSkills" label="必需技能资质" width="160">
+          <template #default="{ row }">
+            <el-tag v-if="row.requiredSkills" size="small" type="info">
+              {{ skillText(row.requiredSkills) }}
+            </el-tag>
+            <span v-else style="color: var(--muted)">无硬性要求</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="serviceArea" label="覆盖区域" width="140" />
+        <el-table-column prop="description" label="服务介绍" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="status" label="状态" width="100">
+          <template #default="{ row }">
+            <StatusTag kind="service" :value="row.status" />
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="160" fixed="right">
+          <template #default="{ row }">
+            <el-button type="primary" link @click="openModal(row)">编辑</el-button>
+            <el-button
+              link
+              :loading="statusAction.pendingKey.value === row.id"
+              :disabled="statusAction.pendingKey.value !== null && statusAction.pendingKey.value !== row.id"
+              @click="toggleStatus(row)"
+            >
+              {{ row.status === 'ON_SHELF' ? '下架' : '上架' }}
+            </el-button>
+          </template>
+        </el-table-column>
+      </DataTable>
     </el-card>
 
     <!-- 项目编辑弹窗 -->
-    <el-dialog v-model="modalVisible" :title="currentItem.id ? '编辑服务项目' : '新增服务项目'" width="550px">
-      <el-form :model="currentItem" label-width="110px">
-        <el-form-item label="服务名称">
+    <el-dialog
+      v-model="modalVisible"
+      :title="currentItem.id ? '编辑服务项目' : '新增服务项目'"
+      width="550px"
+      @closed="itemFormRef?.clearValidate()"
+    >
+      <el-form ref="itemFormRef" :model="currentItem" :rules="itemRules" label-width="110px">
+        <el-form-item label="服务名称" prop="name">
           <el-input v-model="currentItem.name" placeholder="如：暖心送餐服务" />
         </el-form-item>
-        <el-form-item label="服务类别">
+        <el-form-item label="服务类别" prop="category">
           <el-select v-model="currentItem.category" style="width: 100%">
-            <el-option label="助餐送餐" value="MEAL" />
-            <el-option label="居家保洁" value="CLEANING" />
-            <el-option label="代买代办" value="ERRAND" />
-            <el-option label="陪同就医办事" value="ESCORT" />
+            <el-option v-for="option in categoryOptions" :key="option.value" v-bind="option" />
           </el-select>
         </el-form-item>
         <el-form-item label="服务展示图">
@@ -113,7 +125,7 @@
             </div>
           </div>
         </el-form-item>
-        <el-form-item label="基准单价(元)">
+        <el-form-item label="基准单价(元)" prop="price">
           <el-input-number v-model="currentItem.price" :precision="2" :step="5" :min="0" />
         </el-form-item>
         <el-form-item label="预计时长(分钟)">
@@ -132,10 +144,10 @@
             <el-option v-for="(name, code) in skillNames" :key="code" :label="name" :value="code" />
           </el-select>
         </el-form-item>
-        <el-form-item label="服务区域">
+        <el-form-item label="服务区域" prop="serviceArea">
           <el-input v-model="currentItem.serviceArea" placeholder="阳光花园社区" />
         </el-form-item>
-        <el-form-item label="详细介绍">
+        <el-form-item label="详细介绍" prop="description">
           <el-input v-model="currentItem.description" type="textarea" placeholder="填写服务详细操作内容与说明" />
         </el-form-item>
       </el-form>
@@ -151,42 +163,40 @@
 
 <script setup>
 import PageHeader from '../../components/PageHeader.vue'
-import { ref, reactive, computed, onMounted } from 'vue'
+import DataTable from '../../components/DataTable.vue'
+import StatusTag from '../../components/StatusTag.vue'
+import { ref, reactive, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import request from '../../utils/request'
+import { SKILLS, skillText, statusOptions } from '../../utils/presentation.js'
+import { usePagedQuery } from '../../composables/usePagedQuery.js'
+import { useRowSubmit } from '../../composables/useSubmit.js'
+import { confirmDanger } from '../../utils/confirm.js'
+import { maxLength, required } from '../../utils/validators.js'
 
-const loading = ref(false)
-const tableData = ref([])
+const list = usePagedQuery({
+  fetcher: (params, { signal }) => request.get('/service-items/page', { params, signal }),
+  defaults: {}
+})
+const categoryOptions = statusOptions('category')
+const skillNames = SKILLS
+const itemFormRef = ref(null)
+const itemRules = {
+  name: [required('请填写服务名称'), maxLength(64, '服务名称')],
+  category: [required('请选择服务类别', 'change')],
+  price: [
+    {
+      trigger: 'change',
+      validator: (_rule, value, callback) => (Number(value) > 0 ? callback() : callback(new Error('基准单价需大于 0')))
+    }
+  ],
+  serviceArea: [required('请填写服务区域')],
+  description: [maxLength(2000, '详细介绍')]
+}
 const modalVisible = ref(false)
 const uploading = ref(false)
 const saving = ref(false)
 const editorVersion = ref(0)
-const skillNames = {
-  COOKING: '助餐服务',
-  CLEANING: '居家保洁',
-  ERRAND: '代买代办',
-  ESCORT: '陪同办事',
-  NURSING: '基础照护护理'
-}
-const displaySkills = value =>
-  String(value)
-    .split(',')
-    .map(code => skillNames[code.trim()] || code.trim())
-    .join('、')
-
-const catTextMap = {
-  MEAL: '助餐送餐',
-  CLEANING: '居家保洁',
-  ERRAND: '代买代办',
-  ESCORT: '陪同办事'
-}
-
-const catTagMap = {
-  MEAL: 'warning',
-  CLEANING: 'primary',
-  ERRAND: 'success',
-  ESCORT: 'info'
-}
 
 const currentItem = reactive({
   id: null,
@@ -209,18 +219,6 @@ const selectedSkills = computed({
     currentItem.requiredSkills = value.join(',')
   }
 })
-
-const fetchData = () => {
-  loading.value = true
-  request
-    .get('/service-items/page', { params: { pageNum: 1, pageSize: 50 } })
-    .then(res => {
-      tableData.value = res.records || []
-    })
-    .finally(() => {
-      loading.value = false
-    })
-}
 
 const openModal = row => {
   editorVersion.value++
@@ -271,28 +269,41 @@ async function uploadImage(options) {
 }
 const saveItem = async () => {
   if (saving.value || uploading.value) return
+  const valid = await itemFormRef.value.validate().catch(() => false)
+  if (!valid) return
   saving.value = true
   try {
     await request.post('/service-items/save', currentItem)
     ElMessage.success('服务项目保存成功，小程序下拉刷新即可查看')
     modalVisible.value = false
-    fetchData()
+    list.load()
   } catch {
   } finally {
     saving.value = false
   }
 }
 
-const toggleStatus = id => {
-  request.post(`/service-items/${id}/toggle-status`).then(() => {
-    ElMessage.success('状态已切换')
-    fetchData()
-  })
-}
-
-onMounted(() => {
-  fetchData()
+// 上/下架是切换接口：同一行执行中不再响应点击，避免双击切回原状态（R3）
+const statusAction = useRowSubmit(async (id, toOffShelf) => {
+  try {
+    await request.post(`/service-items/${id}/toggle-status`)
+    ElMessage.success(toOffShelf ? '已下架，居民端将不再显示该服务' : '已上架，居民下拉刷新即可预约')
+    list.load()
+  } catch {}
 })
+
+async function toggleStatus(row) {
+  const toOffShelf = row.status === 'ON_SHELF'
+  if (toOffShelf) {
+    const ok = await confirmDanger(
+      `下架「${row.name}」后，居民将无法再预约这项服务；已下的订单不受影响。`,
+      '下架服务',
+      '确认下架'
+    )
+    if (!ok) return
+  }
+  statusAction.run(row.id, toOffShelf)
+}
 </script>
 
 <style scoped>

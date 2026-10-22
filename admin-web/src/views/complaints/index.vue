@@ -9,72 +9,69 @@
       <div class="header-bar flex-between">
         <span style="font-weight: bold; font-size: 16px">社区服务投诉与意见反馈</span>
         <div class="feedback-tools">
-          <el-select v-model="statusFilter" placeholder="全部状态" clearable @change="onStatusChange">
-            <el-option label="待受理" value="PENDING" />
-            <el-option label="处理中" value="PROCESSING" />
-            <el-option label="已处理" value="RESOLVED" />
+          <el-select v-model="list.filters.status" placeholder="全部状态" clearable @change="list.search">
+            <el-option v-for="option in complaintStatusOptions" :key="option.value" v-bind="option" />
           </el-select>
-          <el-button icon="Refresh" @click="fetchData">刷新</el-button>
+          <el-button icon="Refresh" :loading="list.loading.value" @click="list.load">刷新</el-button>
         </div>
       </div>
 
-      <el-skeleton :loading="loading && !tableData.length" animated :rows="6">
-        <template #default>
-          <el-table v-loading="loading && tableData.length > 0" :data="tableData" stripe style="width: 100%">
-            <el-table-column prop="id" label="编号" width="100" />
-            <el-table-column prop="orderId" label="关联订单编号" width="180">
-              <template #default="{ row }">
-                <span v-if="row.orderId && row.orderId !== '0'">{{ row.orderId }}</span>
-                <el-tag v-else size="small" type="info">平台/社区通用建议</el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="complaintTitle" label="投诉主题" width="180">
-              <template #default="{ row }">
-                <span style="font-weight: bold">{{ row.complaintTitle }}</span>
-              </template>
-            </el-table-column>
-            <el-table-column prop="complaintContent" label="反馈详情" min-width="220" show-overflow-tooltip />
-            <el-table-column prop="createdAt" label="提交时间" width="170" />
-            <el-table-column prop="status" label="状态" width="120">
-              <template #default="{ row }">
-                <el-tag :type="row.status === 'RESOLVED' ? 'success' : 'warning'">
-                  {{ statusText[row.status] || row.status }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="handleResult" label="社区处置结果" min-width="200" show-overflow-tooltip />
-            <el-table-column label="操作" width="170" fixed="right">
-              <template #default="{ row }">
-                <el-button
-                  v-if="row.status === 'PENDING'"
-                  type="primary"
-                  link
-                  :loading="startingId === row.id"
-                  @click="startHandle(row)"
-                >
-                  受理
-                </el-button>
-                <el-button
-                  v-if="['PENDING', 'PROCESSING'].includes(row.status)"
-                  type="primary"
-                  link
-                  @click="openHandleModal(row)"
-                >
-                  处理答复
-                </el-button>
-                <span v-else style="color: #28785b; font-size: 13px">{{ statusText[row.status] || row.status }}</span>
-              </template>
-            </el-table-column>
-          </el-table>
-        </template>
-      </el-skeleton>
-      <el-pagination
-        v-model:current-page="pageNum"
-        :page-size="20"
-        :total="total"
-        layout="prev, pager, next, total"
-        @current-change="fetchData"
-      />
+      <DataTable
+        :rows="list.rows.value"
+        :loading="list.loading.value"
+        :error="list.error.value"
+        :total="list.total.value"
+        :page-num="list.pageNum.value"
+        :page-size="list.pageSize.value"
+        empty-text="暂无需要处理的反馈"
+        error-text="反馈列表暂时未能加载"
+        @update:page-num="list.setPage"
+        @update:page-size="list.setPageSize"
+        @retry="list.load"
+      >
+        <el-table-column prop="id" label="编号" width="100" />
+        <el-table-column prop="orderId" label="关联订单编号" width="180">
+          <template #default="{ row }">
+            <span v-if="row.orderId && row.orderId !== '0'">{{ row.orderId }}</span>
+            <el-tag v-else size="small" type="info">平台/社区通用建议</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="complaintTitle" label="投诉主题" width="180">
+          <template #default="{ row }">
+            <span style="font-weight: bold">{{ row.complaintTitle }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="complaintContent" label="反馈详情" min-width="220" show-overflow-tooltip />
+        <el-table-column prop="createdAt" label="提交时间" width="170" />
+        <el-table-column prop="status" label="状态" width="120">
+          <template #default="{ row }">
+            <StatusTag kind="complaint" :value="row.status" />
+          </template>
+        </el-table-column>
+        <el-table-column prop="handleResult" label="社区处置结果" min-width="200" show-overflow-tooltip />
+        <el-table-column label="操作" width="170" fixed="right">
+          <template #default="{ row }">
+            <el-button
+              v-if="row.status === 'PENDING'"
+              type="primary"
+              link
+              :loading="startingId === row.id"
+              @click="startHandle(row)"
+            >
+              受理
+            </el-button>
+            <el-button
+              v-if="['PENDING', 'PROCESSING'].includes(row.status)"
+              type="primary"
+              link
+              @click="openHandleModal(row)"
+            >
+              处理答复
+            </el-button>
+            <span v-else style="color: #28785b; font-size: 13px">{{ statusText('complaint', row.status) }}</span>
+          </template>
+        </el-table-column>
+      </DataTable>
     </el-card>
 
     <!-- 处理投诉弹窗 -->
@@ -107,45 +104,28 @@
 
 <script setup>
 import PageHeader from '../../components/PageHeader.vue'
-import { ref, reactive, onMounted } from 'vue'
+import DataTable from '../../components/DataTable.vue'
+import StatusTag from '../../components/StatusTag.vue'
+import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
 import request from '../../utils/request'
+import { statusOptions, statusText } from '../../utils/presentation.js'
+import { usePagedQuery } from '../../composables/usePagedQuery.js'
 
-const loading = ref(false)
-const tableData = ref([])
+const list = usePagedQuery({
+  fetcher: (params, { signal }) => request.get('/fulfillment/complaints/page', { params, signal }),
+  defaults: { status: '' }
+})
+const complaintStatusOptions = statusOptions('complaint').filter(option => option.value !== 'REJECTED')
 const handleVisible = ref(false)
 const currentComplaint = ref(null)
-const statusFilter = ref('')
-const pageNum = ref(1)
-const total = ref(0)
 const startingId = ref(null)
 const handling = ref(false)
-const statusText = { PENDING: '待受理', PROCESSING: '处理中', RESOLVED: '已处理', REJECTED: '已关闭' }
 
 const handleForm = reactive({
   id: null,
   result: ''
 })
-
-const onStatusChange = () => {
-  pageNum.value = 1
-  fetchData()
-}
-
-const fetchData = () => {
-  loading.value = true
-  request
-    .get('/fulfillment/complaints/page', {
-      params: { pageNum: pageNum.value, pageSize: 20, status: statusFilter.value || undefined }
-    })
-    .then(res => {
-      tableData.value = res.records || []
-      total.value = res.total || 0
-    })
-    .finally(() => {
-      loading.value = false
-    })
-}
 
 const startHandle = async row => {
   if (startingId.value) return
@@ -153,7 +133,8 @@ const startHandle = async row => {
   try {
     await request.post('/fulfillment/complaint/start', { id: row.id })
     ElMessage.success('已受理，居民可查看处理进度')
-    fetchData()
+    list.load()
+  } catch {
   } finally {
     startingId.value = null
   }
@@ -178,16 +159,12 @@ const submitHandle = () => {
     .then(() => {
       ElMessage.success('投诉已办结并更新记录')
       handleVisible.value = false
-      fetchData()
+      list.load()
     })
     .finally(() => {
       handling.value = false
     })
 }
-
-onMounted(() => {
-  fetchData()
-})
 </script>
 
 <style scoped>
@@ -201,10 +178,6 @@ onMounted(() => {
 }
 .feedback-tools .el-select {
   width: 150px;
-}
-.el-pagination {
-  margin-top: 20px;
-  justify-content: flex-end;
 }
 
 .header-bar {

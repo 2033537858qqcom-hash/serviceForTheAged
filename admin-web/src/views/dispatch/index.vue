@@ -215,14 +215,7 @@
       </p>
       <el-form :model="assignForm" label-position="top">
         <el-form-item label="服务人员">
-          <el-select v-model="assignForm.staffId" placeholder="请选择服务人员" style="width: 100%" filterable>
-            <el-option
-              v-for="staff in staffList"
-              :key="staff.profile.id"
-              :label="`${staff.user?.realName || '服务人员'} · ${staff.profile.serviceArea || '社区服务'}`"
-              :value="String(staff.profile.id)"
-            />
-          </el-select>
+          <StaffSelect v-model="assignForm.staffId" :seed="staffList" />
         </el-form-item>
       </el-form>
       <p class="assign-note">确认后将向该人员发送派单，系统会再次检查技能与时间安排。</p>
@@ -236,7 +229,9 @@
 
 <script setup>
 import PageHeader from '../../components/PageHeader.vue'
+import StaffSelect from '../../components/StaffSelect.vue'
 import { computed, ref, reactive, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import request from '../../utils/request'
 import { latestCandidateScores, orderStatusText, shortDate } from '../../utils/presentation'
@@ -250,13 +245,26 @@ const tableData = ref([]),
   selectedOrder = ref(null),
   assignVisible = ref(false),
   staffList = ref([])
-const queueStatus = ref('WAIT_MANUAL,WAIT_DISPATCH')
 const filters = [
   { label: '全部待办', value: 'WAIT_MANUAL,WAIT_DISPATCH' },
   { label: '需要协调', value: 'WAIT_MANUAL' },
   { label: '等待安排', value: 'WAIT_DISPATCH' }
 ]
-const pagination = reactive({ pageNum: 1, pageSize: 6, total: 0 })
+// 队列筛选与页码保存在 ?queue=&page=，刷新/分享后保持（RT4）
+const route = useRoute()
+const router = useRouter()
+const initialQueue = filters.find(filter => filter.value === route.query.queue)?.value || filters[0].value
+const queueStatus = ref(initialQueue)
+const pagination = reactive({ pageNum: Math.max(1, Number.parseInt(route.query.page, 10) || 1), pageSize: 6, total: 0 })
+function syncQuery() {
+  const query = { ...route.query }
+  if (queueStatus.value !== filters[0].value) query.queue = queueStatus.value
+  else delete query.queue
+  if (pagination.pageNum > 1) query.page = String(pagination.pageNum)
+  else delete query.page
+  if (query.queue !== route.query.queue || query.page !== route.query.page) router.replace({ query })
+}
+let fetchSeq = 0
 const assignForm = reactive({ orderId: null, staffId: null })
 const currentScores = computed(() => latestCandidateScores(scoresList.value))
 const qualifiedCandidates = computed(() => currentScores.value.filter(item => Number(item.isQualified) === 1))
@@ -272,12 +280,15 @@ function scorePercent(value) {
   return Math.round(Math.min(1, Math.max(0, Number(value) || 0)) * 100)
 }
 async function fetchData() {
+  const seq = ++fetchSeq
   loading.value = true
   queueError.value = false
+  syncQuery()
   try {
     const result = await request.get('/orders/page', {
       params: { pageNum: pagination.pageNum, pageSize: pagination.pageSize, status: queueStatus.value }
     })
+    if (seq !== fetchSeq) return
     tableData.value = result?.records || []
     pagination.total = Number(result?.total || 0)
     const current = tableData.value.find(row => row.order.id === selectedOrder.value?.order.id) || tableData.value[0]
@@ -287,9 +298,9 @@ async function fetchData() {
       scoresList.value = []
     }
   } catch {
-    queueError.value = true
+    if (seq === fetchSeq) queueError.value = true
   } finally {
-    loading.value = false
+    if (seq === fetchSeq) loading.value = false
   }
 }
 function changeFilter(status) {
@@ -327,6 +338,7 @@ function openAssign(row, staffId = null) {
   if (!staffList.value.length) loadStaff()
 }
 async function submitAssign() {
+  if (actionLoading.value) return
   if (!assignForm.staffId) {
     ElMessage.warning('请选择服务人员')
     return
@@ -343,6 +355,7 @@ async function submitAssign() {
   }
 }
 async function autoDispatch(orderId) {
+  if (actionLoading.value) return
   actionLoading.value = true
   try {
     const attempt = await request.post('/dispatch/assign', { orderId, staffId: null })

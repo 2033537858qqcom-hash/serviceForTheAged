@@ -215,6 +215,7 @@
 </template>
 
 <script setup>
+import { escapeHtml } from '../../utils/escape.js'
 import { computed, ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { use, init, graphic } from 'echarts/core'
@@ -255,8 +256,11 @@ async function refreshDashboard() {
   if (refreshing.value) return
   refreshing.value = true
   const [summary, queue] = await Promise.allSettled([
-    request.get('/stats/dashboard'),
-    request.get('/orders/page', { params: { pageNum: 1, pageSize: 4, status: 'WAIT_MANUAL,WAIT_DISPATCH' } })
+    request.get('/stats/dashboard', { silent: true }),
+    request.get('/orders/page', {
+      params: { pageNum: 1, pageSize: 4, status: 'WAIT_MANUAL,WAIT_DISPATCH' },
+      silent: true
+    })
   ])
   loadError.value = summary.status === 'rejected' || queue.status === 'rejected'
   queueError.value = queue.status === 'rejected'
@@ -318,7 +322,10 @@ function renderCharts() {
     pieChart.setOption({
       textStyle: { fontFamily },
       color: ['#176b5d', '#7da690', '#c1cda4', '#ba8b57', '#9bad9f', '#d5d9cd'],
-      tooltip: { trigger: 'item', formatter: '{b}<br/>{c} 笔 · {d}%' },
+      tooltip: {
+        trigger: 'item',
+        formatter: params => `${escapeHtml(params.name)}<br/>${Number(params.value) || 0} 笔 · ${params.percent ?? 0}%`
+      },
       legend: {
         bottom: 10,
         left: 'center',

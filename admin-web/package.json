@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "test": "node --test src/utils/*.test.js src/icons.test.js",
+    "test": "node --test src/utils/*.test.js src/router/*.test.js src/composables/*.test.js src/views/**/*.test.js src/icons.test.js",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint . && prettier --check .",

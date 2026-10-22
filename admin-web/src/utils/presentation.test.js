@@ -52,3 +52,17 @@ test('equal scores use travel time and staff ID to keep recommendations stable',
     ['2', '12', '1']
   )
 })
+
+import { statusOptions, statusTag, statusText, skillText, orderStatusText } from './presentation.js'
+test('one status table drives labels, tag colours and filter options', () => {
+  assert.equal(statusText('order', 'WAIT_DISPATCH'), '等待安排')
+  assert.equal(orderStatusText.WAIT_MANUAL, statusText('order', 'WAIT_MANUAL'))
+  assert.equal(statusTag('order', 'WAIT_MANUAL'), 'danger')
+  assert.equal(statusText('binding', 'APPROVED'), '已授权')
+  assert.equal(statusText('order', 'NEW_STATUS'), 'NEW_STATUS')
+  assert.equal(statusTag('order', 'NEW_STATUS'), 'info')
+  const options = statusOptions('order')
+  assert.equal(options.length, 8)
+  assert.ok(options.every(option => option.label === statusText('order', option.value)))
+  assert.equal(skillText('COOKING, NURSING,X'), '助餐烹饪、基础照护护理、X')
+})

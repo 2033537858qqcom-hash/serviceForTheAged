@@ -90,17 +90,12 @@ import { ElMessageBox, ElMessage } from 'element-plus'
 const route = useRoute()
 const router = useRouter()
 const sidebarOpen = ref(false)
-const navigation = [
-  { path: '/dashboard', label: '工作台', icon: 'Odometer' },
-  { path: '/orders', label: '服务订单', icon: 'Document' },
-  { path: '/dispatch', label: '智能派单', icon: 'Connection' },
-  { path: '/elders', label: '老人档案', icon: 'User' },
-  { path: '/services', label: '服务项目', icon: 'ShoppingBag' },
-  { path: '/staff', label: '服务人员', icon: 'UserFilled' },
-  { path: '/complaints', label: '反馈处理', icon: 'ChatLineRound' },
-  { path: '/operation-logs', label: '操作日志', icon: 'Document' }
-]
-const currentTitle = computed(() => navigation.find(item => item.path === route.path)?.label || '社区服务')
+// 菜单由路由 meta（title/icon）生成，避免与路由表两处维护（L1）
+const layoutRoute = router.options.routes.find(item => item.path === '/')
+const navigation = (layoutRoute?.children || [])
+  .filter(item => item.meta?.title && !item.meta.hidden)
+  .map(item => ({ path: `/${item.path}`, label: item.meta.title, icon: item.meta.icon || 'Document' }))
+const currentTitle = computed(() => route.meta?.title || '社区服务')
 const dateLabel = new Intl.DateTimeFormat('zh-CN', {
   timeZone: 'Asia/Shanghai',
   month: 'long',
