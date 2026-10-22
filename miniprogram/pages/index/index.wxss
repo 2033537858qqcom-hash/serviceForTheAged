@@ -27,6 +27,8 @@
 /* 进行中的服务（置顶卡片） */
 .active-order-card { position: relative; margin-top: 8rpx; margin-bottom: 30rpx; border: 2rpx solid #b8ded0; box-shadow: 0 6rpx 18rpx rgba(23,107,93,.06); }
 .service-name { font-size: var(--font-section); font-weight: 600; color: var(--text-main); }
+.active-order-title-group { min-width: 0; flex: 1; flex-wrap: wrap; gap: 12rpx; }
+.active-order-title-group .tag { flex-shrink: 0; }
 .active-order-badge { font-size: var(--font-meta); color: var(--primary-color); background: var(--primary-soft); padding: 6rpx 16rpx; border-radius: 10rpx; font-weight: 600; }
 .active-order-meta { display: flex; align-items: flex-start; gap: 14rpx; font-size: var(--font-caption); color: var(--text-secondary); margin-top: 18rpx; }
 .active-order-meta > image { width: 32rpx; height: 32rpx; flex-shrink: 0; margin-top: 4rpx; }
@@ -183,6 +185,18 @@ button.active-order-cta {
 .welcome-contact { flex-wrap: wrap; padding-top: 16rpx; padding-bottom: 16rpx; }
 .welcome-contact image { flex-shrink: 0; }
 @media (min-width: 600px) {
+  .home-page .home-section-heading { margin: 24px 0 14px; gap: 12px; }
+  .home-page .home-dashboard { margin-top: 4px; }
+  .home-page .home-overview, .home-page .home-shortcuts { min-width: 0; }
+  .home-page .active-order-card { margin-top: 0; margin-bottom: 0; border-width: 1px; }
+  .home-page .active-order-heading { gap: 12px; align-items: flex-start; }
+  .home-page .active-order-title-group { gap: 8px; }
+  .home-page .active-order-badge { padding: 5px 10px; border-radius: 8px; font-weight: 500; }
+  .home-page .active-order-meta { gap: 10px; margin-top: 16px; line-height: 1.6; }
+  .home-page .active-order-meta > image { width: 22px; height: 22px; margin-top: 3px; }
+  .home-page .active-order-meta > text { min-width: 0; flex: 1; overflow-wrap: anywhere; }
+  .home-page .active-order-cta { margin-top: 22px; min-height: var(--control-height); border-radius: 14px; }
+  .home-page .active-more { min-height: 44px; margin-top: 8px; }
   .home-page .home-header { gap: 16px; padding-bottom: 20px; }
   .home-page .home-brand { gap: 12px; }
   .home-page .home-brand-icon { width: 52px; height: 52px; border-radius: 14px; }
@@ -199,4 +213,28 @@ button.active-order-cta {
   .home-page .service-strip { flex-wrap: wrap; gap: 12px; }
   .home-page .service-strip-item { flex: 1 1 120px; min-height: 100px; }
   .home-page .service-strip-photo { width: 44px; height: 44px; }
+  .home-page .service-card-info { padding: 16px; }
+  .home-page .more-link { min-height: 44px; gap: 6px; }
+  .home-page .more-link image { width: 18px; height: 18px; }
+  .home-page .home-service-card { gap: 16px; }
+  .home-page .home-footer { padding: 24px 0 12px; letter-spacing: 1px; }
+  .home-page .skeleton-order-title { height: 34px; }
+  .home-page .skeleton-order-meta { height: 28px; margin-top: 16px; }
+  .home-page .skeleton-order-cta { height: var(--control-height); margin-top: 22px; border-radius: 14px; }
+}
+@media (min-width: 900px) {
+  .container.home-page { max-width: 1120px; padding-left: 32px; padding-right: 32px; }
+  .home-page .home-dashboard { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+  .home-page .home-dashboard .home-section-heading { min-height: 40px; margin-top: 20px; }
+  .home-page .home-dashboard .section-note { display: none; }
+  .home-page .home-shortcuts .service-strip { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .home-page .home-shortcuts .service-strip-item { min-height: 122px; padding: 16px; gap: 10px; }
+  .home-page .service-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .home-page .service-list .home-service-card { margin-bottom: 0; }
+  .home-page .service-list-icon { width: 80px; height: 80px; }
+  .home-page .item-meta { display: flex; flex-wrap: wrap; }
+  .home-page .service-grid-2x2 { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+  .home-page.elder-mode .service-entry-card { flex-direction: column; gap: 0; }
+  .home-page.elder-mode .service-entry-photo { width: 100%; }
+  .home-page.elder-mode .service-entry-card .service-card-info { padding: 16px; }
 }

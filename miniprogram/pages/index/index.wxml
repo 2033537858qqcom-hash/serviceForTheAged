@@ -21,6 +21,8 @@
   <!-- 有进行中服务：首屏主卡片 + 大按钮；宫格降级为一行快捷入口 -->
   <!-- 进行中订单加载占位：与英雄卡同尺寸，避免欢迎区先闪后被顶走 -->
   <block wx:if="{{!activeOrderReady}}">
+    <view class="home-dashboard">
+    <view class="home-overview">
     <view class="section-title home-section-heading">
       <text>今天的服务</text>
       <text class="section-note">正在查询进度</text>
@@ -31,6 +33,8 @@
       <view class="skeleton-block skeleton-order-meta"></view>
       <view class="skeleton-block skeleton-order-cta"></view>
     </view>
+    </view>
+    <view class="home-shortcuts">
     <view class="section-title home-section-heading compact-heading">
       <text>还需要其他帮助？</text>
     </view>
@@ -40,18 +44,22 @@
         <view class="skeleton-block skeleton-strip-label"></view>
       </view>
     </view>
+    </view>
+    </view>
   </block>
 
   <block wx:elif="{{activeOrder}}">
+    <view class="home-dashboard">
+    <view class="home-overview">
     <view class="section-title home-section-heading">
       <text>今天的服务</text>
       <text class="section-note">请优先查看进度</text>
     </view>
     <view class="card active-order-card active-order-hero">
-      <view class="flex-between">
-        <view class="flex-row items-center" style="min-width:0; flex:1;">
+      <view class="flex-between active-order-heading">
+        <view class="flex-row items-center active-order-title-group">
           <view class="service-name">{{activeOrder.order.serviceNameSnapshot}}</view>
-          <text class="tag tag-sm {{activeOrder.order.requesterType === 'FAMILY' ? 'tag-info' : 'tag-neutral'}}" style="margin-left: 12rpx; flex-shrink:0;">{{activeOrder.order.requesterType === 'FAMILY' ? '家属代约' : '老人自约'}}</text>
+          <text class="tag tag-sm {{activeOrder.order.requesterType === 'FAMILY' ? 'tag-info' : 'tag-neutral'}}">{{activeOrder.order.requesterType === 'FAMILY' ? '家属代约' : '老人自约'}}</text>
         </view>
         <view class="active-order-badge">{{statusTextMap[activeOrder.order.status]}}</view>
       </view>
@@ -67,6 +75,8 @@
       <view wx:if="{{activeMoreCount > 0}}" class="active-more" hover-class="spring-in" hover-stay-time="80" bindtap="goToActiveOrders">还有 {{activeMoreCount}} 个进行中的服务，去订单页查看 ›</view>
     </view>
 
+    </view>
+    <view class="home-shortcuts">
     <view class="section-title home-section-heading compact-heading">
       <text>还需要其他帮助？</text>
       <view class="more-link" bindtap="goToServiceList">全部服务<image src="/assets/icons/arrow.png" /></view>
@@ -88,6 +98,8 @@
         <view class="service-strip-photo"><service-photo src="{{categoryPhotos.ESCORT}}" fallback="{{photoFallbacks.ESCORT}}" /></view>
         <text class="service-strip-label">陪同</text>
       </view>
+    </view>
+    </view>
     </view>
   </block>
 

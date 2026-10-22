@@ -195,5 +195,5 @@
     <view>熟悉的邻里，用心的照料。</view>
   </view>
 
-  <bottom-sheet show="{{logoutSheet}}" title="退出当前账号" content="退出后需要重新登录才能预约和查看订单。" confirm-text="退出登录" tone="danger" dismiss-text="再想想" bind:close="closeLogoutSheet" bind:confirm="logout"></bottom-sheet>
+  <bottom-sheet show="{{logoutSheet}}" title="退出当前账号" content="退出后需要重新登录才能预约服务和查看订单。" confirm-text="退出登录" tone="danger" dismiss-text="再想想" bind:close="closeLogoutSheet" bind:confirm="logout"></bottom-sheet>
 </view>

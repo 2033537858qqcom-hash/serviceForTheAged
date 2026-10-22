@@ -16,6 +16,26 @@ const fixtures = {
   orders: { file: 'pages/order/list.wxss', html: `<view class="page-shell MODE"><view class="order-header-area"><view class="page-title">我的服务订单</view><view class="page-subtitle">查看服务安排与上门进度</view><view class="tabs-bar"><view class="tab-nav-item">全部</view><view class="tab-nav-item">待上门</view></view></view><swiper class="order-swiper"><view class="order-list-content"><view class="card">服务订单</view></view></swiper></view>`, check: '.order-swiper' },
 };
 
+// Use the actual active-order WXML; a header-only fixture missed oversized tags.
+const homeSource = fs.readFileSync(path.join(root, 'pages/index/index.wxml'), 'utf8');
+const header = homeSource.slice(homeSource.indexOf('  <view class="home-header">'), homeSource.indexOf('  <!-- 有进行中服务'));
+const activeBranch = homeSource.split('<block wx:elif="{{activeOrder}}">')[1].split('</block>')[0];
+function activeHome(elder, family = false) {
+  const state = {
+    isElderMode: elder,
+    activeOrder: { order: { id: 1, requesterType: family ? 'FAMILY' : 'SELF', serviceNameSnapshot: '助餐送餐', status: 'WAIT_MANUAL', plannedStartText: '今天 08:00' }, elder: { name: '赵德柱' }, requesterName: '赵志强', currentStaff: null },
+    statusTextMap: { WAIT_MANUAL: '待人工处理' }, activeMoreCount: 0, categoryPhotos: {}, photoFallbacks: {},
+  };
+  const evaluate = expression => Function(...Object.keys(state), `return (${expression})`)(...Object.values(state));
+  let html = header + activeBranch;
+  html = html.replace(/<text wx:if="{{(.*?)}}">([\s\S]*?)<\/text>/g, (_, condition, content) => evaluate(condition) ? `<text>${content}</text>` : '');
+  html = html.replace(/<view wx:if="{{activeMoreCount > 0}}"[\s\S]*?<\/view>/, '');
+  html = html.replace(/{{(.*?)}}/g, (_, expression) => evaluate(expression) ?? '');
+  return `<view class="container home-page ${elder ? 'elder-mode' : ''}">${html}</view>`;
+}
+fixtures['home-active'] = { file: 'pages/index/index.wxss', html: activeHome, check: '.home-dashboard' };
+fixtures['home-family'] = { file: 'pages/index/index.wxss', html: elder => activeHome(elder, true), check: '.home-dashboard' };
+
 (async () => {
   const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? { channel: process.env.PLAYWRIGHT_CHANNEL } : {}) });
   let count = 0;
@@ -24,7 +44,7 @@ const fixtures = {
       for (const elder of [false, true]) {
         for (const [name, fixture] of Object.entries(fixtures)) {
           const page = await browser.newPage({ viewport: { width, height } });
-          const html = fixture.html.replace(/NAVMODE/g, elder ? 'is-elder' : '').replace(/MODE/g, elder ? 'elder-mode' : '');
+          const html = typeof fixture.html === 'function' ? fixture.html(elder) : fixture.html.replace(/NAVMODE/g, elder ? 'is-elder' : '').replace(/MODE/g, elder ? 'elder-mode' : '');
           await page.setContent(`<style>html,body{margin:0;height:100%}view,swiper,scroll-view{display:block}image{display:inline-block}button{font-family:inherit} ${css('app.wxss')} ${css(fixture.file)}</style>${html}`);
           const metrics = await page.evaluate(selector => {
             const node = document.querySelector(selector);
@@ -40,9 +60,21 @@ const fixtures = {
           }
           if (width >= 600) assert(metrics.font <= 32, `${label}: tablet typography grows with rpx`);
           if (name === 'navigation' && width >= 600) assert.equal(metrics.box.height, (elder ? 72 : 64) + 1, `${label}: tab bar height differs from page reservation`);
-          if (process.env.RESPONSIVE_SCREENSHOT_DIR && width === 768 && !elder) {
+          if (name.startsWith('home-') && width >= 600) {
+            const order = await page.evaluate(() => ({
+              tag: parseFloat(getComputedStyle(document.querySelector('.active-order-title-group .tag')).fontSize),
+              height: document.querySelector('.active-order-hero').getBoundingClientRect().height,
+              ctaBottom: document.querySelector('.active-order-cta').getBoundingClientRect().bottom,
+              columns: getComputedStyle(document.querySelector('.home-dashboard')).gridTemplateColumns,
+            }));
+            assert(order.tag <= (elder ? 18 : 15), `${label}: requester tag too large`);
+            assert(order.height <= (elder ? 420 : 360), `${label}: active card consumes the screen`);
+            assert(order.ctaBottom < height - (elder ? 72 : 64), `${label}: progress action below first screen`);
+            if (width >= 900) assert.equal(order.columns.split(' ').length, 2, `${label}: wide tablet should use two columns`);
+          }
+          if (process.env.RESPONSIVE_SCREENSHOT_DIR && [768, 1024].includes(width) && !elder) {
             fs.mkdirSync(process.env.RESPONSIVE_SCREENSHOT_DIR, { recursive: true });
-            await page.screenshot({ path: path.join(process.env.RESPONSIVE_SCREENSHOT_DIR, `${name}-tablet.png`) });
+            await page.screenshot({ path: path.join(process.env.RESPONSIVE_SCREENSHOT_DIR, `${name}-${width}-tablet.png`) });
           }
           await page.close();
           count++;

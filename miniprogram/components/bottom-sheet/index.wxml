@@ -9,13 +9,26 @@
     bindtouchcancel="onCancel"
   >
     <view class="sheet-handle"></view>
+
+    <!-- 警示/状态微徽标 -->
+    <view class="sheet-badge {{tone === 'danger' ? 'badge-danger' : (tone === 'success' ? 'badge-success' : 'badge-primary')}}" wx:if="{{tone}}">
+      <text wx:if="{{tone === 'danger'}}" class="badge-symbol">!</text>
+      <text wx:elif="{{tone === 'success'}}" class="badge-symbol">✓</text>
+    </view>
+
     <view class="sheet-title" wx:if="{{title}}">{{title}}</view>
     <view class="sheet-body" wx:if="{{content}}">{{content}}</view>
     <slot></slot>
-    <button wx:if="{{confirmText}}" class="btn-primary sheet-confirm {{tone === 'danger' ? 'is-danger' : ''}} {{success ? 'is-success' : ''}}" hover-class="spring-in" bindtap="onConfirm" loading="{{loading}}" disabled="{{loading || success}}">
-      <text wx:if="{{success}}">✓ 操作已完成</text>
-      <text wx:else>{{confirmText}}</text>
-    </button>
-    <button class="sheet-dismiss" hover-class="spring-in" bindtap="onDismiss" disabled="{{loading}}">{{dismissText}}</button>
+
+    <!-- 底部操作按钮组：平权双胶囊并排布局 -->
+    <view class="sheet-actions">
+      <button class="sheet-btn sheet-btn-cancel sheet-dismiss" hover-class="spring-in" hover-stay-time="80" bindtap="onDismiss" disabled="{{loading}}">
+        {{dismissText || '取消'}}
+      </button>
+      <button wx:if="{{confirmText}}" class="sheet-btn sheet-btn-confirm sheet-confirm {{tone === 'danger' ? 'is-danger' : ''}} {{success ? 'is-success' : ''}}" hover-class="spring-in" hover-stay-time="80" bindtap="onConfirm" loading="{{loading}}" disabled="{{loading || success}}">
+        <text wx:if="{{success}}">✓ 操作已完成</text>
+        <text wx:else>{{confirmText}}</text>
+      </button>
+    </view>
   </view>
 </view>

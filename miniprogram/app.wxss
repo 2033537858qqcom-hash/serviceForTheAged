@@ -388,7 +388,8 @@ page { --swipe-tab-width: 144rpx; --motion-fast: 120ms; --motion-standard: 200ms
   }
   .ui-icon { width: 26px; height: 26px; }
   .ui-icon-small { width: 20px; height: 20px; }
-  .tag.tag { height: auto; min-height: 28px; padding: 4px 10px; line-height: 1.4; white-space: normal; }
+  .tag.tag { height: auto; min-height: 28px; padding: 4px 10px; font-size: 15px; line-height: 1.4; white-space: normal; border-radius: 6px; }
+  .elder-mode .tag.tag { font-size: 18px; }
 }
 @keyframes skeleton-shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
 .page-state-tip, .detail-refresh-tip { color: var(--text-secondary); font-size: var(--font-caption); text-align: center; }
