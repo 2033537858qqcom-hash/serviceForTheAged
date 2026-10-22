@@ -1,12 +1,11 @@
 <template>
   <section class="dashboard-page">
-    <div class="page-intro">
-      <div>
-        <span class="eyebrow">阳光花园社区 · 服务运营</span>
-        <h1>{{ greeting }}，{{ currentName }}</h1>
-        <p>把每一项服务安排妥当，让每一份需要及时得到回应。</p>
-      </div>
-      <div class="intro-actions">
+    <PageHeader
+      :eyebrow="`${COMMUNITY_NAME} · 服务运营`"
+      :title="`${greeting}，${currentName}`"
+      description="把每一项服务安排妥当，让每一份需要及时得到回应。"
+    >
+      <template #actions>
         <el-button :loading="refreshing" @click="refreshDashboard">
           <el-icon><Refresh /></el-icon>
           <span>刷新</span>
@@ -15,8 +14,8 @@
           安排服务
           <el-icon class="action-arrow"><ArrowRight /></el-icon>
         </el-button>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
     <el-alert
       v-if="loadError"
       title="部分信息暂时未能加载，请点击刷新重试。"
@@ -215,6 +214,9 @@
 </template>
 
 <script setup>
+import PageHeader from '../../components/PageHeader.vue'
+import { COMMUNITY_NAME } from '../../utils/app-config.js'
+import { getUser } from '../../utils/admin-session.js'
 import { escapeHtml } from '../../utils/escape.js'
 import { computed, ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
@@ -235,13 +237,11 @@ const lineChartRef = ref(null)
 const pieChartRef = ref(null)
 let lineChart, pieChart, resizeObserver
 const currentName = computed(() => {
-  try {
-    const user = JSON.parse(localStorage.getItem('admin_user'))
-    return user?.realName || user?.username || '管理员'
-  } catch {
-    return '管理员'
-  }
+  const user = getUser()
+  return user?.realName || user?.username || '管理员'
 })
+// 卸载后不再写状态或重建已 dispose 的图表（R4）
+let disposed = false
 const hour = Number(
   new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Shanghai', hour: '2-digit', hourCycle: 'h23' }).format(new Date())
 )
@@ -262,11 +262,13 @@ async function refreshDashboard() {
       silent: true
     })
   ])
+  if (disposed) return
   loadError.value = summary.status === 'rejected' || queue.status === 'rejected'
   queueError.value = queue.status === 'rejected'
   if (summary.status === 'fulfilled') stat.value = summary.value || {}
   if (queue.status === 'fulfilled') waitingOrders.value = queue.value?.records || []
   await nextTick()
+  if (disposed) return
   renderCharts()
   refreshing.value = false
 }
@@ -373,6 +375,7 @@ onMounted(() => {
   if (document.querySelector('.insights-grid')) resizeObserver.observe(document.querySelector('.insights-grid'))
 })
 onBeforeUnmount(() => {
+  disposed = true
   resizeObserver?.disconnect()
   lineChart?.dispose()
   pieChart?.dispose()

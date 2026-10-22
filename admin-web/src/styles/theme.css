@@ -10,6 +10,16 @@
   --line: #e3e9e2;
   --warm: #ad652f;
   --danger: #b83a3a;
+  --success: #28785b;
+  --surface-muted: #f2f5ef;
+  /* 圆角与字号 token（L2/L6）：最小字号 12px，正文 14px */
+  --radius-card: 14px;
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-base: 14px;
+  --fs-lg: 16px;
+  --fs-xl: 21px;
+  --fs-2xl: 28px;
   --el-color-primary: #176b5d;
   --el-color-primary-dark-2: #105246;
   --el-color-primary-light-3: #60978b;
@@ -85,7 +95,7 @@ p {
 }
 
 #app .el-card {
-  border-radius: 14px;
+  border-radius: var(--radius-card);
   border-color: var(--line);
   box-shadow: none;
 }
@@ -189,7 +199,7 @@ p {
 .eyebrow {
   display: block;
   color: var(--brand);
-  font-size: 11px;
+  font-size: var(--fs-xs);
   font-weight: 650;
   letter-spacing: 1.8px;
   margin-bottom: 9px;
@@ -359,9 +369,6 @@ p {
   margin-left: 14px;
   vertical-align: middle;
 }
-.el-dialog {
-  max-width: calc(100vw - 32px);
-}
 .el-drawer {
   max-width: 100vw;
 }
@@ -398,4 +405,54 @@ p {
 }
 .el-dropdown-menu__item.is-danger:not(.is-disabled):hover {
   background: var(--el-color-danger-light-9);
+}
+
+/* 文字工具类：统一走 token，便于换肤（L4） */
+.text-muted {
+  color: var(--muted);
+}
+.text-success {
+  color: var(--success);
+}
+.text-warm {
+  color: var(--warm);
+}
+.text-strong {
+  font-weight: 600;
+}
+.text-xs {
+  font-size: var(--fs-xs);
+}
+.text-sm {
+  font-size: var(--fs-sm);
+}
+.toolbar-end {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* 小屏：弹窗表单标签置顶、抽屉铺满、次要列隐藏（L7） */
+@media (max-width: 760px) {
+  .el-dialog .el-form-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .el-dialog .el-form-item__label {
+    justify-content: flex-start;
+    width: auto !important;
+    margin-bottom: 4px;
+  }
+  .el-dialog .el-form-item__content {
+    margin-left: 0 !important;
+  }
+  .el-drawer.rtl,
+  .el-drawer.ltr {
+    width: 100% !important;
+  }
+  .el-table .hide-sm {
+    display: none;
+  }
 }

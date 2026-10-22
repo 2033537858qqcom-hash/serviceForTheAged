@@ -39,7 +39,7 @@
             @update:page-size="elders.setPageSize"
             @retry="elders.load"
           >
-            <el-table-column prop="name" label="姓名" width="120">
+            <el-table-column prop="name" label="姓名" min-width="120">
               <template #default="{ row }">
                 <span style="font-weight: bold">{{ row.name }}</span>
               </template>
@@ -58,15 +58,27 @@
                 <span class="id-card">{{ row.idCardMasked || '未登记' }}</span>
               </template>
             </el-table-column>
-            <el-table-column prop="community" label="所属社区" width="140" />
-            <el-table-column prop="address" label="居住详细地址" min-width="180" show-overflow-tooltip />
+            <el-table-column prop="community" label="所属社区" min-width="140" class-name="hide-sm" />
+            <el-table-column
+              prop="address"
+              label="居住详细地址"
+              min-width="180"
+              show-overflow-tooltip
+              class-name="hide-sm"
+            />
             <el-table-column label="紧急联系人" width="210">
               <template #default="{ row }">
                 {{ row.emergencyContact || '—' }}
                 <MaskedText v-if="row.emergencyPhone" :value="row.emergencyPhone" />
               </template>
             </el-table-column>
-            <el-table-column prop="healthNote" label="健康及照护需求" min-width="160" show-overflow-tooltip />
+            <el-table-column
+              prop="healthNote"
+              label="健康及照护需求"
+              min-width="160"
+              show-overflow-tooltip
+              class-name="hide-sm"
+            />
             <el-table-column label="操作" width="120" fixed="right">
               <template #default="{ row }">
                 <el-button type="primary" link @click="openElderModal(row)">编辑</el-button>
@@ -212,18 +224,19 @@
 </template>
 
 <script setup>
+import { COMMUNITY_NAME } from '../../utils/app-config.js'
 import PageHeader from '../../components/PageHeader.vue'
 import DataTable from '../../components/DataTable.vue'
 import StatusTag from '../../components/StatusTag.vue'
 import MaskedText from '../../components/MaskedText.vue'
 import { computed, ref, reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import request from '../../utils/request'
 import { statusOptions } from '../../utils/presentation.js'
 import { usePagedQuery } from '../../composables/usePagedQuery.js'
 import { useRowSubmit, useSubmit } from '../../composables/useSubmit.js'
-import { confirmDanger } from '../../utils/confirm.js'
+import { confirmDanger, promptReason } from '../../utils/confirm.js'
 import { maxLength, phoneRule, required } from '../../utils/validators.js'
 import { pickElderPayload } from './elder-payload.js'
 
@@ -258,8 +271,8 @@ const emptyElder = () => ({
   gender: 'MALE',
   age: 80,
   phone: '',
-  address: '阳光花园社区',
-  community: '阳光花园社区',
+  address: COMMUNITY_NAME,
+  community: COMMUNITY_NAME,
   emergencyContact: '',
   emergencyPhone: '',
   healthNote: ''
@@ -300,17 +313,13 @@ const bindingAction = useRowSubmit(async (bindingId, action) => {
 
 async function auditBinding(bindingId, approve) {
   const actionText = approve ? '通过' : '驳回'
-  let reason
-  try {
-    ;({ value: reason } = await ElMessageBox.prompt(`请输入${actionText}审核备注说明`, '审核家属代约申请', {
-      confirmButtonText: `确认${actionText}`,
-      cancelButtonText: '再想想',
-      confirmButtonClass: approve ? '' : 'el-button--danger',
-      inputValue: approve ? '亲属关系属实，审核通过' : '材料不齐全'
-    }))
-  } catch {
-    return
-  }
+  // 理由留空必填，避免预填文案被直接提交进审计记录（I3）
+  const reason = await promptReason(`请输入${actionText}审核备注说明`, '审核家属代约申请', {
+    confirmText: `确认${actionText}`,
+    danger: !approve,
+    placeholder: approve ? '例如：已核实亲属关系' : '例如：缺少户口本或关系证明'
+  })
+  if (reason === null) return
   bindingAction.run(bindingId, async id => {
     await request.post('/family-bindings/audit', { bindingId: id, approve, reason })
     ElMessage.success(`已${actionText}`)
@@ -328,10 +337,6 @@ async function revokeBinding(bindingId) {
 </script>
 
 <style scoped>
-.main-card {
-  border-radius: 8px;
-}
-
 .filter-bar {
   margin-bottom: 16px;
 }

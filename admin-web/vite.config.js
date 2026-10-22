@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
@@ -15,33 +15,44 @@ function vendorChunk(id) {
 }
 
 // https://vite.dev/config/
-export default defineConfig({
-  plugins: [
-    vue(),
-    AutoImport({
-      resolvers: [ElementPlusResolver()],
-      dts: 'src/auto-imports.d.ts'
-    }),
-    Components({
-      resolvers: [ElementPlusResolver()],
-      dts: 'src/components.d.ts'
-    })
-  ],
-  build: {
-    // 按需引入后 element-plus ≈543kB、echarts≈530kB（dashboard 图表已 tree-shake）；
-    // 二者仍略超 500，阈值设 550 避免误报，新增超大依赖仍会告警。
-    chunkSizeWarningLimit: 550,
-    rollupOptions: {
-      output: { manualChunks: vendorChunk }
-    }
-  },
-  server: {
-    port: 3000,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:8080',
-        changeOrigin: true
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '')
+  // 生产构建禁止打开演示登录入口（S5）
+  if (mode === 'production' && env.VITE_SHOW_DEMO === 'true')
+    throw new Error('VITE_SHOW_DEMO=true is not allowed in production builds')
+  return {
+    plugins: [
+      vue(),
+      AutoImport({
+        resolvers: [ElementPlusResolver()],
+        dts: 'src/auto-imports.d.ts'
+      }),
+      Components({
+        resolvers: [ElementPlusResolver()],
+        dts: 'src/components.d.ts'
+      })
+    ],
+    build: {
+      // 按需引入后 element-plus ≈543kB、echarts≈530kB（dashboard 图表已 tree-shake）；
+      // 二者仍略超 500，阈值设 550 避免误报，新增超大依赖仍会告警。
+      chunkSizeWarningLimit: 550,
+      rollupOptions: {
+        output: { manualChunks: vendorChunk }
       }
+    },
+    server: {
+      port: 3000,
+      proxy: {
+        '/api': {
+          target: env.VITE_PROXY_TARGET || 'http://localhost:8080',
+          changeOrigin: true
+        }
+      }
+    },
+    test: {
+      environment: 'happy-dom',
+      include: ['src/**/*.spec.js'],
+      server: { deps: { inline: ['element-plus'] } }
     }
   }
 })

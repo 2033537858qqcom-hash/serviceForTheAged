@@ -6,8 +6,7 @@
       description="核验人员资质，管理技能、工作状态与服务排班。"
     />
     <el-card shadow="never" class="main-card">
-      <div class="header-bar flex-between">
-        <span style="font-weight: bold; font-size: 16px">社区养老服务队伍与排班调度</span>
+      <div class="header-bar toolbar-end">
         <el-form :inline="true" :model="list.filters" class="staff-filter" @submit.prevent="list.search">
           <el-input
             v-model="list.filters.name"
@@ -58,12 +57,12 @@
             <el-tag v-for="sk in row.skills" :key="sk.id" size="small" style="margin-right: 6px">
               {{ sk.skillName }}
             </el-tag>
-            <span v-if="!row.skills || row.skills.length === 0" style="color: #bfbfbf; font-size: 12px">暂无资质</span>
+            <span v-if="!row.skills || row.skills.length === 0" class="text-muted text-xs">暂无资质</span>
           </template>
         </el-table-column>
         <el-table-column label="服务评分" width="110">
           <template #default="{ row }">
-            <span style="color: #9b691d; font-weight: bold">{{ row.profile.priorRating }} 分</span>
+            <span class="text-warm text-strong">{{ row.profile.priorRating }} 分</span>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="200" fixed="right">
@@ -334,10 +333,6 @@ async function refreshSelectedStaff() {
 </script>
 
 <style scoped>
-.main-card {
-  border-radius: 8px;
-}
-
 .header-bar {
   margin-bottom: 16px;
 }

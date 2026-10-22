@@ -6,8 +6,7 @@
       description="跟进服务意见，记录处理结果，让每次反馈有回应。"
     />
     <el-card shadow="never" class="main-card">
-      <div class="header-bar flex-between">
-        <span style="font-weight: bold; font-size: 16px">社区服务投诉与意见反馈</span>
+      <div class="header-bar toolbar-end">
         <div class="feedback-tools">
           <el-select v-model="list.filters.status" placeholder="全部状态" clearable @change="list.search">
             <el-option v-for="option in complaintStatusOptions" :key="option.value" v-bind="option" />
@@ -68,7 +67,7 @@
             >
               处理答复
             </el-button>
-            <span v-else style="color: #28785b; font-size: 13px">{{ statusText('complaint', row.status) }}</span>
+            <span v-else class="text-success text-sm">{{ statusText('complaint', row.status) }}</span>
           </template>
         </el-table-column>
       </DataTable>
@@ -81,7 +80,7 @@
           <span>{{ currentComplaint ? currentComplaint.complaintTitle : '' }}</span>
         </el-form-item>
         <el-form-item label="投诉内容">
-          <span style="color: #54645a">{{ currentComplaint ? currentComplaint.complaintContent : '' }}</span>
+          <span class="text-muted">{{ currentComplaint ? currentComplaint.complaintContent : '' }}</span>
         </el-form-item>
         <el-form-item label="处理答复">
           <el-input
@@ -168,9 +167,6 @@ const submitHandle = () => {
 </script>
 
 <style scoped>
-.main-card {
-  border-radius: 8px;
-}
 .feedback-tools {
   display: flex;
   align-items: center;

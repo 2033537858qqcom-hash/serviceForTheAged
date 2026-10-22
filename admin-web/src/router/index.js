@@ -1,4 +1,5 @@
-import { hasAdminSession } from '../utils/admin-session.js'
+import { verifySession } from '../utils/verify-session.js'
+import { getUser, hasAdminSession } from '../utils/admin-session.js'
 import { createRouter, createWebHistory } from 'vue-router'
 import { loginGuard, pageTitle } from './guards.js'
 
@@ -77,7 +78,16 @@ const router = createRouter({
   routes
 })
 
-router.beforeEach(to => loginGuard(to, hasAdminSession(localStorage)))
+// 首次进入后台时向后端校验一次 token（RT5），本地缓存的角色仅作为初筛
+let verified = false
+router.beforeEach(async to => {
+  let loggedIn = hasAdminSession(localStorage)
+  if (loggedIn && !verified && to.path !== '/login') {
+    verified = await verifySession()
+    loggedIn = verified
+  }
+  return loginGuard(to, loggedIn, getUser()?.role)
+})
 router.afterEach(to => {
   document.title = pageTitle(to)
 })
