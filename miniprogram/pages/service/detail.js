@@ -1,28 +1,7 @@
 const navigation = require('../../utils/navigation.js');
 const { lightTap } = require('../../utils/feedback.js');
 const { getCachedService, loadService } = require('../../utils/service-catalog.js');
-
-function getAppSafe() {
-  try {
-    return getApp() || { globalData: {} };
-  } catch (_) {
-    return { globalData: {} };
-  }
-}
-
-const app = new Proxy({}, {
-  get(_, prop) {
-    const instance = getAppSafe();
-    const val = instance[prop];
-    if (typeof val === 'function') return val.bind(instance);
-    return val;
-  },
-  set(_, prop, val) {
-    const instance = getAppSafe();
-    instance[prop] = val;
-    return true;
-  }
-});
+const { getAppSafe, app } = require('../../utils/app-state.js');
 
 Page({
   data: {
@@ -30,6 +9,7 @@ Page({
     service: null,
     loading: true,
     loadError: false,
+    missingId: false,
     isElderMode: false,
     loginSheet: false
   },
@@ -46,8 +26,12 @@ Page({
       });
       return this.loadServiceDetail();
     } else {
-      this.setData({ loading: false, loadError: true });
+      this.setData({ loading: false, missingId: true });
     }
+  },
+
+  goHome() {
+    navigation.switchTab({ url: '/pages/index/index' });
   },
 
   onShow() {

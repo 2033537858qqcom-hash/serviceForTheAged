@@ -7,27 +7,8 @@ const { orderCard, sessionKey } = require('../../utils/list-state.js');
 const { lightTap } = require('../../utils/feedback.js');
 const { HOTLINE_NUMBER, HOTLINE_HOURS } = require('../../utils/contact.js');
 const { DEFAULT_IMAGES, categoryImages } = require('../../utils/service-images.js');
-
-function getAppSafe() {
-  try {
-    return getApp() || { globalData: {} };
-  } catch (_) {
-    return { globalData: {} };
-  }
-}
-const app = new Proxy({}, {
-  get(_, prop) {
-    const instance = getAppSafe();
-    const val = instance[prop];
-    if (typeof val === 'function') return val.bind(instance);
-    return val;
-  },
-  set(_, prop, val) {
-    const instance = getAppSafe();
-    instance[prop] = val;
-    return true;
-  }
-});
+const { ORDER_STATUS_TEXT } = require('../../utils/order-status.js');
+const { getAppSafe, app } = require('../../utils/app-state.js');
 
 Page({
   data: {
@@ -44,16 +25,7 @@ Page({
     activeOrderReady: false,
     activeOrderError: false,
     activeMoreCount: 0,
-    statusTextMap: {
-      'WAIT_DISPATCH': '待派单',
-      'WAIT_ACCEPT': '待接单',
-      'WAIT_VISIT': '待上门',
-      'IN_SERVICE': '服务中',
-      'WAIT_CONFIRM': '待确认',
-      'COMPLETED': '已完成',
-      'WAIT_MANUAL': '待人工处理',
-      'CANCELLED': '已取消'
-    }
+    statusTextMap: { ...ORDER_STATUS_TEXT }
   },
 
   onShow() {
@@ -139,7 +111,7 @@ Page({
     const task = request.get('/orders/page', {
       pageNum: 1, pageSize: 1,
       status: 'WAIT_DISPATCH,WAIT_ACCEPT,WAIT_VISIT,IN_SERVICE,WAIT_CONFIRM,WAIT_MANUAL'
-    }).then(data => {
+    }, { silent: true }).then(data => {
       if (this._disposed || sessionKey(app) !== context) return;
       if (version !== (app.globalData.ordersVersion || 0)) { this._activeRefreshAfter = true; return; }
       const row = data?.records?.[0];

@@ -12,7 +12,9 @@ Component({
     loading: { type: Boolean, value: false },
     success: { type: Boolean, value: false },
     // false：点遮罩不关闭（含未提交输入的抽屉），仍可用取消按钮关闭
-    maskClosable: { type: Boolean, value: true }
+    maskClosable: { type: Boolean, value: true },
+    // true：内容放进可滚动区域（最高 60vh），只能从把手/标题区下拉关闭，内容区可正常滚动
+    scrollable: { type: Boolean, value: false }
   },
   data: { rendered: false, drag: 0, dragging: false },
   lifetimes: {
@@ -32,6 +34,8 @@ Component({
   },
   methods: {
     noop() {},
+    // scrollable 模式下内容区的 touchmove 不参与拖拽
+    onContentMove() {},
     onMask() { if (this.data.maskClosable) this.triggerEvent('close'); },
     onDismiss() { this.triggerEvent('close'); },
     onConfirm() { this.triggerEvent('confirm'); },

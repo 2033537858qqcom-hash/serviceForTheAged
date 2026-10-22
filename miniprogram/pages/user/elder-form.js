@@ -1,27 +1,6 @@
 const navigation = require('../../utils/navigation.js');
 const request = require('../../utils/request.js');
-
-function getAppSafe() {
-  try {
-    return getApp() || { globalData: {} };
-  } catch (_) {
-    return { globalData: {} };
-  }
-}
-
-const app = new Proxy({}, {
-  get(_, prop) {
-    const instance = getAppSafe();
-    const val = instance[prop];
-    if (typeof val === 'function') return val.bind(instance);
-    return val;
-  },
-  set(_, prop, val) {
-    const instance = getAppSafe();
-    instance[prop] = val;
-    return true;
-  }
-});
+const { getAppSafe, app } = require('../../utils/app-state.js');
 
 Page({
   data: {
@@ -46,6 +25,10 @@ Page({
   },
 
   onLoad(options) {
+    // 先校验登录/角色再发请求；回跳地址保留 id，登录后仍回到编辑同一位老人
+    const id = (options && options.id) || '';
+    this._returnUrl = '/pages/user/elder-form' + (id ? `?id=${encodeURIComponent(id)}` : '');
+    if (!navigation.requireRole(['RESIDENT'], this._returnUrl)) { this._denied = true; return; }
     if (options && options.id) {
       this.setData({ id: options.id });
       if (typeof wx !== 'undefined' && wx.setNavigationBarTitle) {
@@ -73,7 +56,8 @@ Page({
     const app = getAppSafe();
     const isElder = Boolean(app.globalData?.isElderMode);
     if (this.data.isElderMode !== isElder) this.setData({ isElderMode: isElder });
-    if (!navigation.requireRole(['RESIDENT'], '/pages/user/elder-form')) return;
+    if (this._denied) return;
+    if (!navigation.requireRole(['RESIDENT'], this._returnUrl || '/pages/user/elder-form')) return;
   },
   onUnload() { this._disposed = true; },
 

@@ -46,14 +46,19 @@ function patchLanBaseUrl(source, url) {
   return source.replace(LAN_ASSIGNMENT, `const LAN_BASE_URL = '${url}'`);
 }
 
+// 写入未提交的 config/local.js（.gitignore），app.js 仅在开发版读取它
+function renderLocalConfig(url) {
+  return `// 本文件由 lan-sync 自动生成，已加入 .gitignore，请勿提交。仅开发版(develop)读取。\nmodule.exports = { LAN_BASE_URL: '${url}' };\n`;
+}
+
 function parseArgs(argv) {
-  const options = { port: 8080, contextPath: '/api', appJs: path.join(__dirname, '..', 'app.js') };
+  const options = { port: 8080, contextPath: '/api', localConfig: path.join(__dirname, '..', 'config', 'local.js') };
   for (let index = 0; index < argv.length; index += 1) {
     const key = argv[index];
     const value = argv[index + 1];
     if (key === '--port') options.port = value;
     else if (key === '--context-path') options.contextPath = value;
-    else if (key === '--app-js') options.appJs = value;
+    else if (key === '--local-config') options.localConfig = value;
     else continue;
     index += 1;
   }
@@ -64,15 +69,22 @@ function syncLanBaseUrl(options = {}) {
   const ip = pickLanAddress();
   if (!ip) return { ip: null, url: null, written: false };
   const url = buildLanBaseUrl(ip, options.port, options.contextPath);
-  const appJs = path.resolve(options.appJs || path.join(__dirname, '..', 'app.js'));
-  const source = fs.readFileSync(appJs, 'utf8');
-  const next = patchLanBaseUrl(source, url);
+  const file = path.resolve(options.localConfig || path.join(__dirname, '..', 'config', 'local.js'));
+  const source = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
+  const next = renderLocalConfig(url);
   const written = next !== source;
-  if (written) fs.writeFileSync(appJs, next);
+  if (written) { fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, next); }
   return { ip, url, written };
 }
 
 function main() {
+  if (process.argv.includes('--clear')) {
+    // 上传体验版/正式版前可清除本机地址文件，确保包内没有任何局域网 IP
+    const file = parseArgs(process.argv.slice(2)).localConfig;
+    if (fs.existsSync(file)) fs.unlinkSync(file);
+    console.log('[lan-sync] cleared local LAN config');
+    return;
+  }
   const result = syncLanBaseUrl(parseArgs(process.argv.slice(2)));
   if (!result.ip) {
     console.warn('[lan-sync] no usable LAN IPv4 address was found');
@@ -84,4 +96,4 @@ function main() {
 
 if (require.main === module) main();
 
-module.exports = { pickLanAddress, isLanIpv4, buildLanBaseUrl, patchLanBaseUrl, syncLanBaseUrl };
+module.exports = { pickLanAddress, isLanIpv4, buildLanBaseUrl, patchLanBaseUrl, renderLocalConfig, syncLanBaseUrl };

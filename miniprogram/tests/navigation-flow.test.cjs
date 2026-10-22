@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { createRuntime, deferred } = require('./page-harness.cjs');
-const appData = () => ({ globalData: { token: 'account-a', baseUrl: 'local', isElderMode: false } });
+const appData = () => ({ globalData: { token: 'account-a', role: 'RESIDENT', baseUrl: 'local', isElderMode: false } });
 const noDelay = () => { throw new Error('navigation must not wait for a timer'); };
 
 test('repeated taps open one detail page and a failed route unlocks immediately', () => {
@@ -52,7 +52,7 @@ test('concurrent 401 responses clear the session and open login only once', asyn
   assert.equal(routes.length, 1);
   assert.equal(toasts.length, 1);
   assert.equal(app.globalData.token, '');
-  assert.equal(app.globalData.role, 'RESIDENT');
+  assert.equal(app.globalData.role, '');
 });
 
 test('an authentication redirect waits only for the current native route to complete', () => {

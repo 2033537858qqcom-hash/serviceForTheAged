@@ -2,6 +2,7 @@ const navigation = require('../../utils/navigation.js');
 const { syncTabBar } = require('../../utils/tab-bar.js');
 const request = require('../../utils/request.js');
 const { HOTLINE_NUMBER, HOTLINE_HOURS } = require('../../utils/contact.js');
+const { getAppSafe, app } = require('../../utils/app-state.js');
 // 订单看板角标：与订单页分类使用同样的状态组合
 const HUB_STATUSES = {
   WAIT_DISPATCH: 'WAIT_DISPATCH,WAIT_ACCEPT,WAIT_MANUAL',
@@ -9,28 +10,6 @@ const HUB_STATUSES = {
   IN_SERVICE: 'IN_SERVICE',
   WAIT_CONFIRM: 'WAIT_CONFIRM'
 };
-
-function getAppSafe() {
-  try {
-    return getApp() || { globalData: {} };
-  } catch (_) {
-    return { globalData: {} };
-  }
-}
-
-const app = new Proxy({}, {
-  get(_, prop) {
-    const instance = getAppSafe();
-    const val = instance[prop];
-    if (typeof val === 'function') return val.bind(instance);
-    return val;
-  },
-  set(_, prop, val) {
-    const instance = getAppSafe();
-    instance[prop] = val;
-    return true;
-  }
-});
 
 Page({
   data: {
@@ -81,7 +60,7 @@ Page({
     if (this._hubKey === key && Date.now() - (this._hubAt || 0) < 30000) return Promise.resolve();
     this._hubKey = key; this._hubAt = Date.now();
     const entries = Object.keys(HUB_STATUSES);
-    return Promise.all(entries.map(name => request.get('/orders/page', { pageNum: 1, pageSize: 1, status: HUB_STATUSES[name] })
+    return Promise.all(entries.map(name => request.get('/orders/page', { pageNum: 1, pageSize: 1, status: HUB_STATUSES[name] }, { silent: true })
       .then(data => Number(data?.total) || 0).catch(() => 0))).then(totals => {
       if (this._hubKey !== key) return;
       const hubCounts = {};
@@ -350,18 +329,14 @@ Page({
   logout() {
     require('../../utils/media-url.js').clearPrivateMedia();
     this.setData({ logoutSheet: false, staffProfile: null, staffSkills: [], staffSkillsDesc: '' });
-    app.globalData.token = '';
-    app.globalData.userInfo = null;
-    app.globalData.role = 'RESIDENT';
-    wx.removeStorageSync('token');
-    wx.removeStorageSync('userInfo');
+    require('../../utils/session.js').clearSession(app);
     this.setData({ userInfo: null });
     wx.showToast({ title: '已安全退出登录', icon: 'none' });
     navigation.toLogin('/pages/user/profile');
   },
 
   goToLogin() {
-    navigation.navigateTo({ url: '/pages/auth/login' });
+    navigation.toLogin('/pages/user/profile');
   },
 
   goToOrderList(e) {

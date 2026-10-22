@@ -48,3 +48,6 @@ project.private.config.json
 .env.*
 !.env.example
 
+
+# 小程序本机局域网调试地址（lan-sync 生成，勿提交）
+miniprogram/config/local.js

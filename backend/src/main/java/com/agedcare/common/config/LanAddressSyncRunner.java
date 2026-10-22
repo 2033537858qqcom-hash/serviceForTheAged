@@ -31,11 +31,11 @@ public class LanAddressSyncRunner implements ApplicationRunner {
             return;
         }
         Path script = root.resolve("miniprogram/scripts/sync-lan-ip.cjs");
-        Path appJs = root.resolve("miniprogram/app.js");
+        Path localConfig = root.resolve("miniprogram/config/local.js");
         if (Files.isRegularFile(script) && runNode(script)) {
             return;
         }
-        writeWithJava(appJs);
+        writeWithJava(localConfig);
     }
 
     private boolean runNode(Path script) {
@@ -65,7 +65,7 @@ public class LanAddressSyncRunner implements ApplicationRunner {
         }
     }
 
-    private void writeWithJava(Path appJs) {
+    private void writeWithJava(Path localConfig) {
         try {
             String ip = LanAddressPicker.fromSystem();
             if (ip == null) {
@@ -73,10 +73,11 @@ public class LanAddressSyncRunner implements ApplicationRunner {
                 return;
             }
             String url = LanAddressPicker.buildLanBaseUrl(ip, port, contextPath);
-            String source = Files.readString(appJs);
-            String next = LanAddressPicker.patchLanBaseUrl(source, url);
+            String next = LanAddressPicker.renderLocalConfig(url);
+            String source = Files.isRegularFile(localConfig) ? Files.readString(localConfig) : "";
             if (!source.equals(next)) {
-                Files.writeString(appJs, next);
+                Files.createDirectories(localConfig.getParent());
+                Files.writeString(localConfig, next);
             }
             log.info("真机调试地址已同步为 {} ，请重新编译小程序后再扫码", url);
         } catch (Exception ex) {

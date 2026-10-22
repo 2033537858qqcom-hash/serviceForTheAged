@@ -112,6 +112,12 @@ public final class LanAddressPicker {
         return "http://" + ip + ":" + port + context;
     }
 
+    /** 生成未提交的 miniprogram/config/local.js，仅开发版读取，体验版/正式版忽略。 */
+    public static String renderLocalConfig(String url) {
+        return "// 本文件由 lan-sync 自动生成，已加入 .gitignore，请勿提交。仅开发版(develop)读取。\n"
+                + "module.exports = { LAN_BASE_URL: '" + url + "' };\n";
+    }
+
     public static String patchLanBaseUrl(String source, String url) {
         Matcher matcher = LAN_ASSIGNMENT.matcher(source);
         if (!matcher.find()) {

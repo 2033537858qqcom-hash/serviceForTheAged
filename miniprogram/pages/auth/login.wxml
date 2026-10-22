@@ -33,9 +33,9 @@
     <view class="login-footer">助餐送餐 · 居家助洁 · 陪同照护</view>
   </view>
 
-  <bottom-sheet show="{{showDocModal}}" title="{{docTitle}}" confirm-text="我已了解并同意" dismiss-text="关闭" bind:close="closeDocModal" bind:confirm="agreeAndCloseDoc">
-    <scroll-view class="doc-scroll-content" scroll-y="true">
+  <bottom-sheet show="{{showDocModal}}" title="{{docTitle}}" confirm-text="我已了解并同意" dismiss-text="关闭" bind:close="closeDocModal" bind:confirm="agreeAndCloseDoc" scrollable>
+    <view class="doc-scroll-content">
       <text class="doc-text">{{docContent}}</text>
-    </scroll-view>
+    </view>
   </bottom-sheet>
 </view>

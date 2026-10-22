@@ -2,28 +2,7 @@ const navigation = require('../../utils/navigation.js');
 const request = require('../../utils/request.js');
 const { sessionKey } = require('../../utils/list-state.js');
 const { friendlyTime } = require('../../utils/time-format.js');
-
-function getAppSafe() {
-  try {
-    return getApp() || { globalData: {} };
-  } catch (_) {
-    return { globalData: {} };
-  }
-}
-
-const app = new Proxy({}, {
-  get(_, prop) {
-    const instance = getAppSafe();
-    const val = instance[prop];
-    if (typeof val === 'function') return val.bind(instance);
-    return val;
-  },
-  set(_, prop, val) {
-    const instance = getAppSafe();
-    instance[prop] = val;
-    return true;
-  }
-});
+const { getAppSafe, app } = require('../../utils/app-state.js');
 
 Page({
   data: {

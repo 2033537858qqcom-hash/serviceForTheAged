@@ -2,19 +2,24 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { createRuntime } = require('./page-harness.cjs');
 
+const LOCAL_LAN = 'http://192.168.31.20:8080/api';
 function currentLanUrl() {
   return launch('ios').app.globalData.baseUrl;
 }
 
-function launch(platform, saved = {}, legacy = false) {
+function launch(platform, saved = {}, legacy = false, envVersion = 'develop', local = { LAN_BASE_URL: LOCAL_LAN }) {
   const app = {};
   const storage = { ...saved };
   const wx = {
     getStorageSync: key => storage[key],
     setStorageSync: (key, value) => { storage[key] = value; },
+    getAccountInfoSync: () => ({ miniProgram: { envVersion } }),
     [legacy ? 'getSystemInfoSync' : 'getDeviceInfo']: () => ({ platform })
   };
-  const rt = createRuntime(app, wx, undefined, { App: value => Object.assign(app, value, { globalData: structuredClone(value.globalData) }) });
+  const rt = createRuntime(app, wx, undefined, {
+    App: value => Object.assign(app, value, { globalData: structuredClone(value.globalData) }),
+    __stubModules: local ? { 'config/local.js': local } : {}
+  });
   rt.require('app'); app.onLaunch();
   return { app, storage, rt };
 }
@@ -30,10 +35,9 @@ test('App registers and starts even before common modules are injected', () => {
   rt.require('app');
   assert.equal(typeof app.onLaunch, 'function', 'App must register without requiring a new module');
   app.onLaunch();
-  const lan = currentLanUrl();
-  assert.match(lan, /^http:\/\/\d+\.\d+\.\d+\.\d+:\d+\/api$/);
-  assert.equal(app.globalData.baseUrl, lan);
-  assert.deepEqual(Array.from(app.getServerUrls()), [lan]);
+  // 本机配置模块不可加载时仍能启动，并退回模拟器地址
+  assert.equal(app.globalData.baseUrl, 'http://localhost:8080/api');
+  assert.match(currentLanUrl(), /^http:\/\/\d+\.\d+\.\d+\.\d+:\d+\/api$/);
 });
 
 test('phone startup uses the computer LAN endpoint while the simulator uses localhost', () => {
@@ -119,4 +123,27 @@ test('a connection timeout tells the user to check WiFi and the LAN address', as
   requests[0].fail({ errMsg: 'request:fail -118:net::ERR_CONNECTION_TIMED_OUT', errno: 600001 });
   await new Promise(resolve => setImmediate(resolve));
   assert.match(toasts.at(-1).title, /同一WiFi|服务地址/);
+});
+
+test('trial and release always use the production HTTPS endpoint and never a LAN address', () => {
+  for (const env of ['trial', 'release']) {
+    for (const platform of ['ios', 'devtools']) {
+      const { app, storage } = launch(platform, { customBaseUrl: 'http://192.168.1.8:8080/api' }, false, env);
+      assert.match(app.globalData.baseUrl, /^https:\/\//, env);
+      assert.deepEqual(Array.from(app.getServerUrls()), [app.globalData.baseUrl]);
+      assert.equal(storage.customBaseUrl, 'http://192.168.1.8:8080/api', 'production does not rewrite dev cache');
+    }
+  }
+});
+
+test('committed app.js contains no private LAN address; develop without local config falls back safely', () => {
+  const source = require('node:fs').readFileSync(require('node:path').join(__dirname, '..', 'app.js'), 'utf8');
+  assert.doesNotMatch(source, /https?:\/\/(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/);
+  const { app } = launch('ios', {}, false, 'develop', null);
+  assert.equal(app.globalData.baseUrl, 'http://localhost:8080/api');
+  assert.deepEqual(Array.from(app.getServerUrls()), []);
+});
+
+test('logged-out role is empty, not RESIDENT', () => {
+  assert.equal(launch('devtools').app.globalData.role, '');
 });

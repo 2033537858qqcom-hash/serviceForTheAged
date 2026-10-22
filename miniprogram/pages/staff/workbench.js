@@ -5,28 +5,8 @@ const { lightTap } = require('../../utils/feedback.js');
 const { syncTabBar } = require('../../utils/tab-bar.js');
 const { hasCoordinates } = require('../../utils/coordinates.js');
 const { taskCard, sessionKey, markOrdersChanged } = require('../../utils/list-state.js');
-
-function getAppSafe() {
-  try {
-    return getApp() || { globalData: {} };
-  } catch (_) {
-    return { globalData: {} };
-  }
-}
-
-const app = new Proxy({}, {
-  get(_, prop) {
-    const instance = getAppSafe();
-    const val = instance[prop];
-    if (typeof val === 'function') return val.bind(instance);
-    return val;
-  },
-  set(_, prop, val) {
-    const instance = getAppSafe();
-    instance[prop] = val;
-    return true;
-  }
-});
+const { ORDER_STATUS_TEXT } = require('../../utils/order-status.js');
+const { getAppSafe, app } = require('../../utils/app-state.js');
 
 const TASK_TABS = [
   { key: '', label: '全部安排' },
@@ -59,12 +39,7 @@ Page({
     rejectDispatchId: null,
     loadError: false,
     isElderMode: false,
-    statusTextMap: {
-      'WAIT_VISIT': '待上门',
-      'IN_SERVICE': '服务中',
-      'WAIT_CONFIRM': '待确认',
-      'COMPLETED': '已完成'
-    },
+    statusTextMap: { ...ORDER_STATUS_TEXT },
     statusTagMap: {
       'WAIT_VISIT': 'tag-warning',
       'IN_SERVICE': 'tag-info',
