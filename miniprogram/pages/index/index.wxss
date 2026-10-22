@@ -2,8 +2,8 @@
 .home-header { position: relative; display: flex; justify-content: space-between; gap: 16rpx; align-items: center; padding: 0 0 28rpx; }
 .home-header::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1rpx; background: linear-gradient(90deg, rgba(23,107,93,0.02) 0%, rgba(23,107,93,0.12) 25%, rgba(23,107,93,0.12) 75%, rgba(23,107,93,0.02) 100%); }
 .home-brand { display: flex; flex: 0 0 auto; min-width: 0; align-items: center; gap: 16rpx; }
-.home-header-deco { flex: 1; display: flex; align-items: center; justify-content: center; padding: 0 8rpx; min-width: 50rpx; height: 56rpx; overflow: hidden; pointer-events: none; }
-.header-floral-art { width: 100%; max-width: 240rpx; height: 44rpx; display: block; opacity: 0.88; }
+.home-header-deco { flex: 1; display: flex; align-items: center; justify-content: center; padding: 0 4rpx; min-width: 60rpx; height: 60rpx; overflow: hidden; pointer-events: none; }
+.header-floral-art { width: 100%; max-width: 290rpx; height: 52rpx; display: block; opacity: 0.92; }
 .home-brand-copy { min-width: 0; }
 .home-brand-icon {
   flex-shrink: 0;
