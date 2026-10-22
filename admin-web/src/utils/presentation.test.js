@@ -66,3 +66,43 @@ test('one status table drives labels, tag colours and filter options', () => {
   assert.ok(options.every(option => option.label === statusText('order', option.value)))
   assert.equal(skillText('COOKING, NURSING,X'), '助餐烹饪、基础照护护理、X')
 })
+
+
+import {
+  formatAction,
+  formatTargetType,
+  formatDetails,
+  actionTagType,
+  OPERATION_ACTIONS,
+  OPERATION_TARGETS
+} from './presentation.js'
+
+test('operation log action formatting translates controller methods to administrator Chinese', () => {
+  assert.equal(formatAction('ServiceItemController.saveOrUpdate'), '保存服务项目')
+  assert.equal(formatAction('ServiceItemController.uploadImage'), '上传服务封面图')
+  assert.equal(formatAction('DispatchController.assign'), '人工指派调度')
+  assert.equal(formatAction('DispatchController.reassign'), '重新指派服务人员')
+  assert.equal(formatAction('StaffController.audit'), '审核人员执业资质')
+  assert.equal(formatAction('OrderController.createOrder'), '创建预约订单')
+  assert.equal(formatAction('LEGACY_PHOTO_CLEANED'), '历史私有图片已清理归档')
+  // Heuristic fallback for unmapped controller method
+  assert.equal(formatAction('ServiceItemController.delete'), '删除服务项目')
+  assert.equal(formatAction('UnknownCustomController.save'), 'UnknownCustom - 保存')
+  assert.equal(formatAction(null), '-')
+})
+
+test('operation log target and details formatting produces clean readable output', () => {
+  assert.equal(formatTargetType('ServiceItemController'), '服务项目')
+  assert.equal(formatTargetType('OrderController'), '服务订单')
+  assert.equal(formatTargetType(null), '通用对象')
+
+  assert.equal(formatDetails('{"method":"POST","path":"/api/service-items"}'), 'POST /api/service-items')
+  assert.equal(formatDetails({ method: 'PUT', path: '/api/users/1' }), 'PUT /api/users/1')
+  assert.equal(formatDetails('plain text detail'), 'plain text detail')
+  assert.equal(formatDetails(null), '-')
+
+  assert.equal(actionTagType('StaffController.audit'), 'success')
+  assert.equal(actionTagType('OrderController.cancel'), 'danger')
+  assert.equal(actionTagType('DispatchController.reassign'), 'warning')
+  assert.equal(actionTagType('ServiceItemController.saveOrUpdate'), 'primary')
+})

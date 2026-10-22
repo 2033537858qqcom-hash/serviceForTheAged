@@ -102,3 +102,158 @@ export function latestCandidateScores(scores = []) {
       String(a.staffId).localeCompare(String(b.staffId), 'en', { numeric: true })
   )
 }
+
+export const OPERATION_ACTIONS = {
+  // 服务项目
+  'ServiceItemController.saveOrUpdate': '保存服务项目',
+  'ServiceItemController.uploadImage': '上传服务封面图',
+  'ServiceItemController.toggleStatus': '上架/下架服务项目',
+  'ServiceItemController.updateStatus': '调整服务状态',
+  'ServiceItemController.delete': '删除服务项目',
+  // 调度派单
+  'DispatchController.assign': '人工指派调度',
+  'DispatchController.reassign': '重新指派服务人员',
+  'DispatchController.accept': '服务人员接单',
+  'DispatchController.reject': '服务人员拒单',
+  // 老人档案
+  'ElderProfileController.saveOrUpdate': '维护老人健康档案',
+  'ElderProfileController.save': '保存老人健康档案',
+  // 家属绑定
+  'FamilyBindingController.apply': '提交家属代约申请',
+  'FamilyBindingController.audit': '审核家属绑定申请',
+  'FamilyBindingController.revoke': '解除家属绑定关系',
+  // 履约服务
+  'FulfillmentController.startService': '服务人员开始上门',
+  'FulfillmentController.submitRecord': '提交服务核销凭证',
+  'FulfillmentController.confirm': '确认完成服务订单',
+  'FulfillmentController.submitReview': '提交服务评价',
+  'FulfillmentController.submitComplaint': '提交服务投诉建议',
+  'FulfillmentController.startComplaint': '受理服务投诉建议',
+  'FulfillmentController.handleComplaint': '处理办结投诉建议',
+  // 订单
+  'OrderController.createOrder': '创建预约订单',
+  'OrderController.create': '创建预约订单',
+  'OrderController.cancelOrder': '取消预约订单',
+  'OrderController.cancel': '取消预约订单',
+  'OrderController.payOrder': '支付结算订单',
+  'OrderController.pay': '支付结算订单',
+  // 服务人员
+  'StaffController.saveOrUpdate': '维护服务人员档案',
+  'StaffController.audit': '审核人员执业资质',
+  'StaffController.updateStatus': '调整人员在岗状态',
+  'StaffController.addSkill': '认证添加专业技能',
+  'StaffController.removeSkill': '移除人员专业技能',
+  'StaffController.addShift': '安排服务人员排班',
+  'StaffController.reportLocation': '上报人员实时坐标',
+  'StaffController.mockMoveLocation': '模拟人员位置移动',
+  // 用户与权限
+  'UserController.updateStatus': '启用/冻结系统账号',
+  'UserController.updatePassword': '修改系统登录密码',
+  'UserController.updateAvatar': '更换用户个人头像',
+  'UserController.updateProfile': '修改用户个人资料',
+  // 附件与消息
+  'FileUploadController.uploadImage': '上传系统图片文件',
+  'NotificationController.markAsRead': '标记系统通知已读',
+  'NotificationController.read': '标记系统通知已读',
+  // 认证
+  'AuthController.login': '账号密码登录',
+  'AuthController.wechatLogin': '微信授权登录',
+  'MockAuthController.mockLogin': '模拟快速登录',
+  // 系统清理与迁移
+  'LEGACY_PHOTO_PENDING': '历史私有图片待清理',
+  'LEGACY_PHOTO_CLEANED': '历史私有图片已清理归档'
+}
+
+export const OPERATION_TARGETS = {
+  ServiceItemController: '服务项目',
+  SERVICE_ITEM: '服务项目',
+  DispatchController: '调度派单',
+  DISPATCH: '调度派单',
+  ElderProfileController: '老人档案',
+  ELDER: '老人档案',
+  FamilyBindingController: '家属绑定',
+  FAMILY_BINDING: '家属绑定',
+  FulfillmentController: '履约服务',
+  FULFILLMENT: '履约服务',
+  OrderController: '服务订单',
+  ORDER: '服务订单',
+  StaffController: '服务人员',
+  STAFF: '服务人员',
+  UserController: '系统用户',
+  USER: '系统用户',
+  FileUploadController: '文件附件',
+  UPLOAD: '文件附件',
+  NotificationController: '消息通知',
+  NOTIFICATION: '消息通知',
+  SERVICE_RECORD: '服务核销记录',
+  SYSTEM: '系统任务'
+}
+
+export function formatAction(action) {
+  if (!action) return '-'
+  if (OPERATION_ACTIONS[action]) return OPERATION_ACTIONS[action]
+  const parts = String(action).split('.')
+  if (parts.length === 2) {
+    const [controller, method] = parts
+    const target = OPERATION_TARGETS[controller] || controller.replace(/Controller$/, '')
+    const verbMap = {
+      saveOrUpdate: '保存/维护',
+      save: '保存',
+      update: '修改',
+      delete: '删除',
+      remove: '移除',
+      audit: '审核',
+      uploadImage: '上传图片',
+      toggleStatus: '切换状态',
+      updateStatus: '修改状态',
+      assign: '指派调度',
+      cancel: '取消',
+      confirm: '确认',
+      create: '创建'
+    }
+    const verb = verbMap[method] || method
+    return `${target} - ${verb}`
+  }
+  return String(action)
+}
+
+export function formatTargetType(targetType) {
+  if (!targetType) return '通用对象'
+  return OPERATION_TARGETS[targetType] || targetType.replace(/Controller$/, '')
+}
+
+export function formatDetails(details) {
+  if (!details) return '-'
+  if (typeof details === 'object') {
+    if (details.method && details.path) return `${details.method} ${details.path}`
+    return JSON.stringify(details)
+  }
+  const raw = String(details).trim()
+  if (raw.startsWith('{') && raw.endsWith('}')) {
+    try {
+      const parsed = JSON.parse(raw)
+      if (parsed.method && parsed.path) {
+        return `${parsed.method} ${parsed.path}`
+      }
+      if (parsed.message) return String(parsed.message)
+      if (parsed.reason) return String(parsed.reason)
+    } catch {
+      // ignore JSON parse failure
+    }
+  }
+  return raw
+}
+
+export function actionTagType(action) {
+  const str = String(action || '').toLowerCase()
+  if (str.includes('audit') || str.includes('confirm') || str.includes('accept') || str.includes('cleaned')) {
+    return 'success'
+  }
+  if (str.includes('cancel') || str.includes('reject') || str.includes('delete') || str.includes('remove') || str.includes('revoke')) {
+    return 'danger'
+  }
+  if (str.includes('reassign') || str.includes('status') || str.includes('complaint')) {
+    return 'warning'
+  }
+  return 'primary'
+}
