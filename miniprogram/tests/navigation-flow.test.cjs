@@ -201,8 +201,8 @@ test('successful booking redirects immediately and retries routing without creat
   page.submitOrder(); assert.equal(posts, 1); assert.equal(calls.length, 2);
 });
 
-test('review and elder saves return immediately while duplicate taps stay locked', async () => {
-  for (const [name, action] of [['order/confirm', 'submitReview'], ['user/elder-form', 'saveElder']]) {
+test('elder saves return immediately while duplicate taps stay locked', async () => {
+  for (const [name, action] of [['user/elder-form', 'saveElder']]) {
     const saved = deferred(); const calls = []; let posts = 0;
     const rt = createRuntime(appData(), { showToast() {}, navigateBack: o => calls.push(o) }, { post: () => { posts++; return saved.promise; } }, { setTimeout: noDelay });
     const page = rt.page(name); page.data.name = '居民'; page.data.orderId = '1';

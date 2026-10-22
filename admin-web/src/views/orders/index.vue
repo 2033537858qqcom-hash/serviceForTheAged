@@ -126,6 +126,7 @@
             </el-descriptions-item>
             <el-descriptions-item label="评价内容">
               {{ detailData.serviceReview.content || '无文字评价' }}
+              <div v-if="detailData.serviceReview.tags" style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px;"><el-tag v-for="tag in detailData.serviceReview.tags.split(',')" :key="tag" size="small">{{ tag }}</el-tag></div>
             </el-descriptions-item>
           </el-descriptions>
         </div>

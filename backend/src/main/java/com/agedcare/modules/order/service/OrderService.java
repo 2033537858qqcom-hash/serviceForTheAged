@@ -19,6 +19,8 @@ import com.agedcare.modules.elder.mapper.ElderProfileMapper;
 import com.agedcare.modules.elder.service.ElderProfileService;
 import com.agedcare.modules.fulfillment.entity.ServiceRecord;
 import com.agedcare.modules.fulfillment.entity.ServiceReview;
+import com.agedcare.modules.fulfillment.entity.ServiceComplaint;
+import com.agedcare.modules.fulfillment.mapper.ServiceComplaintMapper;
 import com.agedcare.modules.fulfillment.mapper.ServiceRecordMapper;
 import com.agedcare.modules.fulfillment.mapper.ServiceReviewMapper;
 import com.agedcare.modules.order.dto.OrderCreateDTO;
@@ -69,6 +71,7 @@ public class OrderService {
     private final StaffBookingMapper staffBookingMapper;
     private final ServiceRecordMapper serviceRecordMapper;
     private final ServiceReviewMapper serviceReviewMapper;
+    private final ServiceComplaintMapper serviceComplaintMapper;
     private final DispatchService dispatchService;
     private final SysUserMapper sysUserMapper;
 
@@ -377,6 +380,13 @@ public class OrderService {
 
         OrderVO vo = assembleOrderVO(order);
         vo.setCanPay(canPay(order, currentUser, false));
+        if (UserRole.RESIDENT.getCode().equals(currentUser.getRole()) || UserRole.ADMIN.getCode().equals(currentUser.getRole())) {
+            var query = new LambdaQueryWrapper<ServiceComplaint>()
+                    .eq(ServiceComplaint::getOrderId, orderId)
+                    .orderByDesc(ServiceComplaint::getCreatedAt);
+            if (UserRole.RESIDENT.getCode().equals(currentUser.getRole())) query.eq(ServiceComplaint::getComplainantId, currentUser.getId());
+            vo.setFeedbackRecords(serviceComplaintMapper.selectList(query));
+        }
         return vo;
     }
 

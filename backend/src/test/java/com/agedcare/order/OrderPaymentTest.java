@@ -46,6 +46,7 @@ class OrderPaymentTest {
     @Mock StaffBookingMapper bookings;
     @Mock ServiceRecordMapper records;
     @Mock ServiceReviewMapper reviews;
+    @Mock com.agedcare.modules.fulfillment.mapper.ServiceComplaintMapper complaints;
     @Mock DispatchService dispatch;
     @Mock SysUserMapper users;
     OrderService service;
@@ -55,7 +56,7 @@ class OrderPaymentTest {
         // 用真实的 ElderProfileService，绑定关系只由 FamilyBindingMapper 决定
         ElderProfileService profiles = new ElderProfileService(elders, bindings, staffProfiles, orders);
         service = new OrderService(orders, logs, items, elders, profiles, staffProfiles, staffService, attempts,
-                bookings, records, reviews, dispatch, users);
+                bookings, records, reviews, complaints, dispatch, users);
         order = ServiceOrder.builder().id(ORDER_ID).elderId(ELDER_ID).requesterUserId(FAMILY_USER).status("WAIT_VISIT").build();
         when(orders.selectByIdForUpdate(ORDER_ID)).thenAnswer(i -> order);
         when(elders.selectById(ELDER_ID)).thenReturn(ElderProfile.builder().id(ELDER_ID).userId(ELDER_USER).name("钱桂芳").idCard("110101194611152345").build());

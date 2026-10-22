@@ -11,6 +11,7 @@ const ELDER_KEYS = ['id', 'name', 'age', 'community'];
 
 function detailView(data) {
   const view = pick(data, TOP_KEYS) || {};
+  view.feedbackRecords = Array.isArray(data?.feedbackRecords) ? data.feedbackRecords.map(record => pick(record, ['id', 'complaintTitle', 'status', 'statusText', 'createdAtText', 'handleResult', 'handledAtText'])) : [];
   view.elder = pick(data && data.elder, ELDER_KEYS);
   const staff = data && data.currentStaff;
   view.currentStaff = staff ? {

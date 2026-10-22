@@ -283,6 +283,11 @@ public class FulfillmentService {
      */
     @Transactional(rollbackFor = Exception.class)
     public void submitReview(ServiceReview review) {
+        submitReview(review, false, null);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void submitReview(ServiceReview review, boolean followUp, String issueType) {
         LoginUser currentUser = UserContext.getUser();
         if (currentUser == null) {
             throw new BusinessException(ResultCode.UNAUTHORIZED);
@@ -309,10 +314,30 @@ public class FulfillmentService {
             throw new BusinessException("评分必须在1到5星之间");
         }
 
+        String content = review.getContent() == null ? "" : review.getContent().trim();
+        if (content.length() > 200) throw new BusinessException("评价内容最多200字");
+        review.setContent(content);
+        java.util.Set<String> allowedTags = java.util.Set.of("准时上门", "态度耐心", "服务细致", "沟通顺畅", "整体满意", "上门迟到", "服务未完成", "沟通不清", "服务态度需改进", "其他问题");
+        java.util.List<String> tags = StringUtils.hasText(review.getTags())
+                ? java.util.Arrays.stream(review.getTags().split(",")).map(String::trim).distinct().toList()
+                : java.util.List.of();
+        if (tags.size() > 5 || !allowedTags.containsAll(tags)) throw new BusinessException("请选择有效的评价标签，最多5项");
+        review.setTags(String.join(",", tags));
+        if (followUp && (review.getRating() > 2 || !java.util.Set.of("上门迟到", "服务未完成", "沟通不清", "服务态度需改进", "其他问题").contains(issueType == null ? "" : issueType))) {
+            throw new BusinessException("请为低分评价选择需要社区跟进的问题类型");
+        }
+
         review.setElderId(order.getElderId());
         review.setReviewerUserId(currentUser.getId());
         review.setCreatedAt(LocalDateTime.now());
         serviceReviewMapper.insert(review);
+
+        if (followUp) {
+            submitComplaint(ServiceComplaint.builder().orderId(order.getId())
+                    .complaintTitle("[评价跟进] " + issueType)
+                    .complaintContent("用户主动申请社区联系并跟进。\n评分：" + review.getRating() + "星\n问题：" + issueType
+                            + "\n标签：" + String.join("、", tags) + "\n补充意见：" + (content.isEmpty() ? "未填写" : content)).build());
+        }
 
         // 更新服务人员评分
         if (order.getCurrentDispatchId() != null) {
@@ -390,18 +415,30 @@ public class FulfillmentService {
     }
 
     @Transactional(rollbackFor = Exception.class)
+    public void startComplaint(Long id) {
+        int changed = serviceComplaintMapper.update(null, new com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<ServiceComplaint>()
+                .eq(ServiceComplaint::getId, id).eq(ServiceComplaint::getStatus, "PENDING")
+                .set(ServiceComplaint::getStatus, "PROCESSING").set(ServiceComplaint::getHandleUserId, UserContext.getUser().getId())
+                .set(ServiceComplaint::getUpdatedAt, LocalDateTime.now()));
+        if (changed == 0) throw new BusinessException("该反馈已被受理或不存在，请刷新列表");
+    }
+
+    @Transactional(rollbackFor = Exception.class)
     public void handleComplaint(Long id, String result) {
         LoginUser currentUser = UserContext.getUser();
         ServiceComplaint complaint = serviceComplaintMapper.selectById(id);
         if (complaint == null) {
             throw new BusinessException("投诉记录不存在");
         }
-        complaint.setStatus("RESOLVED");
-        complaint.setHandleUserId(currentUser.getId());
-        complaint.setHandleResult(result);
-        complaint.setHandledAt(LocalDateTime.now());
-        complaint.setUpdatedAt(LocalDateTime.now());
-        serviceComplaintMapper.updateById(complaint);
+        if (!java.util.Set.of("PENDING", "PROCESSING").contains(complaint.getStatus())) throw new BusinessException("该反馈已办结，请勿重复处理");
+        if (!StringUtils.hasText(result) || result.trim().length() > 4000) throw new BusinessException("请填写4000字以内的处理答复");
+        LocalDateTime handledAt = LocalDateTime.now();
+        int changed = serviceComplaintMapper.update(null, new com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<ServiceComplaint>()
+                .eq(ServiceComplaint::getId, id).in(ServiceComplaint::getStatus, "PENDING", "PROCESSING")
+                .set(ServiceComplaint::getStatus, "RESOLVED").set(ServiceComplaint::getHandleUserId, currentUser.getId())
+                .set(ServiceComplaint::getHandleResult, result.trim()).set(ServiceComplaint::getHandledAt, handledAt)
+                .set(ServiceComplaint::getUpdatedAt, handledAt));
+        if (changed == 0) throw new BusinessException("该反馈已办结，请刷新列表");
     }
 
     private void recordStatusLog(Long orderId, String fromStatus, String toStatus, String reason) {

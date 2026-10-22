@@ -8,12 +8,19 @@ const { friendlyTime, friendlyRange } = require('../../utils/time-format.js');
 const { detailView } = require('../../utils/order-view.js');
 const { ORDER_STATUS_TEXT_DETAIL } = require('../../utils/order-status.js');
 const { getAppSafe, app } = require('../../utils/app-state.js');
+const { parseTags, FEEDBACK_STATUS } = require('../../utils/review-feedback.js');
 
 function decorateTimes(data) {
   if (!data) return;
   if (data.order) data.order.plannedStartText = friendlyTime(data.order.plannedStartAt);
   if (data.serviceRecord) data.serviceRecord.actualRangeText = friendlyRange(data.serviceRecord.actualStartAt, data.serviceRecord.actualEndAt);
   if (Array.isArray(data.logs)) data.logs.forEach(log => { log.createdAtText = friendlyTime(log.createdAt); });
+  if (data.serviceReview) data.serviceReview.tagList = parseTags(data.serviceReview.tags);
+  if (Array.isArray(data.feedbackRecords)) data.feedbackRecords.forEach(record => {
+    record.statusText = FEEDBACK_STATUS[record.status] || '待核实';
+    record.createdAtText = friendlyTime(record.createdAt);
+    record.handledAtText = friendlyTime(record.handledAt);
+  });
 }
 
 function formatTrackingDistance(value) {

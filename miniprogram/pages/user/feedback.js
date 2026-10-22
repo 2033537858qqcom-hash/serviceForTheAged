@@ -2,6 +2,7 @@ const navigation = require('../../utils/navigation.js');
 const request = require('../../utils/request.js');
 const { app } = require('../../utils/app-state.js');
 const { friendlyTime } = require('../../utils/time-format.js');
+const { FEEDBACK_STATUS } = require('../../utils/review-feedback.js');
 
 const FEEDBACK_TYPES = ['服务态度', '准时履约', '照护质量', '费用结算', '平台功能', '其他建议'];
 
@@ -32,11 +33,14 @@ Page({
       return;
     }
 
-    const orderId = options.orderId ? Number(options.orderId) : null;
-    const serviceName = options.serviceName ? decodeURIComponent(options.serviceName) : '';
+    const rawId = String(options.orderId || '');
+    const orderId = /^\d+$/.test(rawId) ? (Number.isSafeInteger(Number(rawId)) ? Number(rawId) : rawId) : null;
+    let serviceName = '';
+    try { serviceName = options.serviceName ? decodeURIComponent(options.serviceName) : ''; } catch (_) {}
 
     this.setData({
       orderId,
+      activeTab: options.tab === '1' ? 1 : 0,
       serviceName,
       isElderMode: Boolean(app.globalData && app.globalData.isElderMode)
     });
@@ -69,7 +73,7 @@ Page({
           sub: date ? `预约时间: ${date}` : ''
         });
 
-        if (initialOrderId && Number(initialOrderId) === Number(id)) {
+        if (initialOrderId && String(initialOrderId) === String(id)) {
           selectedIndex = index + 1;
         }
       });
@@ -127,6 +131,7 @@ Page({
   },
 
   submitFeedback() {
+    if (this.data.submitting) return;
     const title = (this.data.title || '').trim();
     const content = (this.data.content || '').trim();
 
@@ -142,7 +147,7 @@ Page({
     this.setData({ submitting: true });
 
     const payload = {
-      orderId: this.data.orderId ? Number(this.data.orderId) : 0,
+      orderId: this.data.orderId || 0,
       complaintTitle: `[${this.data.selectedType}] ${title}`,
       complaintContent: content
     };
@@ -174,6 +179,7 @@ Page({
       const records = (data && data.records) || (Array.isArray(data) ? data : []);
       const formatted = records.map(item => ({
         ...item,
+        statusText: FEEDBACK_STATUS[item.status] || '待核实',
         createdAtText: item.createdAt ? friendlyTime(item.createdAt) : '',
         handledAtText: item.handledAt ? friendlyTime(item.handledAt) : ''
       }));

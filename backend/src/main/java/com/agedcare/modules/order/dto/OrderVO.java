@@ -3,6 +3,7 @@ package com.agedcare.modules.order.dto;
 import com.agedcare.modules.dispatch.entity.DispatchAttempt;
 import com.agedcare.modules.fulfillment.entity.ServiceRecord;
 import com.agedcare.modules.fulfillment.entity.ServiceReview;
+import com.agedcare.modules.fulfillment.entity.ServiceComplaint;
 import com.agedcare.modules.order.entity.OrderStatusLog;
 import com.agedcare.modules.order.entity.ServiceOrder;
 import com.agedcare.modules.staff.dto.StaffDetailVO;
@@ -26,6 +27,7 @@ public class OrderVO {
     private StaffDetailVO currentStaff;
     private ServiceRecord serviceRecord;
     private ServiceReview serviceReview;
+    private List<ServiceComplaint> feedbackRecords;
     private List<OrderStatusLog> logs;
     private OrderTrackingVO tracking;
 }

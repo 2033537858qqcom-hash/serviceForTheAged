@@ -4,7 +4,7 @@
     <el-card shadow="never" class="main-card">
       <div class="header-bar flex-between">
         <span style="font-weight: bold; font-size: 16px;">社区服务投诉与意见反馈</span>
-        <el-button icon="Refresh" @click="fetchData">刷新</el-button>
+        <div class="feedback-tools"><el-select v-model="statusFilter" placeholder="全部状态" clearable @change="pageNum = 1; fetchData()"><el-option label="待受理" value="PENDING" /><el-option label="处理中" value="PROCESSING" /><el-option label="已处理" value="RESOLVED" /></el-select><el-button icon="Refresh" @click="fetchData">刷新</el-button></div>
       </div>
 
       <el-skeleton :loading="loading && !tableData.length" animated :rows="6">
@@ -27,27 +27,29 @@
         <el-table-column prop="status" label="状态" width="120">
           <template #default="{ row }">
             <el-tag :type="row.status === 'RESOLVED' ? 'success' : 'warning'">
-              {{ row.status === 'RESOLVED' ? '已办结答复' : '待处理' }}
+              {{ statusText[row.status] || row.status }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="handleResult" label="社区处置结果" min-width="200" show-overflow-tooltip />
-        <el-table-column label="操作" width="120" fixed="right">
+        <el-table-column label="操作" width="170" fixed="right">
           <template #default="{ row }">
+            <el-button v-if="row.status === 'PENDING'" type="primary" link :loading="startingId === row.id" @click="startHandle(row)">受理</el-button>
             <el-button
               type="primary"
               link
-              v-if="row.status !== 'RESOLVED'"
+              v-if="['PENDING', 'PROCESSING'].includes(row.status)"
               @click="openHandleModal(row)"
             >
               处理答复
             </el-button>
-            <span v-else style="color: #28785b; font-size: 13px;">已办结</span>
+            <span v-else style="color: #28785b; font-size: 13px;">{{ statusText[row.status] || row.status }}</span>
           </template>
         </el-table-column>
       </el-table>
       </template>
       </el-skeleton>
+      <el-pagination v-model:current-page="pageNum" :page-size="20" :total="total" layout="prev, pager, next, total" @current-change="fetchData" />
     </el-card>
 
     <!-- 处理投诉弹窗 -->
@@ -60,12 +62,12 @@
           <span style="color: #54645a;">{{ currentComplaint ? currentComplaint.complaintContent : '' }}</span>
         </el-form-item>
         <el-form-item label="处理答复">
-          <el-input v-model="handleForm.result" type="textarea" :rows="4" placeholder="填写社区调查核实结论及对居民的处理答复..." />
+          <el-input v-model="handleForm.result" type="textarea" :rows="4" maxlength="4000" show-word-limit placeholder="填写社区调查核实结论及对居民的处理答复..." />
         </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="handleVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitHandle">办结并通知</el-button>
+        <el-button type="primary" :loading="handling" @click="submitHandle">办结并保存答复</el-button>
       </template>
     </el-dialog>
   </div>
@@ -81,6 +83,12 @@ const loading = ref(false)
 const tableData = ref([])
 const handleVisible = ref(false)
 const currentComplaint = ref(null)
+const statusFilter = ref('')
+const pageNum = ref(1)
+const total = ref(0)
+const startingId = ref(null)
+const handling = ref(false)
+const statusText = { PENDING: '待受理', PROCESSING: '处理中', RESOLVED: '已处理', REJECTED: '已关闭' }
 
 const handleForm = reactive({
   id: null,
@@ -89,11 +97,22 @@ const handleForm = reactive({
 
 const fetchData = () => {
   loading.value = true
-  request.get('/fulfillment/complaints/page', { params: { pageNum: 1, pageSize: 50 } }).then(res => {
+  request.get('/fulfillment/complaints/page', { params: { pageNum: pageNum.value, pageSize: 20, status: statusFilter.value || undefined } }).then(res => {
     tableData.value = res.records || []
+    total.value = res.total || 0
   }).finally(() => {
     loading.value = false
   })
+}
+
+const startHandle = async (row) => {
+  if (startingId.value) return
+  startingId.value = row.id
+  try {
+    await request.post('/fulfillment/complaint/start', { id: row.id })
+    ElMessage.success('已受理，居民可查看处理进度')
+    fetchData()
+  } finally { startingId.value = null }
 }
 
 const openHandleModal = (row) => {
@@ -104,15 +123,17 @@ const openHandleModal = (row) => {
 }
 
 const submitHandle = () => {
+  if (handling.value) return
   if (!handleForm.result.trim()) {
     ElMessage.warning('请填写处理答复内容')
     return
   }
-  request.post('/fulfillment/complaint/handle', handleForm).then(() => {
+  handling.value = true
+  request.post('/fulfillment/complaint/handle', { ...handleForm, result: handleForm.result.trim() }).then(() => {
     ElMessage.success('投诉已办结并更新记录')
     handleVisible.value = false
     fetchData()
-  })
+  }).finally(() => { handling.value = false })
 }
 
 onMounted(() => {
@@ -124,6 +145,9 @@ onMounted(() => {
 .main-card {
   border-radius: 8px;
 }
+.feedback-tools { display: flex; align-items: center; gap: 12px; }
+.feedback-tools .el-select { width: 150px; }
+.el-pagination { margin-top: 20px; justify-content: flex-end; }
 
 .header-bar {
   margin-bottom: 16px;

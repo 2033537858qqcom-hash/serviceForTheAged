@@ -210,6 +210,8 @@
 }
 .rating-stars { font-size: var(--font-caption); color: var(--warning-color); font-weight: 600; }
 .review-content { font-size: var(--font-body); line-height: 1.8; }
+.feedback-tag-list { display: flex; flex-wrap: wrap; gap: 12rpx; margin-top: 16rpx; }
+.feedback-record .card-title { flex-wrap: wrap; }
 .timeline { margin-left: 12rpx; }
 .timeline-node { padding: 0 0 30rpx 30rpx; position: relative; }
 .timeline-node:last-child { padding-bottom: 0; }

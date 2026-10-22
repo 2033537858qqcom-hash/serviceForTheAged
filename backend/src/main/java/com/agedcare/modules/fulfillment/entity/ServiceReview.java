@@ -27,7 +27,7 @@ public class ServiceReview implements Serializable {
     private Long reviewerUserId;
     @NotNull @Min(1) @Max(5)
     private Integer rating; // 1~5
-    @Size(max=2000)
+    @Size(max=200)
     private String content;
     @Size(max=255)
     private String tags;

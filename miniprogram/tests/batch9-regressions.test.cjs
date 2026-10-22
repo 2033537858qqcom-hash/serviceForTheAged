@@ -72,9 +72,10 @@ test('profile order hub shows per-status counts', async () => {
   assert.equal(profile.data.hubCounts.IN_SERVICE, 0);
 });
 
-test('review page says which service is being reviewed', () => {
-  const page = createRuntime().page('order/confirm');
+test('review page gets service context from the authorized order instead of URL text', async () => {
+  const page = createRuntime({ globalData: { token: 't' } }, {}, { get: async () => ({ order: { status: 'COMPLETED', serviceNameSnapshot: '助餐送餐' }, currentStaff: { user: { realName: '张玉兰' } }, serviceRecord: { actualEndAt: '2020-01-02 10:00:00' } }) }).page('order/confirm');
   page.onLoad({ orderId: '5', service: encodeURIComponent('助餐送餐'), staff: encodeURIComponent('张玉兰'), done: encodeURIComponent('2020-01-02 10:00:00') });
+  await page.onShow();
   assert.equal(page.data.reviewContext.service, '助餐送餐');
   assert.equal(page.data.reviewContext.staff, '张玉兰');
   assert.match(page.data.reviewContext.doneText, /10:00$/);

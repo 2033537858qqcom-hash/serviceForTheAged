@@ -185,6 +185,17 @@
       <text class="rating-stars">{{orderVO.serviceReview.rating}} / 5 分</text>
     </view>
     <view class="review-content">{{orderVO.serviceReview.content || '客户未填写文字评价'}}</view>
+    <view class="feedback-tag-list"><text class="tag tag-neutral" wx:for="{{orderVO.serviceReview.tagList}}" wx:key="*this">{{item}}</text></view>
+  </view>
+
+  <view class="card feedback-record" wx:for="{{orderVO.feedbackRecords}}" wx:key="id">
+    <view class="card-title flex-between"><text>我的反馈跟进</text><text class="tag {{item.status === 'RESOLVED' ? 'tag-success' : 'tag-warning'}}">{{item.statusText}}</text></view>
+    <view class="review-content">{{item.complaintTitle}}</view>
+    <view class="record-line">提交时间：{{item.createdAtText}}</view>
+    <view class="record-summary" wx:if="{{item.handleResult}}">社区答复：{{item.handleResult}}</view>
+    <view class="record-line" wx:if="{{item.handledAtText}}">答复时间：{{item.handledAtText}}</view>
+    <view class="record-line" wx:if="{{item.status === 'PENDING'}}">社区尚未受理，请稍后查看。</view>
+    <view class="record-line" wx:if="{{item.status === 'PROCESSING'}}">社区已受理，正在核实并协调处理。</view>
   </view>
 
   <!-- 订单流转时间线 -->

@@ -6,6 +6,7 @@ import com.agedcare.common.security.RequireRole;
 import com.agedcare.modules.fulfillment.entity.ServiceComplaint;
 import com.agedcare.modules.fulfillment.entity.ServiceRecord;
 import com.agedcare.modules.fulfillment.dto.ServiceRecordDTO;
+import com.agedcare.modules.fulfillment.dto.ReviewSubmitDTO;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import com.agedcare.modules.fulfillment.entity.ServiceReview;
@@ -42,6 +43,12 @@ public class FulfillmentController {
         private String result;
     }
 
+    @Data
+    public static class ComplaintIdDTO {
+        @NotNull @Positive
+        private Long id;
+    }
+
     @Operation(summary = "服务人员开始上门服务(签到)")
     @PostMapping("/start/{orderId}")
     @RequireRole(UserRole.STAFF)
@@ -70,8 +77,10 @@ public class FulfillmentController {
     @Operation(summary = "提交服务评价(仅限居民)")
     @PostMapping("/review")
     @RequireRole(UserRole.RESIDENT)
-    public Result<Void> submitReview(@Valid @RequestBody ServiceReview review) {
-        fulfillmentService.submitReview(review);
+    public Result<Void> submitReview(@Valid @RequestBody ReviewSubmitDTO dto) {
+        ServiceReview review = ServiceReview.builder().orderId(dto.getOrderId()).rating(dto.getRating())
+                .content(dto.getContent()).tags(dto.getTags()).build();
+        fulfillmentService.submitReview(review, dto.isFollowUp(), dto.getIssueType());
         return Result.success();
     }
 
@@ -105,6 +114,14 @@ public class FulfillmentController {
     }
 
     @Operation(summary = "管理员处理投诉")
+    @PostMapping("/complaint/start")
+    @RequireRole(UserRole.ADMIN)
+    public Result<Void> startComplaint(@Valid @RequestBody ComplaintIdDTO dto) {
+        fulfillmentService.startComplaint(dto.getId());
+        return Result.success();
+    }
+
+    @Operation(summary = "管理员办结投诉")
     @PostMapping("/complaint/handle")
     @RequireRole(UserRole.ADMIN)
     public Result<Void> handleComplaint(@Valid @RequestBody HandleComplaintDTO dto) {

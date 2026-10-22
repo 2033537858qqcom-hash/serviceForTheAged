@@ -2,7 +2,7 @@
   <!-- 顶栏导言与模式说明 -->
   <view class="feedback-intro">
     <view class="feedback-page-title">服务建议与反馈</view>
-    <view class="feedback-page-subtitle">每一条意见我们都认真核实，责任网格长闭环跟进并公示答复。</view>
+    <view class="feedback-page-subtitle">记录服务中的意见，在反馈记录中查看社区处理进度和答复。</view>
   </view>
 
   <!-- 顶部双标签切换 (我要反馈 / 反馈记录) -->
@@ -141,7 +141,7 @@
             <text class="history-title">{{item.complaintTitle}}</text>
           </view>
           <text class="tag {{item.status === 'RESOLVED' ? 'tag-success' : 'tag-warning'}}">
-            {{item.status === 'RESOLVED' ? '已办结答复' : '待处理核实'}}
+            {{item.statusText}}
           </text>
         </view>
 
@@ -166,7 +166,7 @@
         <!-- 待处理提示 -->
         <view class="pending-tip" wx:else>
           <text class="pending-dot"></text>
-          <text>责任督导与社区网格员已接单，正在核实情况，处理完毕后将在此处公示解决方案。</text>
+          <text>{{item.status === 'PROCESSING' ? '社区已受理，正在核实并协调处理。' : (item.status === 'REJECTED' ? '该反馈已关闭，可联系社区了解详情。' : '您的意见已送达社区，尚待受理。')}}</text>
         </view>
       </view>
     </view>
