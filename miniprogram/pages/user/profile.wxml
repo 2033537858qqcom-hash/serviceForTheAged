@@ -2,7 +2,7 @@
   <view class="profile-intro">{{userInfo && userInfo.role === 'STAFF' ? '服务人员执业档案与中心' : '我的照护与社区生活'}}</view>
 
   <!-- 用户头部身份卡片 -->
-  <view class="profile-hero">
+  <view class="profile-hero {{userInfo && userInfo.role === 'STAFF' ? 'hero-staff' : (userInfo && userInfo.role === 'ADMIN' ? 'hero-admin' : '')}}">
     <view class="profile-avatar {{userInfo && userInfo.role === 'STAFF' ? 'staff-hero-avatar' : ''}}" bindtap="chooseAndUploadAvatar" hover-class="avatar-tap" hover-stay-time="80" aria-label="点击更换个人头像">
       <image wx:if="{{userInfo && userInfo.avatar}}" class="avatar-photo" mode="aspectFill" src="{{userInfo.avatar[0] === '/' ? currentBaseUrl + userInfo.avatar : userInfo.avatar}}" />
       <image wx:else class="avatar-default-icon" src="{{userInfo && userInfo.role === 'STAFF' ? '/assets/icons/staff.png' : '/assets/icons/user.png'}}" />
@@ -16,6 +16,14 @@
         <text class="role-badge" wx:if="{{userInfo}}">{{roleTextMap[userInfo.role] || userInfo.role}}</text>
         <text wx:else>登录后，为自己和家人安排养老照料</text>
       </view>
+    </view>
+
+    <!-- 角色专属艺术线条装饰 -->
+    <view class="profile-hero-deco" aria-hidden="true">
+      <image wx:if="{{!userInfo}}" class="role-line-art deco-guest" mode="aspectFit" src="/assets/icons/role-line-guest.png" />
+      <image wx:elif="{{userInfo.role === 'STAFF'}}" class="role-line-art deco-staff" mode="aspectFit" src="/assets/icons/role-line-staff.png" />
+      <image wx:elif="{{userInfo.role === 'ADMIN'}}" class="role-line-art deco-admin" mode="aspectFit" src="/assets/icons/role-line-admin.png" />
+      <image wx:else class="role-line-art deco-resident" mode="aspectFit" src="/assets/icons/role-line-resident.png" />
     </view>
   </view>
 
