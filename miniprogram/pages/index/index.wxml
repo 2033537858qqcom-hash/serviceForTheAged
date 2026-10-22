@@ -10,7 +10,7 @@
     </view>
     <!-- 留白区域自然花草藤蔓线条装饰 -->
     <view class="home-header-deco" aria-hidden="true">
-      <image class="header-floral-art" src="/assets/icons/floral-deco.png" mode="aspectFit" />
+      <image class="header-floral-art" src="/assets/icons/floral-deco.svg" mode="aspectFit" />
     </view>
     <button class="care-mode-control" hover-class="care-mode-pressed" hover-stay-time="80" bindtap="toggleMode">
       <image src="/assets/icons/care.png" />
