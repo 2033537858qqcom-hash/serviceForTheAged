@@ -33,8 +33,14 @@ page {
   line-height: 1.6;
   font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif;
 }
-view, button, input, textarea { box-sizing: border-box; }
-button { font-weight: 500; line-height: 1.5; min-height: 88rpx; display: inline-flex; align-items: center; justify-content: center; }
+view, button, input, textarea, scroll-view, swiper, swiper-item, picker { box-sizing: border-box; }
+page { overflow-wrap: break-word; -webkit-text-size-adjust: 100%; }
+button { font-weight: 500; line-height: 1.5; min-height: 88rpx; display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; }
+button:not([size='mini']) {
+  width: auto;
+  margin-left: 0;
+  margin-right: 0;
+}
 button[size="mini"] {
   min-height: 88rpx;
   line-height: 1.4;
@@ -63,12 +69,42 @@ input, textarea { color: var(--text-main); }
 .container { padding: 32rpx; padding-bottom: calc(40rpx + env(safe-area-inset-bottom)); }
 .card { background: #fff; border: 1rpx solid var(--border-color); border-radius: 24rpx; padding: 30rpx; margin-bottom: 24rpx; box-shadow: 0 4rpx 14rpx rgba(36,52,46,.025); }
 .flex-row { display: flex; align-items: center; }
+.flex-row > view, .flex-between > view { min-width: 0; }
 .flex-between { display: flex; justify-content: space-between; align-items: center; gap: 16rpx; }
 .flex-col { display: flex; flex-direction: column; }
+
+/* 全宽主行动按钮规范 (无论手机还是平板均充满容器) */
+button.btn-block,
+.btn-block,
+button.active-order-cta,
+.active-order-cta,
+button.btn-submit,
+.btn-submit,
+button.btn-submit-order,
+.btn-submit-order,
+button.btn-save,
+.btn-save,
+button.btn-apply,
+.btn-apply,
+button.profile-login,
+.profile-login,
+button.btn-logout-bottom,
+.btn-logout-bottom,
+button.btn-add-bottom,
+.btn-add-bottom,
+button.btn-quick-login,
+.btn-quick-login {
+  width: 100% !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
 
 /* 按钮分级规范 */
 .btn-primary {
   display: flex;
+  white-space: nowrap;
   align-items: center;
   justify-content: center;
   min-height: var(--control-height);
@@ -103,6 +139,7 @@ input, textarea { color: var(--text-main); }
 
 .btn-secondary {
   display: flex;
+  white-space: nowrap;
   align-items: center;
   justify-content: center;
   min-height: var(--control-height);
@@ -125,6 +162,7 @@ input, textarea { color: var(--text-main); }
 
 .btn-tertiary {
   display: flex;
+  white-space: nowrap;
   align-items: center;
   justify-content: center;
   min-height: var(--control-height);
@@ -144,6 +182,7 @@ input, textarea { color: var(--text-main); }
 
 .btn-danger {
   display: flex;
+  white-space: nowrap;
   align-items: center;
   justify-content: center;
   min-height: var(--control-height);
@@ -270,6 +309,87 @@ page { --swipe-tab-width: 144rpx; --motion-fast: 120ms; --motion-standard: 200ms
 .skeleton-short { width: 62%; }
 .skeleton-banner { height: 148rpx; }
 .skeleton-row { height: 72rpx; width: 100%; margin-top: 20rpx; }
+
+/* 平板以可读宽度和物理像素排版，避免 rpx 随屏幕等比放大。 */
+@media (min-width: 600px) {
+  page {
+    --font-meta: 16px;
+    --font-caption: 18px;
+    --font-body: 20px;
+    --font-section: 24px;
+    --font-title: 28px;
+    --font-display: 32px;
+    --control-height: 52px;
+    --tab-bar-height: 64px;
+    --swipe-tab-width: 100px;
+    --radius-sm: 10px;
+    --radius-md: 14px;
+    --radius-lg: 18px;
+  }
+  .elder-mode {
+    --font-meta: 19px;
+    --font-caption: 22px;
+    --font-body: 24px;
+    --font-section: 28px;
+    --font-title: 32px;
+    --font-display: 36px;
+    --control-height: 60px;
+    --tab-bar-height: 72px;
+    --swipe-tab-width: 120px;
+  }
+  .container.container {
+    width: 100%;
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 24px;
+    padding-right: 24px;
+    padding-top: 24px;
+    padding-bottom: calc(var(--tab-bar-height) + 24px + env(safe-area-inset-bottom));
+  }
+  .card.card { padding: 24px; border-radius: 18px; margin-bottom: 20px; }
+  /* 平板模式下按钮宽度与排版重置：避免微信默认 width: 184px 导致的非全宽或文字溢出折行 */
+  button, button:not([size='mini']) {
+    width: auto;
+    margin-left: 0;
+    margin-right: 0;
+    white-space: nowrap;
+  }
+  .btn-primary:not(.btn-inline):not(.book-button):not(.btn-action):not(.tag),
+  .btn-secondary:not(.btn-inline):not(.book-button):not(.btn-action):not(.tag),
+  .btn-danger:not(.btn-inline):not(.book-button):not(.btn-action):not(.tag) {
+    padding: 14px 24px;
+    border-radius: 14px;
+    white-space: nowrap;
+  }
+  button.btn-block,
+  .btn-block,
+  button.active-order-cta,
+  .active-order-cta,
+  button.btn-submit,
+  .btn-submit,
+  button.btn-submit-order,
+  .btn-submit-order,
+  button.btn-save,
+  .btn-save,
+  button.btn-apply,
+  .btn-apply,
+  button.profile-login,
+  .profile-login,
+  button.btn-logout-bottom,
+  .btn-logout-bottom,
+  button.btn-add-bottom,
+  .btn-add-bottom,
+  button.btn-quick-login,
+  .btn-quick-login {
+    width: 100% !important;
+    display: flex;
+    justify-content: center;
+  }
+  .ui-icon { width: 26px; height: 26px; }
+  .ui-icon-small { width: 20px; height: 20px; }
+  .tag.tag { height: auto; min-height: 28px; padding: 4px 10px; line-height: 1.4; white-space: normal; }
+}
 @keyframes skeleton-shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
 .page-state-tip, .detail-refresh-tip { color: var(--text-secondary); font-size: var(--font-caption); text-align: center; }
 @media (prefers-reduced-motion: reduce) {

@@ -1,7 +1,7 @@
 .home-page { padding: 32rpx; padding-bottom: calc(var(--tab-bar-height) + 32rpx + env(safe-area-inset-bottom)); }
 .home-header { position: relative; display: flex; justify-content: space-between; gap: 16rpx; align-items: center; padding: 0 0 28rpx; }
 .home-header::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1rpx; background: linear-gradient(90deg, rgba(23,107,93,0.02) 0%, rgba(23,107,93,0.12) 25%, rgba(23,107,93,0.12) 75%, rgba(23,107,93,0.02) 100%); }
-.home-brand { display: flex; flex: 0 0 auto; min-width: 0; align-items: center; gap: 16rpx; }
+.home-brand { display: flex; flex: 1 1 auto; min-width: 0; align-items: center; gap: 16rpx; }
 .home-header-deco { flex: 1; display: flex; align-items: center; justify-content: center; padding: 0 6rpx; min-width: 40rpx; height: 72rpx; overflow: hidden; pointer-events: none; }
 .header-floral-art { width: 100%; max-width: 240rpx; height: 68rpx; display: block; }
 .home-brand-copy { min-width: 0; }
@@ -19,7 +19,7 @@
 }
 .brand-name { font-size: var(--font-title); color: var(--text-main); font-weight: 650; letter-spacing: 4rpx; line-height: 1.25; }
 .brand-name text { color: var(--price-color); }
-.brand-community { color: var(--text-secondary); font-size: var(--font-meta); margin-top: 5rpx; white-space: nowrap; }
+.brand-community { color: var(--text-secondary); font-size: var(--font-meta); margin-top: 5rpx; overflow-wrap: anywhere; }
 .care-mode-control { display: flex; flex: 0 0 188rpx; width: 188rpx; align-items: center; justify-content: center; gap: 9rpx; margin: 0; padding: 12rpx 24rpx; min-height: 88rpx; line-height: 1.3; border-radius: 44rpx; background: #fff; border: 1rpx solid #e0e7da; color: var(--primary-color); font-size: var(--font-caption); white-space: nowrap; transition: transform 200ms var(--motion-ease), background-color 120ms ease; }
 .care-mode-control image { flex-shrink: 0; width: 30rpx; height: 30rpx; }
 .care-mode-control.care-mode-pressed { transform: scale(.96); background: var(--primary-soft); }
@@ -116,11 +116,13 @@
 
 /* 进行中订单主卡片 + 一键进度 */
 .active-order-hero { padding: 32rpx; margin-bottom: 8rpx; border-color: #d4e4d9; background: #f3f8f2; }
-.active-order-cta {
-  width: 100%;
+.active-order-cta,
+button.active-order-cta {
+  width: 100% !important;
   margin-top: 28rpx;
   min-height: 96rpx;
   border-radius: var(--radius-md, 20rpx);
+  white-space: nowrap;
 }
 .elder-mode .active-order-cta { min-height: var(--control-height); }
 .compact-heading { margin-top: 28rpx; margin-bottom: 12rpx; }
@@ -175,3 +177,26 @@
 /* 拨打社区电话：做成可识别的次级按钮 */
 .welcome-contact { border: 2rpx solid var(--primary-color); border-radius: 20rpx; padding: 0 24rpx; margin-top: 20rpx; background: #fff; }
 .welcome-contact .contact-label { color: var(--primary-color); font-weight: 600; }
+
+.home-section-heading, .active-order-hero > .flex-between { flex-wrap: wrap; }
+.service-grid-2x2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.welcome-contact { flex-wrap: wrap; padding-top: 16rpx; padding-bottom: 16rpx; }
+.welcome-contact image { flex-shrink: 0; }
+@media (min-width: 600px) {
+  .home-page .home-header { gap: 16px; padding-bottom: 20px; }
+  .home-page .home-brand { gap: 12px; }
+  .home-page .home-brand-icon { width: 52px; height: 52px; border-radius: 14px; }
+  .home-page .home-header-deco { min-width: 0; height: 48px; }
+  .home-page .header-floral-art { max-width: 160px; height: 48px; }
+  .home-page .care-mode-control { flex-basis: 132px; width: 132px; min-height: 52px; padding: 10px 16px; gap: 6px; }
+  .home-page .care-mode-control image { width: 22px; height: 22px; }
+  .home-page .welcome-panel { padding: 24px; border-radius: 20px; }
+  .home-page .welcome-title { font-size: 36px; }
+  .home-page .welcome-contact { min-height: 56px; gap: 10px; padding: 12px; }
+  .home-page .service-entry-photo { height: 156px; }
+  .home-page.elder-mode .service-entry-photo { width: 156px; }
+  .home-page .service-list-icon { width: 100px; height: 90px; }
+  .home-page .service-strip { flex-wrap: wrap; gap: 12px; }
+  .home-page .service-strip-item { flex: 1 1 120px; min-height: 100px; }
+  .home-page .service-strip-photo { width: 44px; height: 44px; }
+}

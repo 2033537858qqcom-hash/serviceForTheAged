@@ -98,3 +98,14 @@
 .elder-mode .submit-box { gap: 16rpx; padding-inline: 24rpx; }
 
 .container.elder-mode { padding-bottom: calc(300rpx + env(safe-area-inset-bottom)); }
+.item-summary, .form-title { flex-wrap: wrap; gap: 16rpx; }
+.coord-badge { max-width: 100%; overflow-wrap: anywhere; }
+@media (min-width: 600px) {
+  .container.container { padding-bottom: calc(160px + env(safe-area-inset-bottom)); }
+  .container .submit-box { max-width: 720px; margin: 0 auto; padding: 16px 24px calc(16px + env(safe-area-inset-bottom)); gap: 20px; }
+  .container .submit-price { min-width: 120px; }
+  .container .form-input, .container .picker-box { min-height: var(--control-height); padding: 16px; }
+  .container .slot-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  .container .slot-chip, .container .map-picker-btn { min-height: var(--control-height); }
+  .container .day-chip { min-height: 80px; }
+}

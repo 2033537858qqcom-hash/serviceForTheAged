@@ -7,3 +7,10 @@
 .sheet-confirm { margin-top: 28rpx; }
 .sheet-confirm.is-success { background: #1f8a5b !important; color: #fff !important; }
 .sheet-dismiss { margin-top: 12rpx; background: transparent; color: var(--text-secondary); font-size: var(--font-caption); min-height: 88rpx; display: flex; align-items: center; justify-content: center; }
+.sheet-panel { box-sizing: border-box; max-height: 90vh; overflow-y: auto; }
+@media (min-width: 600px) {
+  .sheet-mask { justify-content: center; }
+  .sheet-panel { max-width: 640px; padding: 16px 24px calc(24px + env(safe-area-inset-bottom)); border-radius: 24px 24px 0 0; }
+  .sheet-handle { width: 48px; height: 5px; margin: 4px auto 20px; }
+  .sheet-dismiss { min-height: 52px; }
+}

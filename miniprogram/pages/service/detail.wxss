@@ -52,3 +52,8 @@
 
 /* 大字模式底栏折行约 240rpx，预留更多空间避免遮挡最后一张卡片 */
 .container.elder-mode { padding-bottom: calc(300rpx + env(safe-area-inset-bottom)); }
+@media (min-width: 600px) {
+  .container.container { padding-bottom: calc(160px + env(safe-area-inset-bottom)); }
+  .container .bottom-bar { max-width: 720px; margin: 0 auto; padding: 16px 24px calc(16px + env(safe-area-inset-bottom)); gap: 20px; }
+  .container .detail-cover { height: 260px; }
+}

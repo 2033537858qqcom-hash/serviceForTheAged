@@ -211,3 +211,25 @@
 .hub-icon-wrap { position: relative; }
 .hub-badge { position: absolute; top: -10rpx; right: -14rpx; min-width: 36rpx; height: 36rpx; padding: 0 8rpx; border-radius: 18rpx; background: var(--danger-color); color: #fff; font-size: 24rpx; line-height: 36rpx; text-align: center; box-sizing: border-box; }
 .elder-mode .hub-badge { min-width: 44rpx; height: 44rpx; line-height: 44rpx; border-radius: 22rpx; font-size: var(--font-meta); }
+
+.staff-stats-header { flex-wrap: wrap; }
+.staff-status-pill { height: auto; min-height: 50rpx; line-height: 1.5; padding-top: 6rpx; padding-bottom: 6rpx; white-space: normal; }
+.staff-stats-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.staff-stat-item, .hub-item { min-width: 0; }
+.menu-item switch { flex-shrink: 0; }
+@media (min-width: 600px) {
+  .profile-page .profile-hero { min-height: 152px; padding: 28px; gap: 24px; margin-bottom: 20px; border-radius: 22px; }
+  .profile-page .profile-avatar { width: 88px; height: 88px; border-width: 4px; }
+  .profile-page .avatar-default-icon { width: 42px; height: 42px; }
+  .profile-page .avatar-edit-badge { width: 28px; height: 28px; border-width: 2px; }
+  .profile-page .avatar-edit-icon { width: 16px; height: 16px; }
+  .profile-page .user-sub { margin-top: 8px; }
+  .profile-page .menu-card { padding: 0 24px; }
+  .profile-page .menu-item { min-height: 96px; padding: 20px 0; gap: 16px; }
+  .profile-page .menu-icon-wrap { width: 48px; height: 48px; border-radius: 12px; }
+  .profile-page .menu-icon-wrap image { width: 26px; height: 26px; }
+  .profile-page .menu-arrow { width: 20px; height: 20px; }
+  .profile-page .hub-icon-wrap { width: 56px; height: 56px; }
+  .profile-page .hub-icon-wrap image { width: 30px; height: 30px; }
+  .profile-page .hub-item { min-height: 80px; }
+}

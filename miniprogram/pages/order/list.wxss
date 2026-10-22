@@ -14,6 +14,8 @@ page {
   padding-bottom: calc(var(--tab-bar-height) + env(safe-area-inset-bottom));
 }
 
+
+
 .order-header-area {
   flex-shrink: 0;
   padding: 16rpx 32rpx 0;
@@ -87,9 +89,9 @@ page {
 
 /* Swiper 滑动区域 */
 .order-swiper {
-  flex: 1;
-  height: 100%;
-  min-height: 400rpx;
+  flex: 1 1 0%;
+  height: 0;
+  min-height: 0;
   width: 100%;
 }
 
@@ -175,6 +177,7 @@ page {
 
 .btn-action, .btn-primary.btn-action {
   margin: 0;
+  width: auto !important;
   height: auto;
   min-height: 88rpx;
   line-height: 1.4;
@@ -191,6 +194,7 @@ page {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  white-space: nowrap;
   box-sizing: border-box;
   transition: transform 160ms ease, background-color 120ms ease;
 }
@@ -319,3 +323,21 @@ page {
 /* 预约时间是老人最关心的信息，放在服务名下第一行并加大 */
 .order-time { margin: 12rpx 0 8rpx; font-size: var(--font-body); font-weight: 600; color: var(--text-main); }
 .order-meta-row { margin-top: 12rpx; }
+
+@media (min-width: 600px) {
+  .page-shell .order-header-area, .page-shell .order-list-content { width: 100%; max-width: 720px; margin: 0 auto; }
+  .page-shell .order-header-area { padding: 16px 24px 0; }
+  .page-shell .order-list-content { padding: 20px 24px; }
+  .page-shell .tab-nav-item { padding: 14px 8px; min-height: 52px; font-size: var(--font-caption); }
+  .page-shell .btn-action,
+  .page-shell button.btn-action {
+    width: auto !important;
+    min-height: 44px;
+    height: 44px;
+    line-height: 44px;
+    padding: 0 18px;
+    font-size: 16px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+}

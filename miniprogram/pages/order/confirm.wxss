@@ -23,3 +23,10 @@
 
 .review-context-title { font-size: var(--font-section); font-weight: 600; color: var(--text-main); }
 .review-context-meta { margin-top: 8rpx; font-size: var(--font-caption); color: var(--text-secondary); }
+.star-item { flex: 1; min-width: 0; }
+@media (min-width: 600px) {
+  .container.scroll-content-with-bottom { padding-bottom: calc(140px + env(safe-area-inset-bottom)); }
+  .container .confirm-bottom-bar { max-width: 720px; margin: 0 auto; padding: 16px 24px calc(16px + env(safe-area-inset-bottom)); }
+  .container .star-item { font-size: 48px; width: auto; }
+  .container .comment-input { min-height: 180px; padding: 16px; }
+}

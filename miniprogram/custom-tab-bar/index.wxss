@@ -17,3 +17,15 @@
 .is-elder .tab-bar-content, .is-elder .tab-bar-item { height: 120rpx; }
 .is-elder .tab-label { font-size: 30rpx; line-height: 36rpx; }
 @media (prefers-reduced-motion: reduce) { .tab-indicator, .tab-label { transition: none; } }
+@media (min-width: 600px) {
+  .tab-bar-content { max-width: 720px; margin: 0 auto; }
+  .tab-bar-content, .tab-bar-item { height: 64px; }
+  .tab-bar-item { padding: 6px 0; }
+  .icon-wrapper, .tab-indicator, .indicator-pill { height: 30px; }
+  .icon-wrapper, .indicator-pill { width: 52px; }
+  .tab-icon { width: 26px; height: 26px; }
+  .tab-indicator { top: 6px; }
+  .tab-label { font-size: 15px; line-height: 20px; margin-top: 2px; }
+  .is-elder .tab-bar-content, .is-elder .tab-bar-item { height: 72px; }
+  .is-elder .tab-label { font-size: 18px; line-height: 24px; }
+}

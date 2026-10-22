@@ -175,6 +175,13 @@ Page({
     }
   },
 
+  onResize() {
+    this.measurePage();
+    this._gesturing = false;
+    this._gestureIndex = null;
+    this.setData({ sliderShift: this.data.currentTabIndex * 100, sliderLive: false });
+  },
+
   measurePage() {
     try {
       const info = typeof wx.getWindowInfo === 'function' ? wx.getWindowInfo() : wx.getSystemInfoSync();

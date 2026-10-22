@@ -2,6 +2,8 @@
   padding-bottom: calc(var(--tab-bar-height) + 32rpx + env(safe-area-inset-bottom));
 }
 
+
+
 .staff-header-card {
   background: var(--primary-soft);
   border-color: #d4e4d9;
@@ -295,3 +297,12 @@
 .elder-mode .task-actions { flex-direction: column; align-items: stretch; }
 
 .task-card { box-shadow: none; }
+
+@media (min-width: 600px) {
+  .workbench-page .staff-avatar { width: 56px; height: 56px; padding: 12px; }
+  .workbench-page .staff-name { flex-wrap: wrap; }
+  .workbench-page .seg-btn { height: auto; min-height: var(--control-height); line-height: 1.5; padding: 12px 20px; }
+  .workbench-page .btn-accept-action, .workbench-page .btn-reject-action { min-height: var(--control-height); }
+  .workbench-page .btn-nav, .workbench-page .btn-mock { min-height: var(--control-height) !important; padding: 12px 20px !important; }
+  .workbench-page .task-actions button, .workbench-page .task-actions .task-status-pill { height: auto; min-height: var(--control-height); padding: 12px; white-space: normal; }
+}

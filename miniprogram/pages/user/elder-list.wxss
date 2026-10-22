@@ -37,3 +37,10 @@
 .elder-mode .btn-edit-card { height: var(--control-height); min-height: var(--control-height); line-height: var(--control-height); padding: 0 36rpx; font-size: var(--font-body); border-radius: 20rpx; }
 
 .elder-list-page.elder-mode { padding-bottom: calc(240rpx + env(safe-area-inset-bottom)); }
+.elder-identity, .card-top, .card-actions { flex-wrap: wrap; }
+.detail-text { min-width: 0; overflow-wrap: anywhere; }
+@media (min-width: 600px) {
+  .elder-list-page, .elder-list-page.elder-mode { padding-bottom: calc(140px + env(safe-area-inset-bottom)); }
+  .elder-list-page .bottom-action-box { max-width: 720px; margin: 0 auto; padding: 16px 24px calc(16px + env(safe-area-inset-bottom)); }
+  .elder-list-page .btn-edit-card { height: auto; min-height: var(--control-height); padding: 12px 20px; line-height: 1.5; }
+}

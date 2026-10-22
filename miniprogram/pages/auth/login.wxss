@@ -40,3 +40,21 @@ page { background: #263f32; color: #fff; }
 /* 协议行移到按钮上方 */
 .agreement-section { margin-top: 40rpx; }
 .login-content .action-section { margin-top: 24rpx; }
+.login-content { box-sizing: border-box; }
+.agreement-label { flex: 1; min-width: 0; }
+@media (min-width: 600px) {
+  .login-content { max-width: 640px; margin: 0 auto; padding: calc(72px + env(safe-area-inset-top)) 32px calc(24px + env(safe-area-inset-bottom)); }
+  .brand-lockup { gap: 16px; }
+  .brand-icon { width: 64px; height: 64px; border-radius: 16px; }
+  .brand-name { font-size: 32px; }
+  .brand-description, .hero-eyebrow, .agreement-label, .login-footer { font-size: 18px; }
+  .login-spacer { min-height: 56px; }
+  .hero-title { font-size: 42px; }
+  .hero-description { font-size: 20px; }
+  .login-content .action-section .btn-quick-login { min-height: 60px; padding: 16px; font-size: 22px; border-radius: 16px; }
+  .checkbox-hit-area { width: 44px; min-height: 56px; }
+  .custom-checkbox { width: 26px; height: 26px; border-radius: 6px; }
+  .check-stroke { width: 12px; height: 7px; border-width: 3px; }
+  .agreement-section { margin-top: 24px; }
+  .agreement-row { min-height: 56px; }
+}

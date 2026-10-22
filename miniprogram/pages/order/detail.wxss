@@ -1,4 +1,5 @@
 .container { padding-bottom: calc(220rpx + env(safe-area-inset-bottom)); }
+
 .status-banner { border-radius: 20rpx; padding: 26rpx 28rpx; background: var(--primary-soft); border: 1rpx solid #d4e4d9; margin-bottom: 20rpx; }
 .status-title { font-size: var(--font-title); font-weight: 600; color: var(--primary-dark); }
 .status-sub { font-size: var(--font-caption); margin-top: 10rpx; color: #466553; line-height: 1.6; }
@@ -172,7 +173,7 @@
 .info-item { padding: 20rpx 0; border-bottom: 1rpx solid #eef1ec; align-items: flex-start; }
 .info-item:last-child { border-bottom: 0; padding-bottom: 0; }
 .label { font-size: var(--font-caption); color: var(--text-secondary); flex: 0 0 150rpx; }
-.value { font-size: var(--font-body); text-align: right; overflow-wrap: anywhere; flex: 1; }
+.value { font-size: var(--font-body); text-align: right; overflow-wrap: anywhere; flex: 1; min-width: 0; }
 .bold { font-weight: 600; }
 .price { color: var(--primary-dark); font-weight: 600; }
 .code { font-size: var(--font-caption); }
@@ -255,3 +256,11 @@
 .bottom-actions .btn-cancel.is-solo { flex: 1; min-height: var(--control-height); font-size: var(--font-body); background: #fdf0ef; border: 2rpx solid var(--danger-color); border-radius: 24rpx; }
 .bottom-actions .btn-pay { flex: 1; }
 .paid-text { color: var(--success-color, #2f7d4f); font-weight: 600; }
+
+@media (min-width: 600px) {
+  .container.container { padding-bottom: calc(180px + env(safe-area-inset-bottom)); }
+  .container .bottom-actions { max-width: 720px; margin: 0 auto; padding: 16px 24px calc(16px + env(safe-area-inset-bottom)); flex-wrap: wrap; }
+  .container .label { flex-basis: 120px; }
+  .container.elder-mode .label { flex-basis: auto; }
+  .container .btn-dial, .container .btn-map-action { min-height: var(--control-height); padding: 12px 20px; }
+}

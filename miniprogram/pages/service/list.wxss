@@ -14,6 +14,8 @@ page {
   padding-bottom: calc(var(--tab-bar-height) + env(safe-area-inset-bottom));
 }
 
+
+
 .listing-header-area {
   flex-shrink: 0;
   padding: 16rpx 32rpx 0;
@@ -86,9 +88,9 @@ page {
 
 /* Swiper 滑动区域 */
 .service-swiper {
-  flex: 1;
-  height: 100%;
-  min-height: 400rpx;
+  flex: 1 1 0%;
+  height: 0;
+  min-height: 0;
   width: 100%;
 }
 
@@ -185,8 +187,10 @@ page {
   font-size: var(--font-meta);
 }
 
-.book-button {
+.book-button,
+button.book-button {
   margin: 0;
+  width: auto !important;
   height: 88rpx;
   min-height: 88rpx;
   line-height: 88rpx;
@@ -200,6 +204,8 @@ page {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  white-space: nowrap;
+  flex-shrink: 0;
   box-sizing: border-box;
   transition: transform 160ms ease, background-color 120ms ease;
 }
@@ -211,6 +217,7 @@ page {
 .book-button image {
   width: 22rpx;
   height: 22rpx;
+  flex-shrink: 0;
   filter: brightness(0) invert(1);
 }
 
@@ -264,4 +271,31 @@ page {
   padding: 0 36rpx;
   font-size: var(--font-body);
   border-radius: var(--radius-md, 20rpx);
+}
+
+@media (min-width: 600px) {
+  .service-page .listing-header-area, .service-page .service-list-content, .service-page .service-skeleton-list { width: 100%; max-width: 720px; margin: 0 auto; }
+  .service-page .listing-header-area { padding: 16px 24px 0; }
+  .service-page .service-list-content { padding: 20px 24px; }
+  .service-page .service-picture { width: 116px; height: 100px; }
+  .service-page .service-card-main { gap: 20px; }
+  .service-page .item-footer { padding-top: 16px; margin-top: 16px; }
+  .service-page .book-button,
+  .service-page button.book-button {
+    width: auto !important;
+    min-width: 140px;
+    height: 48px;
+    min-height: 48px;
+    line-height: 48px;
+    padding: 0 22px;
+    font-size: 16px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .service-page .book-button image {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+  }
+  .service-page .cat-nav-item { padding: 14px 8px; min-height: 52px; }
 }
