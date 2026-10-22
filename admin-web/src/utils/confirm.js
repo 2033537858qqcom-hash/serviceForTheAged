@@ -20,12 +20,13 @@ export async function confirmDanger(message, title, confirmText = '确认') {
 export async function promptReason(
   message,
   title,
-  { confirmText = '确认', min = 4, max = 200, placeholder = '' } = {}
+  { confirmText = '确认', min = 4, max = 200, placeholder = '', danger = false } = {}
 ) {
   try {
     const { value } = await ElMessageBox.prompt(message, title, {
       confirmButtonText: confirmText,
       cancelButtonText: '再想想',
+      confirmButtonClass: danger ? 'el-button--danger' : '',
       inputValue: '',
       inputPlaceholder: placeholder,
       inputType: 'textarea',

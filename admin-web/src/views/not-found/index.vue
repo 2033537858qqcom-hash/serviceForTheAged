@@ -27,7 +27,8 @@ function goDashboard() {
 }
 
 function goBack() {
-  if (window.history.length > 1) {
+  // 只有站内存在上一页时才后退，避免退回站外页面（RT6）
+  if (router.options.history.state?.back) {
     router.back()
     return
   }

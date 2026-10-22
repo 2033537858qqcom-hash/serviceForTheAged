@@ -1,7 +1,7 @@
 <template>
   <div class="app-shell">
     <button v-if="sidebarOpen" class="nav-backdrop" aria-label="收起导航" @click="sidebarOpen = false"></button>
-    <aside class="sidebar" :class="{ 'is-open': sidebarOpen }">
+    <aside ref="sidebarRef" class="sidebar" :class="{ 'is-open': sidebarOpen }" @keydown.esc="closeSidebar">
       <router-link to="/dashboard" class="brand-lockup" aria-label="颐邻社区养老，返回工作台">
         <img class="brand-symbol" src="/brand/yilin-icon.png" alt="" width="46" height="46" />
         <span>
@@ -32,7 +32,7 @@
           <el-icon><Location /></el-icon>
         </span>
         <div>
-          <strong>阳光花园社区</strong>
+          <strong>{{ COMMUNITY_NAME }}</strong>
           <p>让照护，离家更近一点。</p>
         </div>
       </div>
@@ -45,10 +45,11 @@
       <header class="app-header">
         <div class="header-context">
           <button
+            ref="toggleRef"
             class="mobile-nav-toggle"
             :aria-expanded="sidebarOpen"
             :aria-label="sidebarOpen ? '收起导航' : '展开导航'"
-            @click="sidebarOpen = !sidebarOpen"
+            @click="toggleSidebar"
           >
             <el-icon><Menu /></el-icon>
           </button>
@@ -69,7 +70,7 @@
       <main class="app-main">
         <div class="page-container">
           <router-view v-slot="{ Component, route: viewRoute }">
-            <transition name="fade-slide" mode="out-in">
+            <transition name="fade-slide">
               <component :is="Component" :key="viewRoute.path" />
             </transition>
           </router-view>
@@ -84,7 +85,9 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { COMMUNITY_NAME } from '../../utils/app-config.js'
+import { computed, nextTick, ref, watch } from 'vue'
+import { clearSession, getUser } from '../../utils/admin-session.js'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox, ElMessage } from 'element-plus'
 const route = useRoute()
@@ -102,13 +105,21 @@ const dateLabel = new Intl.DateTimeFormat('zh-CN', {
   day: 'numeric',
   weekday: 'long'
 }).format(new Date())
-const currentUser = computed(() => {
-  try {
-    return JSON.parse(localStorage.getItem('admin_user')) || { username: '管理员' }
-  } catch {
-    return { username: '管理员' }
-  }
-})
+const currentUser = computed(() => getUser() || { username: '管理员' })
+// 移动端侧栏：打开时焦点移入首个菜单，Esc 关闭并把焦点还给开关（I6）
+const sidebarRef = ref(null)
+const toggleRef = ref(null)
+async function toggleSidebar() {
+  sidebarOpen.value = !sidebarOpen.value
+  if (!sidebarOpen.value) return
+  await nextTick()
+  sidebarRef.value?.querySelector('.nav-item')?.focus()
+}
+function closeSidebar() {
+  if (!sidebarOpen.value) return
+  sidebarOpen.value = false
+  toggleRef.value?.focus()
+}
 const userInitial = computed(() =>
   currentUser.value.role === 'ADMIN'
     ? '管'
@@ -127,10 +138,9 @@ const logout = () => {
     type: 'warning'
   })
     .then(() => {
-      localStorage.removeItem('admin_token')
-      localStorage.removeItem('admin_user')
+      clearSession()
       ElMessage.success('已退出登录')
-      router.push('/login')
+      router.replace('/login')
     })
     .catch(() => {})
 }
@@ -335,11 +345,14 @@ nav {
   min-height: calc(100vh - 170px);
 }
 /* 页面平滑滑动切换动画 */
-.fade-slide-enter-active,
-.fade-slide-leave-active {
+/* 新旧页面同时过渡、离开的页面立即脱离文档流，切页不再额外等待（I5） */
+.fade-slide-enter-active {
   transition:
-    opacity 0.24s ease,
-    transform 0.24s cubic-bezier(0.25, 0.8, 0.25, 1);
+    opacity 0.16s ease,
+    transform 0.16s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+.fade-slide-leave-active {
+  display: none;
 }
 .fade-slide-enter-from {
   opacity: 0;

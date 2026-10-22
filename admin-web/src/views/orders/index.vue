@@ -48,18 +48,18 @@
             <div class="cell-note">{{ row.order.orderNo }}</div>
           </template>
         </el-table-column>
-        <el-table-column prop="elder.name" label="服务老人" width="120">
+        <el-table-column prop="elder.name" label="服务老人" min-width="120">
           <template #default="{ row }">
             <span>{{ row.elder ? row.elder.name : '老人' }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="order.plannedStartAt" label="预约时间" width="170" />
+        <el-table-column prop="order.plannedStartAt" label="预约时间" min-width="170" />
         <el-table-column prop="order.status" label="状态" width="120">
           <template #default="{ row }">
             <StatusTag kind="order" :value="row.order.status" />
           </template>
         </el-table-column>
-        <el-table-column label="服务人员" width="120">
+        <el-table-column label="服务人员" min-width="120">
           <template #default="{ row }">
             <span v-if="row.currentStaff">{{ row.currentStaff.user.realName }}</span>
             <span v-else style="color: var(--muted)">尚未分配</span>
@@ -143,7 +143,7 @@
         <div v-if="detailData.serviceReview" style="margin-top: 24px">
           <el-descriptions title="客户评价" :column="1" border>
             <el-descriptions-item label="满意度星级">
-              <el-rate :model-value="detailData.serviceReview.rating" disabled show-score text-color="#ff9900" />
+              <el-rate :model-value="detailData.serviceReview.rating" disabled show-score text-color="var(--warm)" />
             </el-descriptions-item>
             <el-descriptions-item label="评价内容">
               {{ detailData.serviceReview.content || '无文字评价' }}
@@ -165,7 +165,7 @@
           <el-timeline>
             <el-timeline-item v-for="log in detailData.logs" :key="log.id" :timestamp="log.createdAt" type="primary">
               <strong>{{ statusText('order', log.toStatus) }}</strong>
-              <div style="color: #54645a; font-size: 13px; margin-top: 4px">{{ log.reason }}</div>
+              <div class="text-muted text-sm" style="margin-top: 4px">{{ log.reason }}</div>
             </el-timeline-item>
           </el-timeline>
         </div>
@@ -210,7 +210,7 @@ import request from '../../utils/request'
 import { statusOptions, statusText } from '../../utils/presentation.js'
 import { usePagedQuery } from '../../composables/usePagedQuery.js'
 import { useRowSubmit, useSubmit } from '../../composables/useSubmit.js'
-import { confirmDanger, promptReason } from '../../utils/confirm.js'
+import { promptReason } from '../../utils/confirm.js'
 import { required } from '../../utils/validators.js'
 
 const route = useRoute()
@@ -316,10 +316,14 @@ async function adminConfirm(orderId) {
 }
 
 async function handleCancel(orderId) {
-  const ok = await confirmDanger('取消后服务人员的排班预留会立即释放，居民会收到取消通知。', '取消订单', '确认取消订单')
-  if (!ok) return
+  const reason = await promptReason(
+    '取消后服务人员的排班预留会立即释放，居民会收到取消通知。请填写取消原因：',
+    '取消订单',
+    { confirmText: '确认取消订单', danger: true, max: 100, placeholder: '例如：居民来电要求取消' }
+  )
+  if (reason === null) return
   rowAction.run(orderId, async id => {
-    await request.post(`/orders/${id}/cancel`, null, { params: { reason: '管理员后台取消' } })
+    await request.post(`/orders/${id}/cancel`, null, { params: { reason } })
     ElMessage.success('订单已取消')
   })
 }
@@ -328,11 +332,6 @@ async function handleCancel(orderId) {
 <style scoped>
 .filter-card {
   margin-bottom: 16px;
-  border-radius: 8px;
-}
-
-.table-card {
-  border-radius: 8px;
 }
 
 .pagination-box {

@@ -6,8 +6,7 @@
       description="维护社区服务项目、价格、服务范围与预约说明。"
     />
     <el-card shadow="never" class="main-card">
-      <div class="header-bar flex-between">
-        <span style="font-weight: bold; font-size: 16px">养老服务项目配置</span>
+      <div class="header-bar toolbar-end">
         <el-button type="primary" icon="Plus" @click="openModal(null)">新增服务项目</el-button>
       </div>
 
@@ -47,7 +46,7 @@
         </el-table-column>
         <el-table-column prop="price" label="基准单价" width="120">
           <template #default="{ row }">
-            <span style="color: var(--danger); font-weight: bold">¥{{ row.price }}</span>
+            <span class="text-warm text-strong">¥{{ row.price }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="durationMinutes" label="预计时长" width="120">
@@ -145,7 +144,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="服务区域" prop="serviceArea">
-          <el-input v-model="currentItem.serviceArea" placeholder="阳光花园社区" />
+          <el-input v-model="currentItem.serviceArea" :placeholder="COMMUNITY_NAME" />
         </el-form-item>
         <el-form-item label="详细介绍" prop="description">
           <el-input v-model="currentItem.description" type="textarea" placeholder="填写服务详细操作内容与说明" />
@@ -162,6 +161,7 @@
 </template>
 
 <script setup>
+import { COMMUNITY_NAME } from '../../utils/app-config.js'
 import PageHeader from '../../components/PageHeader.vue'
 import DataTable from '../../components/DataTable.vue'
 import StatusTag from '../../components/StatusTag.vue'
@@ -198,17 +198,19 @@ const uploading = ref(false)
 const saving = ref(false)
 const editorVersion = ref(0)
 
-const currentItem = reactive({
+// 新增/重置共用一份默认值（C3）
+const emptyItem = () => ({
   id: null,
   name: '',
   category: 'MEAL',
   price: 20.0,
   durationMinutes: 60,
   requiredSkills: '',
-  serviceArea: '阳光花园社区',
+  serviceArea: COMMUNITY_NAME,
   description: '',
   icon: ''
 })
+const currentItem = reactive(emptyItem())
 const selectedSkills = computed({
   get: () =>
     (currentItem.requiredSkills || '')
@@ -222,21 +224,7 @@ const selectedSkills = computed({
 
 const openModal = row => {
   editorVersion.value++
-  if (row) {
-    Object.assign(currentItem, row, { icon: row.icon || '' })
-  } else {
-    Object.assign(currentItem, {
-      id: null,
-      name: '',
-      category: 'MEAL',
-      price: 20.0,
-      durationMinutes: 60,
-      requiredSkills: '',
-      serviceArea: '阳光花园社区',
-      description: '',
-      icon: ''
-    })
-  }
+  Object.assign(currentItem, emptyItem(), row ? { ...row, icon: row.icon || '' } : {})
   modalVisible.value = true
 }
 
@@ -307,10 +295,6 @@ async function toggleStatus(row) {
 </script>
 
 <style scoped>
-.main-card {
-  border-radius: 8px;
-}
-
 .header-bar {
   margin-bottom: 16px;
 }

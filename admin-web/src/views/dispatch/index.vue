@@ -26,6 +26,7 @@
             v-for="filter in filters"
             :key="filter.value"
             :class="{ active: queueStatus === filter.value }"
+            :aria-pressed="queueStatus === filter.value"
             @click="changeFilter(filter.value)"
           >
             {{ filter.label }}
