@@ -5,28 +5,7 @@ const request = require('../../utils/request.js');
 const { getCachedService, loadService } = require('../../utils/service-catalog.js');
 const { markOrdersChanged, sessionKey } = require('../../utils/list-state.js');
 const { parseTime, dateKey, friendlyTime, bookingDays, hourSlots } = require('../../utils/time-format.js');
-
-function getAppSafe() {
-  try {
-    return getApp() || { globalData: {} };
-  } catch (_) {
-    return { globalData: {} };
-  }
-}
-
-const app = new Proxy({}, {
-  get(_, prop) {
-    const instance = getAppSafe();
-    const val = instance[prop];
-    if (typeof val === 'function') return val.bind(instance);
-    return val;
-  },
-  set(_, prop, val) {
-    const instance = getAppSafe();
-    instance[prop] = val;
-    return true;
-  }
-});
+const { getAppSafe, app } = require('../../utils/app-state.js');
 
 function formatFriendlyDate(dateStr) {
   const date = parseTime(dateStr);
@@ -69,6 +48,9 @@ Page({
   },
 
   onLoad(options) {
+    // 先校验登录/角色再发请求（onShow 晚于 onLoad）
+    const serviceId = (options && options.serviceId) || '';
+    if (!navigation.requireRole(['RESIDENT'], `/pages/order/create?serviceId=${serviceId}`)) { this._denied = true; return; }
     if (options && options.serviceId) {
       this.setData({ serviceId: options.serviceId, service: getCachedService(options.serviceId) });
       this.loadService(options.serviceId);
@@ -80,6 +62,7 @@ Page({
     const app = getAppSafe();
     const isElder = Boolean(app.globalData?.isElderMode);
     if (this.data.isElderMode !== isElder) this.setData({ isElderMode: isElder });
+    if (this._denied) return;
     if (!navigation.requireRole(['RESIDENT'], `/pages/order/create?serviceId=${this.data.serviceId || ''}`)) return;
     return this.loadElders();
   },

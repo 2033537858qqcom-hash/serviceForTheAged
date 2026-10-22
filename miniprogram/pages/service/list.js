@@ -3,6 +3,7 @@ const { syncTabBar } = require('../../utils/tab-bar.js');
 const { loadCatalog } = require('../../utils/service-catalog.js');
 const { visibleTabs } = require('../../utils/list-state.js');
 const { sliderShift } = require('../../utils/slider-shift.js');
+const { getAppSafe, app } = require('../../utils/app-state.js');
 
 const CATEGORIES = [
   { key: '', label: '全部' },
@@ -11,27 +12,6 @@ const CATEGORIES = [
   { key: 'ERRAND', label: '代买代办' },
   { key: 'ESCORT', label: '陪同办事' }
 ];
-
-function getAppSafe() {
-  try {
-    return getApp() || { globalData: {} };
-  } catch (_) {
-    return { globalData: {} };
-  }
-}
-const app = new Proxy({}, {
-  get(_, prop) {
-    const instance = getAppSafe();
-    const val = instance[prop];
-    if (typeof val === 'function') return val.bind(instance);
-    return val;
-  },
-  set(_, prop, val) {
-    const instance = getAppSafe();
-    instance[prop] = val;
-    return true;
-  }
-});
 
 Page({
   data: {
@@ -64,6 +44,8 @@ Page({
     if (this.data.isElderMode !== isElder) {
       this.setData({ isElderMode: isElder });
     }
+    const tabQuery = navigation.takeTabQuery('/pages/service/list');
+    if (tabQuery && tabQuery.category && app.globalData) app.globalData.serviceCategory = tabQuery.category;
     const requested = app.globalData?.serviceCategory;
     if (requested) {
       const index = CATEGORIES.findIndex(cat => cat.key === requested);

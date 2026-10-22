@@ -5,6 +5,9 @@ const { hasCoordinates } = require('../../utils/coordinates.js');
 const { lightTap } = require('../../utils/feedback.js');
 const { markOrdersChanged, sessionKey } = require('../../utils/list-state.js');
 const { friendlyTime, friendlyRange } = require('../../utils/time-format.js');
+const { detailView } = require('../../utils/order-view.js');
+const { ORDER_STATUS_TEXT_DETAIL } = require('../../utils/order-status.js');
+const { getAppSafe, app } = require('../../utils/app-state.js');
 
 function decorateTimes(data) {
   if (!data) return;
@@ -20,28 +23,6 @@ function formatTrackingDistance(value) {
   return meters >= 1000 ? (meters / 1000).toFixed(1) + 'km' : meters + 'm';
 }
 
-function getAppSafe() {
-  try {
-    return getApp() || { globalData: {} };
-  } catch (_) {
-    return { globalData: {} };
-  }
-}
-
-const app = new Proxy({}, {
-  get(_, prop) {
-    const instance = getAppSafe();
-    const val = instance[prop];
-    if (typeof val === 'function') return val.bind(instance);
-    return val;
-  },
-  set(_, prop, val) {
-    const instance = getAppSafe();
-    instance[prop] = val;
-    return true;
-  }
-});
-
 Page({
   data: {
     orderId: null,
@@ -49,6 +30,7 @@ Page({
     fulfillmentPhotos: [],
     loading: true,
     loadError: false,
+    missingId: false,
     canCancel: false,
     isElderMode: false,
     cancelSheet: false,
@@ -62,16 +44,7 @@ Page({
     polyline: [],
     mapCenter: { latitude: 39.9042, longitude: 116.4074 },
     mapScale: 15,
-    statusTextMap: {
-      'WAIT_DISPATCH': '待派单',
-      'WAIT_ACCEPT': '待接单',
-      'WAIT_VISIT': '待上门',
-      'IN_SERVICE': '服务中',
-      'WAIT_CONFIRM': '待确认完成',
-      'COMPLETED': '已完成',
-      'WAIT_MANUAL': '待人工协调',
-      'CANCELLED': '已取消'
-    },
+    statusTextMap: { ...ORDER_STATUS_TEXT_DETAIL },
     statusSubMap: {
       'WAIT_DISPATCH': '系统正在为您匹配符合技能与时间要求的服务人员',
       'WAIT_ACCEPT': '已向服务人员发送派单通知，等待确认接单',
@@ -88,7 +61,7 @@ Page({
     if (options && options.id) {
       this.setData({ orderId: options.id });
     } else {
-      this.setData({ loading: false, loadError: true });
+      this.setData({ loading: false, missingId: true });
     }
   },
 
@@ -118,6 +91,10 @@ Page({
 
   onPullDownRefresh() {
     return this.loadDetail(this.data.orderId, true).finally(() => wx.stopPullDownRefresh());
+  },
+
+  goHome() {
+    navigation.switchTab({ url: '/pages/index/index' });
   },
 
   retryDetail() {
@@ -171,7 +148,7 @@ Page({
       }
       if (!valid()) return;
       decorateTimes(data);
-      this.setData({ orderVO: data, canCancel, fulfillmentPhotos, unavailablePhotos });
+      this.setData({ orderVO: detailView(data), canCancel, fulfillmentPhotos, unavailablePhotos });
       this._version = version;
       this._updatedAt = Date.now();
       this.updateMapState(data?.tracking || null);
@@ -203,7 +180,7 @@ Page({
     if (this._trackingPending?.context === context) return this._trackingPending.task;
     const job = { context };
     this._trackingPending = job;
-    const task = request.get(`/orders/${id}/tracking`).then(tracking => {
+    const task = request.get(`/orders/${id}/tracking`, null, { silent: true }).then(tracking => {
       if (this._disposed || this._hidden || sessionKey(getAppSafe()) !== context || this.data.orderId !== id) return;
       const status = this.data.orderVO?.order?.status;
       if (status && !['WAIT_VISIT', 'IN_SERVICE'].includes(status)) return;

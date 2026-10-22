@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const os = require('node:os');
-const { pickLanAddress, buildLanBaseUrl, patchLanBaseUrl } = require('../scripts/sync-lan-ip.cjs');
+const { renderLocalConfig, pickLanAddress, buildLanBaseUrl, patchLanBaseUrl } = require('../scripts/sync-lan-ip.cjs');
 
 const sampleIfaces = {
   jumengcloud: [{ address: '198.18.0.1', family: 'IPv4', internal: false }],
@@ -42,4 +42,11 @@ test('patching app.js replaces only the LAN_BASE_URL assignment', () => {
 test('the live machine address is a LAN IPv4 or explicitly absent', () => {
   const ip = pickLanAddress(os.networkInterfaces());
   if (ip) assert.match(ip, /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.)/);
+});
+
+test('lan-sync writes an uncommitted local config instead of app.js', () => {
+  const { renderLocalConfig } = require('../scripts/sync-lan-ip.cjs');
+  assert.match(renderLocalConfig('http://192.168.1.9:8080/api'), /module\.exports = \{ LAN_BASE_URL: 'http:\/\/192\.168\.1\.9:8080\/api' \};/);
+  const ignore = require('node:fs').readFileSync(require('node:path').join(__dirname, '..', '..', '.gitignore'), 'utf8');
+  assert.match(ignore, /^miniprogram\/config\/local\.js$/m);
 });

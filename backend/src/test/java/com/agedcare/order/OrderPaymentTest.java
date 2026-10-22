@@ -58,7 +58,7 @@ class OrderPaymentTest {
                 bookings, records, reviews, dispatch, users);
         order = ServiceOrder.builder().id(ORDER_ID).elderId(ELDER_ID).requesterUserId(FAMILY_USER).status("WAIT_VISIT").build();
         when(orders.selectByIdForUpdate(ORDER_ID)).thenAnswer(i -> order);
-        when(elders.selectById(ELDER_ID)).thenReturn(ElderProfile.builder().id(ELDER_ID).userId(ELDER_USER).build());
+        when(elders.selectById(ELDER_ID)).thenReturn(ElderProfile.builder().id(ELDER_ID).userId(ELDER_USER).name("钱桂芳").idCard("110101194611152345").build());
         when(orders.markPaid(eq(ORDER_ID), anyLong(), any())).thenAnswer(i -> {
             if (order.getPaidAt() != null) return 0;
             order.setPaidByUserId(i.getArgument(1)); order.setPaidAt(i.getArgument(2)); return 1;
@@ -134,5 +134,15 @@ class OrderPaymentTest {
         OrderVO paid = service.getOrderDetail(ORDER_ID);
         assertFalse(paid.isCanPay());
         assertTrue(paid.isPaid());
+    }
+
+    @Test void orderDetailNeverExposesTheElderIdCard() throws Exception {
+        when(orders.selectById(ORDER_ID)).thenAnswer(i -> order);
+        as(ELDER_USER, "RESIDENT");
+        OrderVO vo = service.getOrderDetail(ORDER_ID);
+        assertEquals("钱桂芳", vo.getElder().getName());
+        String json = new com.fasterxml.jackson.databind.ObjectMapper().findAndRegisterModules().writeValueAsString(vo);
+        assertFalse(json.contains("idCard"), json);
+        assertFalse(json.contains("110101194611152345"));
     }
 }

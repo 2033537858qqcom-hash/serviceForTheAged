@@ -2,14 +2,7 @@ const navigation = require('../../utils/navigation.js');
 const request = require('../../utils/request.js');
 const { lightTap } = require('../../utils/feedback.js');
 const { sessionKey } = require('../../utils/list-state.js');
-
-function getAppSafe() {
-  try {
-    return getApp() || { globalData: {} };
-  } catch (_) {
-    return { globalData: {} };
-  }
-}
+const { getAppSafe } = require('../../utils/app-state.js');
 
 const careLevelMap = {
   // 与后端 ElderSaveDTO 的 careLevel 取值一致：NORMAL | MEDIUM | HIGH

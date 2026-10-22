@@ -1,3 +1,4 @@
+const { getRole, clearSession } = require('./session.js');
 const LOGIN = '/pages/auth/login';
 const HOME = '/pages/index/index';
 const WORKBENCH = '/pages/staff/workbench';
@@ -87,7 +88,7 @@ function requireRole(allowedRoles, returnUrl) {
   if (!requireLogin(returnUrl)) return false;
   let app = null;
   try { app = getApp(); } catch (_) {}
-  const role = app?.globalData?.role || app?.globalData?.userInfo?.role || 'RESIDENT';
+  const role = getRole(app);
   if (Array.isArray(allowedRoles) && allowedRoles.length > 0 && !allowedRoles.includes(role)) {
     if (typeof wx !== 'undefined' && wx.showToast) {
       wx.showToast({ title: '无权访问该角色页面', icon: 'none' });
@@ -113,14 +114,35 @@ function redirectStaffHome() {
   return true;
 }
 
+function parseQuery(query) {
+  const out = {};
+  (query || '').split('&').filter(Boolean).forEach(pair => {
+    const [key, value = ''] = pair.split('=');
+    try { out[decodeURIComponent(key)] = decodeURIComponent(value); } catch (_) { out[key] = value; }
+  });
+  return out;
+}
+
+// tab 页取出（并清除）登录后暂存给它的参数
+function takeTabQuery(path) {
+  let app = null;
+  try { app = getApp(); } catch (_) {}
+  const pending = app?.globalData?.pendingTabQuery;
+  if (!pending || pending.path !== path) return null;
+  app.globalData.pendingTabQuery = null;
+  return pending.query;
+}
+
 function afterLogin(returnUrl) {
   let app = null;
   try { app = getApp(); } catch (_) {}
-  const role = app?.globalData?.role || app?.globalData?.userInfo?.role || 'RESIDENT';
+  const role = getRole(app);
 
   if (role === 'ADMIN') {
-    if (typeof wx !== 'undefined' && wx.showToast) {
-      wx.showToast({ title: '管理员请前往电脑端管理平台', icon: 'none' });
+    // 管理员不能使用小程序：退出登录并留在登录页，可换账号重新登录，不会卡在已登录状态
+    clearSession(app);
+    if (typeof wx !== 'undefined' && wx.showModal) {
+      wx.showModal({ title: '请使用电脑端', content: '管理员账号请在电脑端管理平台登录，小程序可换用居民或服务人员账号。', showCancel: false });
     }
     return false;
   }
@@ -138,9 +160,13 @@ function afterLogin(returnUrl) {
     }
   }
 
-  const path = target.split('?')[0];
-  if (TAB_PAGES.includes(path)) return route('switchTab', { url: path }, true);
+  const [path, query] = target.split('?');
+  if (TAB_PAGES.includes(path)) {
+    // switchTab 不能带参数：参数暂存到 globalData，由 tab 页 onShow 通过 takeTabQuery 取用
+    if (query && app?.globalData) app.globalData.pendingTabQuery = { path, query: parseQuery(query) };
+    return route('switchTab', { url: path }, true);
+  }
   return route('redirectTo', { url: target }, true);
 }
 
-module.exports = { navigateTo, switchTab, redirectTo, navigateBack, toLogin, requireLogin, requireRole, redirectStaffHome, afterLogin, currentUrl };
+module.exports = { navigateTo, switchTab, redirectTo, navigateBack, toLogin, requireLogin, requireRole, redirectStaffHome, afterLogin, takeTabQuery, currentUrl };

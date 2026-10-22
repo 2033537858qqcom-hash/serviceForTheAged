@@ -1,7 +1,6 @@
 package com.agedcare.modules.order.dto;
 
 import com.agedcare.modules.dispatch.entity.DispatchAttempt;
-import com.agedcare.modules.elder.entity.ElderProfile;
 import com.agedcare.modules.fulfillment.entity.ServiceRecord;
 import com.agedcare.modules.fulfillment.entity.ServiceReview;
 import com.agedcare.modules.order.entity.OrderStatusLog;
@@ -22,7 +21,7 @@ public class OrderVO {
     private boolean paid;
     private boolean canPay; // 仅详情接口按当前用户计算：老人本人或已审核绑定家属、未支付且未取消
     private String settlementNote;
-    private ElderProfile elder;
+    private OrderElderVO elder; // 精简后的老人信息，不含 idCard
     private DispatchAttempt currentDispatch;
     private StaffDetailVO currentStaff;
     private ServiceRecord serviceRecord;

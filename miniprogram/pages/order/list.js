@@ -3,6 +3,8 @@ const { syncTabBar } = require('../../utils/tab-bar.js');
 const request = require('../../utils/request.js');
 const { orderCard, visibleTabs, sessionKey } = require('../../utils/list-state.js');
 const { sliderShift } = require('../../utils/slider-shift.js');
+const { ORDER_STATUS_TEXT } = require('../../utils/order-status.js');
+const { getAppSafe, app } = require('../../utils/app-state.js');
 
 const TTL = 15 * 1000;
 const PAGE_SIZE = 10;
@@ -14,27 +16,6 @@ const TABS = [
   { key: 'WAIT_CONFIRM', label: '待确认' },
   { key: 'COMPLETED', label: '已完成' }
 ];
-
-function getAppSafe() {
-  try {
-    return getApp() || { globalData: {} };
-  } catch (_) {
-    return { globalData: {} };
-  }
-}
-const app = new Proxy({}, {
-  get(_, prop) {
-    const instance = getAppSafe();
-    const val = instance[prop];
-    if (typeof val === 'function') return val.bind(instance);
-    return val;
-  },
-  set(_, prop, val) {
-    const instance = getAppSafe();
-    instance[prop] = val;
-    return true;
-  }
-});
 
 const emptyView = () => ({ list: [], hasMore: true, loaded: false, loading: false, error: false, isRefreshing: false });
 const emptyCache = () => ({
@@ -52,11 +33,7 @@ Page({
     tabData: TABS.map(emptyView),
     sliderShift: 0,
     sliderLive: false,
-    statusTextMap: {
-      WAIT_DISPATCH: '待派单', WAIT_ACCEPT: '待接单', WAIT_VISIT: '待上门',
-      IN_SERVICE: '服务中', WAIT_CONFIRM: '待确认', COMPLETED: '已完成',
-      WAIT_MANUAL: '待人工处理', CANCELLED: '已取消'
-    },
+    statusTextMap: { ...ORDER_STATUS_TEXT },
     statusTagMap: {
       WAIT_DISPATCH: 'tag-warning', WAIT_ACCEPT: 'tag-warning', WAIT_VISIT: 'tag-info',
       IN_SERVICE: 'tag-info', WAIT_CONFIRM: 'tag-warning', COMPLETED: 'tag-success',
@@ -92,6 +69,8 @@ Page({
       this.resetSession();
     }
 
+    const tabQuery = navigation.takeTabQuery('/pages/order/list');
+    if (tabQuery && tabQuery.status !== undefined && app.globalData) app.globalData.orderStatusFilter = tabQuery.status;
     let index = this.data.currentTabIndex;
     if (app.globalData && Object.prototype.hasOwnProperty.call(app.globalData, 'orderStatusFilter')) {
       index = this.findStatus(app.globalData.orderStatusFilter);
@@ -307,7 +286,7 @@ Page({
   },
 
   goToLogin() {
-    navigation.navigateTo({ url: '/pages/auth/login?redirect=/pages/order/list' });
+    navigation.toLogin('/pages/order/list');
   },
 
   noAction() {}

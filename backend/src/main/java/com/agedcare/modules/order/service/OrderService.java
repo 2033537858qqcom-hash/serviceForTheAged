@@ -389,7 +389,7 @@ public class OrderService {
         vo.setSettlementNote(paid
                 ? "该订单已支付，每笔订单只需支付一次"
                 : "老人本人或已绑定的家属均可支付，每笔订单只需支付一次；金额为预约时的费用");
-        vo.setElder(elderProfileMapper.selectById(order.getElderId()));
+        vo.setElder(com.agedcare.modules.order.dto.OrderElderVO.from(elderProfileMapper.selectById(order.getElderId())));
 
         String type = order.getRequesterType() != null ? order.getRequesterType() : "SELF";
         vo.setRequesterType(type);

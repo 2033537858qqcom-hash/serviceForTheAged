@@ -11,6 +11,8 @@ function createRuntime(app = { globalData: {} }, wx = {}, request = { get: () =>
     filename = path.resolve(filename);
     if (!path.extname(filename)) filename += '.js';
     if (filename === path.join(root, 'utils', 'request.js') && request !== null) return request;
+    const stub = globals.__stubModules && globals.__stubModules[path.relative(root, filename)];
+    if (stub) return stub;
     if (modules.has(filename)) return modules.get(filename).exports;
     const module = { exports: {} };
     modules.set(filename, module);
