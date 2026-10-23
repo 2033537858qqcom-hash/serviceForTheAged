@@ -169,11 +169,13 @@
   color: var(--primary-dark);
 }
 
-.card-title { font-size: var(--font-section); font-weight: 600; margin-bottom: 26rpx; }
-.info-item { padding: 20rpx 0; border-bottom: 1rpx solid #eef1ec; align-items: flex-start; }
+.card-title { font-size: var(--font-section); font-weight: 600; margin-bottom: 20rpx; }
+.info-item { padding: 14rpx 0; border-bottom: 0; align-items: flex-start; gap: 16rpx; }
+.info-item.order-feedback-item { margin-top: 12rpx; padding-top: 22rpx; border-top: 1rpx solid #eef1ec; align-items: center; }
 .info-item:last-child { border-bottom: 0; padding-bottom: 0; }
 .label { font-size: var(--font-caption); color: var(--text-secondary); flex: 0 0 150rpx; }
 .value { font-size: var(--font-body); text-align: right; overflow-wrap: anywhere; flex: 1; min-width: 0; }
+.info-item.is-multiline .value { line-height: 1.55; }
 .bold { font-weight: 600; }
 .price { color: var(--primary-dark); font-weight: 600; }
 .code { font-size: var(--font-caption); }

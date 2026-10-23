@@ -6,11 +6,20 @@
       description="跟进服务意见，记录处理结果，让每次反馈有回应。"
     />
     <el-card shadow="never" class="main-card">
-      <div class="header-bar toolbar-end">
-        <div class="feedback-tools">
-          <el-select v-model="list.filters.status" placeholder="全部状态" clearable @change="list.search">
+      <div class="toolbar-split">
+        <div class="toolbar-filters">
+          <el-select
+            v-model="list.filters.status"
+            placeholder="全部状态"
+            clearable
+            style="width: 160px"
+            @change="list.search"
+          >
             <el-option v-for="option in complaintStatusOptions" :key="option.value" v-bind="option" />
           </el-select>
+          <el-button v-if="list.filters.status" icon="Refresh" @click="list.reset">重置</el-button>
+        </div>
+        <div class="toolbar-actions">
           <el-button icon="Refresh" :loading="list.loading.value" @click="list.load">刷新</el-button>
         </div>
       </div>
@@ -37,7 +46,7 @@
         </el-table-column>
         <el-table-column prop="complaintTitle" label="投诉主题" width="180">
           <template #default="{ row }">
-            <span style="font-weight: bold">{{ row.complaintTitle }}</span>
+            <span class="cell-title">{{ row.complaintTitle }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="complaintContent" label="反馈详情" min-width="220" show-overflow-tooltip />

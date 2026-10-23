@@ -2,8 +2,8 @@ const navigation = require('../../utils/navigation.js');
 const { syncTabBar } = require('../../utils/tab-bar.js');
 const { loadCatalog } = require('../../utils/service-catalog.js');
 const { visibleTabs } = require('../../utils/list-state.js');
-const { sliderShift } = require('../../utils/slider-shift.js');
-const { getAppSafe, app } = require('../../utils/app-state.js');
+const { createSwipeMethods } = require('../../utils/slider-shift.js');
+const { app } = require('../../utils/app-state.js');
 
 const CATEGORIES = [
   { key: '', label: '全部' },
@@ -28,6 +28,8 @@ Page({
     loadError: false,
     categoryIcons: { MEAL: 'meal', CLEANING: 'cleaning', ERRAND: 'errand', ESCORT: 'escort' }
   },
+
+  ...createSwipeMethods({ indexKey: 'currentCatIndex', count: CATEGORIES.length }),
 
   onLoad(options = {}) {
     this._disposed = false;
@@ -79,34 +81,6 @@ Page({
   changeCat(e) {
     const index = Number(e.currentTarget.dataset.index);
     if (index !== this.data.currentCatIndex) this.selectCategory(index, true);
-  },
-
-  onResize() {
-    this.measurePage();
-    this._gesturing = false;
-    this._gestureIndex = null;
-    this.setData({ sliderShift: this.data.currentCatIndex * 100, sliderLive: false });
-  },
-
-  measurePage() {
-    try {
-      const info = typeof wx.getWindowInfo === 'function' ? wx.getWindowInfo() : wx.getSystemInfoSync();
-      this._pageWidth = info.windowWidth || 375;
-    } catch (_) {
-      this._pageWidth = 375;
-    }
-  },
-
-  onSwiperTouchStart() {
-    this._gesturing = true;
-    this._gestureIndex = this.data.currentCatIndex;
-  },
-
-  onSwiperTransition(e) {
-    const index = this._gestureIndex == null ? this.data.currentCatIndex : this._gestureIndex;
-    const shift = Math.round(sliderShift(index, e.detail.dx || 0, this._pageWidth || 375, CATEGORIES.length) * 1000) / 10;
-    if (shift === this.data.sliderShift && this.data.sliderLive) return;
-    this.setData({ sliderShift: shift, sliderLive: true });
   },
 
   onSwiperChange(e) {

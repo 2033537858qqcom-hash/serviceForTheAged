@@ -6,19 +6,26 @@
       description="核验人员资质，管理技能、工作状态与服务排班。"
     />
     <el-card shadow="never" class="main-card">
-      <div class="header-bar toolbar-end">
-        <el-button type="primary" @click="applicationsVisible = true">入驻申请审核</el-button>
-        <el-button type="primary" plain @click="openPendingCredentials">待审核资质</el-button>
-        <el-form :inline="true" :model="list.filters" class="staff-filter" @submit.prevent="list.search">
-          <el-input
-            v-model="list.filters.name"
-            placeholder="输入姓名，回车搜索"
-            clearable
-            style="width: 200px"
-            @clear="list.search"
-          />
-          <el-button icon="Search" native-type="submit">搜索</el-button>
+      <div class="toolbar-split">
+        <el-form :inline="true" :model="list.filters" class="toolbar-filters" @submit.prevent="list.search">
+          <el-form-item label="人员姓名">
+            <el-input
+              v-model="list.filters.name"
+              placeholder="输入姓名，回车搜索"
+              clearable
+              style="width: 200px"
+              @clear="list.search"
+            />
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" icon="Search" native-type="submit">查询</el-button>
+            <el-button v-if="list.filters.name" icon="Refresh" @click="list.reset">重置</el-button>
+          </el-form-item>
         </el-form>
+        <div class="toolbar-actions">
+          <el-button type="primary" plain @click="openPendingCredentials">待审核资质</el-button>
+          <el-button type="primary" @click="applicationsVisible = true">入驻申请审核</el-button>
+        </div>
       </div>
 
       <DataTable
@@ -36,7 +43,7 @@
       >
         <el-table-column label="姓名" width="140">
           <template #default="{ row }">
-            <span style="font-weight: bold">{{ row.user ? row.user.realName : '' }}</span>
+            <span class="cell-title">{{ row.user ? row.user.realName : '' }}</span>
           </template>
         </el-table-column>
         <el-table-column label="联系电话" width="170">
@@ -56,17 +63,18 @@
         </el-table-column>
         <el-table-column label="专业技能" min-width="200">
           <template #default="{ row }">
-            <el-tag
-              v-for="sk in row.skills"
-              :key="sk.id"
-              :type="sk.auditStatus === 'APPROVED' ? 'success' : 'warning'"
-              size="small"
-              style="margin-right: 6px"
-            >
-              {{ sk.skillName
-              }}{{ sk.auditStatus === 'PENDING' ? ' · 待审核' : sk.auditStatus === 'REJECTED' ? ' · 已退回' : '' }}
-            </el-tag>
-            <span v-if="!row.skills || row.skills.length === 0" class="text-muted text-xs">暂无资质</span>
+            <div v-if="row.skills && row.skills.length" class="skill-tags">
+              <el-tag
+                v-for="sk in row.skills"
+                :key="sk.id"
+                :type="sk.auditStatus === 'APPROVED' ? 'success' : 'warning'"
+                size="small"
+              >
+                {{ sk.skillName
+                }}{{ sk.auditStatus === 'PENDING' ? ' · 待审核' : sk.auditStatus === 'REJECTED' ? ' · 已退回' : '' }}
+              </el-tag>
+            </div>
+            <span v-else class="text-muted text-xs">暂无资质</span>
           </template>
         </el-table-column>
         <el-table-column label="服务评分" width="110">
@@ -103,9 +111,9 @@
         </el-descriptions>
 
         <!-- 技能列表 -->
-        <div style="margin-top: 24px">
-          <div class="flex-between" style="margin-bottom: 12px">
-            <span style="font-weight: bold">专业资质与技能</span>
+        <div class="dialog-section">
+          <div class="dialog-section-head">
+            <span class="cell-title">专业资质与技能</span>
             <el-button type="primary" plain @click="openSkillModal">+ 录入新资质</el-button>
           </div>
           <el-table :data="selectedStaff.skills || []" size="small" border empty-text="暂无资质">
@@ -134,9 +142,9 @@
         </div>
 
         <!-- 排班班次列表 -->
-        <div style="margin-top: 24px">
-          <div class="flex-between" style="margin-bottom: 12px">
-            <span style="font-weight: bold">有效工作排班班次</span>
+        <div class="dialog-section">
+          <div class="dialog-section-head">
+            <span class="cell-title">有效工作排班班次</span>
             <el-button type="primary" plain @click="openShiftModal">+ 添加排班</el-button>
           </div>
           <el-table :data="selectedStaff.shifts || []" size="small" border max-height="250" empty-text="暂无排班">
@@ -420,18 +428,20 @@ async function refreshSelectedStaff() {
 </script>
 
 <style scoped>
-.header-bar {
-  margin-bottom: 16px;
+.skill-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
-.flex-between {
+.dialog-section {
+  margin-top: 24px;
+}
+
+.dialog-section-head {
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-.staff-filter {
-  display: flex;
-  gap: 8px;
+  margin-bottom: 12px;
 }
 </style>

@@ -6,8 +6,37 @@
       description="维护社区服务项目、价格、服务范围与预约说明。"
     />
     <el-card shadow="never" class="main-card">
-      <div class="header-bar toolbar-end">
-        <el-button type="primary" icon="Plus" @click="openModal(null)">新增服务项目</el-button>
+      <div class="toolbar-split">
+        <el-form :inline="true" :model="list.filters" class="toolbar-filters" @submit.prevent="list.search">
+          <el-form-item label="服务类别">
+            <el-select
+              v-model="list.filters.category"
+              placeholder="全部类别"
+              clearable
+              style="width: 150px"
+              @change="list.search"
+            >
+              <el-option v-for="option in categoryOptions" :key="option.value" v-bind="option" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="状态">
+            <el-select
+              v-model="list.filters.status"
+              placeholder="全部状态"
+              clearable
+              style="width: 140px"
+              @change="list.search"
+            >
+              <el-option v-for="option in serviceStatusOptions" :key="option.value" v-bind="option" />
+            </el-select>
+          </el-form-item>
+          <el-form-item v-if="list.filters.category || list.filters.status">
+            <el-button icon="Refresh" @click="list.reset">重置</el-button>
+          </el-form-item>
+        </el-form>
+        <div class="toolbar-actions">
+          <el-button type="primary" icon="Plus" @click="openModal(null)">新增服务项目</el-button>
+        </div>
       </div>
 
       <DataTable
@@ -36,7 +65,7 @@
         </el-table-column>
         <el-table-column prop="name" label="项目名称" width="160">
           <template #default="{ row }">
-            <span style="font-weight: bold">{{ row.name }}</span>
+            <span class="cell-title">{{ row.name }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="category" label="服务类别" width="130">
@@ -57,7 +86,7 @@
             <el-tag v-if="row.requiredSkills" size="small" type="info">
               {{ skillText(row.requiredSkills) }}
             </el-tag>
-            <span v-else style="color: var(--muted)">无硬性要求</span>
+            <span v-else class="text-muted">无硬性要求</span>
           </template>
         </el-table-column>
         <el-table-column prop="serviceArea" label="覆盖区域" width="140" />
@@ -176,9 +205,10 @@ import { maxLength, required } from '../../utils/validators.js'
 
 const list = usePagedQuery({
   fetcher: (params, { signal }) => request.get('/service-items/page', { params, signal }),
-  defaults: {}
+  defaults: { category: '', status: '' }
 })
 const categoryOptions = statusOptions('category')
+const serviceStatusOptions = statusOptions('service')
 const skillNames = SKILLS
 const itemFormRef = ref(null)
 const itemRules = {

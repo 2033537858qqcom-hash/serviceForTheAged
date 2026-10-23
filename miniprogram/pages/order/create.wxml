@@ -48,7 +48,10 @@
     </picker>
     <view class="slot-label">选择上门时间</view>
     <view class="slot-grid">
-      <view wx:for="{{timeSlots}}" wx:key="time" class="slot-chip {{selectedTime === item.time ? 'is-active' : ''}} {{item.disabled ? 'is-disabled' : ''}}" bindtap="onSlotTap" data-time="{{item.time}}" data-disabled="{{item.disabled}}" aria-disabled="{{item.disabled}}">{{item.time}}</view>
+      <view wx:for="{{timeSlots}}" wx:key="time" class="slot-chip {{selectedTime === item.time ? 'is-active' : ''}} {{item.disabled ? 'is-disabled' : ''}}" bindtap="onSlotTap" data-time="{{item.time}}" data-disabled="{{item.disabled}}" aria-disabled="{{item.disabled}}">
+        <text class="slot-chip-time">{{item.time}}</text>
+        <text wx:if="{{item.disabled}}" class="slot-chip-note">已过时</text>
+      </view>
     </view>
     <view class="slot-empty" wx:if="{{!selectedTime}}">当天已没有可预约的时段，请选择其他日期。</view>
     <view class="field-error" wx:if="{{formErrors.time}}">

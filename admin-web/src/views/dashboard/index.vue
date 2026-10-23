@@ -120,7 +120,7 @@
         </div>
       </section>
     </div>
-    <div class="insights-grid">
+    <div ref="insightsGridRef" class="insights-grid">
       <section class="panel trend-panel">
         <div class="panel-heading">
           <div>
@@ -233,9 +233,10 @@ const waitingOrders = ref([])
 const refreshing = ref(false)
 const loadError = ref(false)
 const queueError = ref(false)
+const insightsGridRef = ref(null)
 const lineChartRef = ref(null)
 const pieChartRef = ref(null)
-let lineChart, pieChart, resizeObserver
+let lineChart, pieChart, resizeObserver, pollTimer
 const currentName = computed(() => {
   const user = getUser()
   return user?.realName || user?.username || '管理员'
@@ -275,6 +276,10 @@ async function refreshDashboard() {
 function renderCharts() {
   const fontFamily = 'PingFang SC, Microsoft YaHei, sans-serif'
   if (lineChartRef.value) {
+    if (lineChart && lineChart.getDom() !== lineChartRef.value) {
+      lineChart.dispose()
+      lineChart = null
+    }
     lineChart ||= init(lineChartRef.value)
     const trend = stat.value?.recentOrdersTrend || []
     lineChart.setOption({
@@ -320,6 +325,10 @@ function renderCharts() {
     lineChart = null
   }
   if (pieChartRef.value) {
+    if (pieChart && pieChart.getDom() !== pieChartRef.value) {
+      pieChart.dispose()
+      pieChart = null
+    }
     pieChart ||= init(pieChartRef.value)
     pieChart.setOption({
       textStyle: { fontFamily },
@@ -369,13 +378,26 @@ function resizeCharts() {
   lineChart?.resize()
   pieChart?.resize()
 }
+function onVisibilityChange() {
+  if (typeof document !== 'undefined' && document.visibilityState === 'visible' && !disposed) {
+    refreshDashboard()
+  }
+}
 onMounted(() => {
   refreshDashboard()
   resizeObserver = new ResizeObserver(resizeCharts)
-  if (document.querySelector('.insights-grid')) resizeObserver.observe(document.querySelector('.insights-grid'))
+  if (insightsGridRef.value) resizeObserver.observe(insightsGridRef.value)
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    pollTimer = setInterval(() => {
+      if (document.visibilityState === 'visible') refreshDashboard()
+    }, 30000)
+  }
 })
 onBeforeUnmount(() => {
   disposed = true
+  clearInterval(pollTimer)
+  if (typeof document !== 'undefined') document.removeEventListener('visibilitychange', onVisibilityChange)
   resizeObserver?.disconnect()
   lineChart?.dispose()
   pieChart?.dispose()

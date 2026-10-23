@@ -2,7 +2,10 @@
 .home-header { position: relative; display: flex; justify-content: space-between; gap: 16rpx; align-items: center; padding: 0 0 28rpx; }
 .home-header::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1rpx; background: linear-gradient(90deg, rgba(23,107,93,0.02) 0%, rgba(23,107,93,0.12) 25%, rgba(23,107,93,0.12) 75%, rgba(23,107,93,0.02) 100%); }
 .home-brand { display: flex; flex: 1 1 auto; min-width: 0; align-items: center; gap: 16rpx; }
-.home-header-deco { flex: 1; display: flex; align-items: center; justify-content: center; padding: 0 6rpx; min-width: 40rpx; height: 72rpx; overflow: hidden; pointer-events: none; }
+.home-header-deco { flex: 1; display: none; align-items: center; justify-content: center; padding: 0 6rpx; min-width: 40rpx; height: 72rpx; overflow: hidden; opacity: 0.72; pointer-events: none; }
+@media (min-width: 400px) {
+  .home-header-deco { display: flex; }
+}
 .header-floral-art { width: 100%; max-width: 240rpx; height: 68rpx; display: block; }
 .home-brand-copy { min-width: 0; }
 .home-brand-icon {
@@ -114,6 +117,9 @@
 .elder-mode .contact-hours { margin-left: 0; }
 .elder-mode .home-brand-icon { width: 88rpx; height: 88rpx; border-radius: 22rpx; }
 .elder-mode .home-header-deco { display: none; }
+.elder-mode .service-strip { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18rpx; }
+.elder-mode .service-strip-item { flex-direction: row; justify-content: flex-start; gap: 20rpx; min-height: 132rpx; padding: 20rpx 24rpx; }
+.elder-mode .service-strip-photo { width: 84rpx; height: 84rpx; border-radius: 18rpx; flex-shrink: 0; }
 
 
 /* 进行中订单主卡片 + 一键进度 */

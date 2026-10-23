@@ -34,7 +34,11 @@ Component({
       if (show) {
         this._opened = true;
         this.setTabBarBlocked(true);
-        this.setData({ rendered: true, dragging: false, drag: 420 }, () => this.setData({ drag: 0 }));
+        this.setData({ rendered: true, dragging: false, drag: 420 }, () => {
+          const enter = () => { if (this._opened) this.setData({ drag: 0 }); };
+          if (typeof wx !== 'undefined' && typeof wx.nextTick === 'function') wx.nextTick(enter);
+          else enter();
+        });
         return;
       }
       if (this._opened && this.data.rendered) this.finishClose();
@@ -76,7 +80,9 @@ Component({
     onMove(event) {
       const touch = event.touches && event.touches[0];
       if (!touch || this._startY == null) return;
-      this.setData({ drag: sheetDelta(this._startY, touch.clientY) });
+      const nextDrag = Math.round(sheetDelta(this._startY, touch.clientY));
+      if (nextDrag === this.data.drag) return;
+      this.setData({ drag: nextDrag });
     },
     onEnd() {
       if (this._startY == null) return;

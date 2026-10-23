@@ -2,7 +2,23 @@
   padding-bottom: calc(var(--tab-bar-height) + 32rpx + env(safe-area-inset-bottom));
 }
 
-
+.location-auth-banner {
+  background: #fdf5eb;
+  border-color: #fae1c3;
+  padding: 20rpx 26rpx;
+  min-height: 88rpx;
+}
+.location-auth-text {
+  font-size: var(--font-caption);
+  color: var(--warning-color);
+  flex: 1;
+}
+.location-auth-link {
+  font-size: var(--font-caption);
+  color: var(--primary-color);
+  font-weight: 600;
+  white-space: nowrap;
+}
 
 .staff-header-card {
   background: var(--primary-soft);

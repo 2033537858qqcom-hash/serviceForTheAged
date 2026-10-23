@@ -1,14 +1,19 @@
+import { ref } from 'vue'
+
 // 管理后台会话的唯一读写入口（token 与用户信息）
 export const TOKEN_KEY = 'admin_token'
 export const USER_KEY = 'admin_user'
 
+const sessionVersion = ref(0)
 const defaultStorage = () => (typeof localStorage === 'undefined' ? null : localStorage)
 
 export function getToken(storage = defaultStorage()) {
+  void sessionVersion.value
   return storage?.getItem(TOKEN_KEY) || ''
 }
 
 export function getUser(storage = defaultStorage()) {
+  void sessionVersion.value
   try {
     return JSON.parse(storage?.getItem(USER_KEY) || 'null')
   } catch {
@@ -19,11 +24,19 @@ export function getUser(storage = defaultStorage()) {
 export function saveSession({ token, userInfo }, storage = defaultStorage()) {
   storage.setItem(TOKEN_KEY, token)
   storage.setItem(USER_KEY, JSON.stringify(userInfo))
+  sessionVersion.value++
+}
+
+export function updateUser(userInfo, storage = defaultStorage()) {
+  if (!storage || !userInfo) return
+  storage.setItem(USER_KEY, JSON.stringify(userInfo))
+  sessionVersion.value++
 }
 
 export function clearSession(storage = defaultStorage()) {
   storage?.removeItem(TOKEN_KEY)
   storage?.removeItem(USER_KEY)
+  sessionVersion.value++
 }
 
 export function hasAdminSession(storage = defaultStorage()) {

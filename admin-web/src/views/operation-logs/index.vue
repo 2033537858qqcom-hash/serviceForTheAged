@@ -81,7 +81,7 @@ const list = usePagedQuery({
 </script>
 <style scoped>
 .panel {
-  padding: 20px;
+  padding: 24px;
 }
 .time-cell {
   color: var(--ink);

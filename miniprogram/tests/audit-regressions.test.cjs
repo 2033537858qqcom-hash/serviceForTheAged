@@ -300,3 +300,51 @@ test('workbench can find older active tasks beyond the first twenty orders', asy
   assert.equal(page.data.tasksHasMore, false);
   assert.equal(page.data.tasksLoading, false);
 });
+
+
+test('workbench stops location polling on auth denial and resumes after openSetting grants permission', () => {
+  let cleared = 0, granted = false;
+  const page = createRuntime(app(), {
+    getLocation(o) {
+      if (!granted) o.fail?.({ errMsg: 'getLocation:fail auth deny' });
+      else o.success?.({ latitude: 30, longitude: 120 });
+      o.complete?.();
+    },
+    openSetting(o) {
+      granted = true;
+      o.success?.({ authSetting: { 'scope.userLocation': true } });
+    }
+  }, { post: () => Promise.resolve() }, {
+    setInterval: () => 99,
+    clearInterval: () => { cleared++; }
+  }).page('staff/workbench');
+  page.startLocationReporting();
+  assert.equal(page.data.locationAuthDenied, true);
+  assert.equal(page._locationTimer, null);
+  assert.ok(cleared >= 1);
+  page.openLocationSetting();
+  assert.equal(page.data.locationAuthDenied, false);
+  assert.equal(page._locationTimer, 99);
+});
+
+test('workbench persists fulfillment record drafts per order and clears draft after submit', async () => {
+  const store = new Map();
+  const wxMock = {
+    getStorageSync: k => store.get(k),
+    setStorageSync: (k, v) => store.set(k, v),
+    removeStorageSync: k => store.delete(k),
+    showToast() {}
+  };
+  const page = createRuntime(app(), wxMock, { post: () => Promise.resolve(), get: () => Promise.resolve({}) }).page('staff/workbench');
+  page.openSubmitRecordModal({ currentTarget: { dataset: { id: 42 } } });
+  page.onInputSummary({ detail: { value: '老人测量血压正常' } });
+  assert.equal(store.get('workbench_record_draft_42')?.summary, '老人测量血压正常');
+
+  // Reopening the modal for the same order restores the draft
+  const rebuilt = createRuntime(app(), wxMock, { post: () => Promise.resolve(), get: () => Promise.resolve({}) }).page('staff/workbench');
+  rebuilt.openSubmitRecordModal({ currentTarget: { dataset: { id: 42 } } });
+  assert.equal(rebuilt.data.recordSummary, '老人测量血压正常');
+
+  await rebuilt.submitRecord();
+  assert.equal(store.has('workbench_record_draft_42'), false);
+});

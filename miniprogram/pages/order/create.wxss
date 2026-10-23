@@ -67,10 +67,13 @@
 .day-chip-sub { font-size: var(--font-meta); color: var(--text-secondary); margin-top: 4rpx; }
 .more-date { margin: 16rpx 0 24rpx; min-height: 88rpx; padding: 0 20rpx; border-radius: 16rpx; border: 1rpx dashed var(--color-line-soft); font-size: var(--font-caption); color: var(--text-secondary); }
 .slot-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16rpx; }
-.slot-chip { min-height: 88rpx; border-radius: 16rpx; background: var(--color-bg-soft); border: 2rpx solid var(--color-line-soft); display: flex; align-items: center; justify-content: center; font-size: var(--font-body); color: var(--text-main); box-sizing: border-box; }
-.day-chip.is-active, .slot-chip.is-active { background: var(--primary-color); border-color: var(--primary-color); }
-.day-chip.is-active .day-chip-label, .day-chip.is-active .day-chip-sub, .slot-chip.is-active { color: #fff; }
-.slot-chip.is-disabled { opacity: 0.4; text-decoration: line-through; }
+.slot-chip { position: relative; min-height: 88rpx; padding: 10rpx 8rpx; border-radius: 16rpx; background: var(--color-bg-soft); border: 2rpx solid var(--color-line-soft); display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: var(--font-body); color: var(--text-main); box-sizing: border-box; overflow: hidden; }
+.slot-chip-time { line-height: 1.25; font-weight: 550; }
+.slot-chip-note { font-size: 24rpx; line-height: 1.1; color: var(--text-secondary); margin-top: 4rpx; }
+.day-chip.is-active, .slot-chip.is-active { background: var(--primary-color); border-color: var(--primary-color); box-shadow: 0 4rpx 12rpx rgba(23, 107, 93, 0.22); }
+.day-chip.is-active .day-chip-label, .day-chip.is-active .day-chip-sub, .slot-chip.is-active, .slot-chip.is-active .slot-chip-time { color: #fff; }
+.slot-chip.is-disabled { opacity: 0.55; background: repeating-linear-gradient(-45deg, #f3f5f1, #f3f5f1 8rpx, #eaeee8 8rpx, #eaeee8 16rpx); border-color: #dce2da; color: var(--text-secondary); }
+.slot-chip.is-disabled .slot-chip-time { text-decoration: line-through; }
 .slot-empty { margin-top: 16rpx; font-size: var(--font-caption); color: var(--text-secondary); }
 .picker-icon { width: 32rpx; height: 32rpx; flex-shrink: 0; }
 .time-tip { font-size: var(--font-meta); line-height: 1.8; color: var(--text-secondary); margin-top: 20rpx; }

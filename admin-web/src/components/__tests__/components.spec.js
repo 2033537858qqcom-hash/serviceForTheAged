@@ -5,6 +5,7 @@ import StatusTag from '../StatusTag.vue'
 import MaskedText from '../MaskedText.vue'
 import PageHeader from '../PageHeader.vue'
 import DataTable from '../DataTable.vue'
+import StaffSelect from '../StaffSelect.vue'
 
 const global = { directives: { loading: ElLoading.directive } }
 
@@ -64,5 +65,21 @@ describe('PrivatePhoto', () => {
     await flushPromises()
     expect(request.get).not.toHaveBeenCalled()
     expect(wrapper.text()).toBe('照片暂不可用')
+  })
+})
+
+describe('StaffSelect', () => {
+  it('merges asynchronously updated seed options and deduplicates by staff profile id', async () => {
+    const wrapper = mount(StaffSelect, { props: { seed: [] } })
+    expect(wrapper.vm.options).toHaveLength(0)
+    await wrapper.setProps({
+      seed: [
+        { profile: { id: 1, serviceArea: '东区', currentStatus: 'AVAILABLE' }, user: { realName: '张阿姨' } },
+        { profile: { id: 1, serviceArea: '东区', currentStatus: 'AVAILABLE' }, user: { realName: '张阿姨' } }
+      ]
+    })
+    expect(wrapper.vm.options).toHaveLength(1)
+    expect(wrapper.vm.options[0].user.realName).toBe('张阿姨')
+    wrapper.unmount()
   })
 })

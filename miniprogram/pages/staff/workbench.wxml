@@ -1,6 +1,12 @@
 <view class="container workbench-page {{isElderMode ? 'elder-mode' : ''}}">
   <state-view wx:if="{{loadError}}" type="error" title="工作台暂时未能完整加载" description="请检查网络后重试" bindaction="loadStaffData" />
 
+  <!-- 定位权限降级引导条 -->
+  <view class="card location-auth-banner flex-between" wx:if="{{locationAuthDenied}}" bindtap="openLocationSetting">
+    <view class="location-auth-text">未开启位置权限，上门轨迹无法同步，点击前往开启</view>
+    <text class="location-auth-link">去设置 ›</text>
+  </view>
+
   <!-- 待接单新任务强提醒 (倒计时置顶优先暴露) -->
   <view class="section-title flex-between alert-heading" wx:if="{{pendingAttempt}}">
     <text class="alert-title">有一项新服务待接单</text>

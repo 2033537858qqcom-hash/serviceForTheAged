@@ -100,9 +100,9 @@
     </view>
   </view>
 
-  <!-- 服务基本信息 -->
+  <!-- 预约与上门信息 -->
   <view class="card info-card">
-    <view class="card-title">服务基本信息</view>
+    <view class="card-title">预约与上门信息</view>
     <view class="info-item flex-between">
       <text class="label">预约类型</text>
       <view class="flex-row items-center">
@@ -115,6 +115,35 @@
       <text class="value bold">{{orderVO.order.serviceNameSnapshot}}</text>
     </view>
     <view class="info-item flex-between">
+      <text class="label">预约开始</text>
+      <text class="value">{{orderVO.order.plannedStartText}}</text>
+    </view>
+    <view class="info-item flex-between">
+      <text class="label">预计时长</text>
+      <text class="value">{{orderVO.order.durationMinutesSnapshot}} 分钟</text>
+    </view>
+    <view class="info-item flex-between">
+      <text class="label">服务对象</text>
+      <text class="value">{{orderVO.elder ? orderVO.elder.name : '老人'}}</text>
+    </view>
+    <view class="info-item flex-between is-multiline">
+      <text class="label">服务地址</text>
+      <text class="value">{{orderVO.order.addressSnapshot}}</text>
+    </view>
+    <view class="info-item flex-between is-multiline">
+      <text class="label">联系人</text>
+      <text class="value">{{orderVO.order.contactNameSnapshot}} ({{orderVO.order.contactPhoneSnapshot}})</text>
+    </view>
+    <view class="info-item flex-between is-multiline" wx:if="{{orderVO.order.remark}}">
+      <text class="label">备注说明</text>
+      <text class="value">{{orderVO.order.remark}}</text>
+    </view>
+  </view>
+
+  <!-- 费用与订单凭据 -->
+  <view class="card info-card">
+    <view class="card-title">费用与订单凭据</view>
+    <view class="info-item flex-between">
       <text class="label">预计费用</text>
       <text class="value price">¥{{orderVO.order.priceSnapshot}}</text>
     </view>
@@ -122,31 +151,7 @@
       <text class="label">支付状态</text>
       <text class="value {{orderVO.paid ? 'paid-text' : ''}}">{{orderVO.paid ? '已支付' + (orderVO.payerName ? '（' + orderVO.payerName + '）' : '') : '待支付'}}</text>
     </view>
-    <view class="info-item"><text class="label">费用说明</text><text class="value">{{orderVO.settlementNote || '老人本人或已绑定的家属均可支付，每笔订单只需支付一次'}}</text></view>
-    <view class="info-item flex-between">
-      <text class="label">预计时长</text>
-      <text class="value">{{orderVO.order.durationMinutesSnapshot}} 分钟</text>
-    </view>
-    <view class="info-item flex-between">
-      <text class="label">预约开始</text>
-      <text class="value">{{orderVO.order.plannedStartText}}</text>
-    </view>
-    <view class="info-item flex-between">
-      <text class="label">服务对象</text>
-      <text class="value">{{orderVO.elder ? orderVO.elder.name : '老人'}}</text>
-    </view>
-    <view class="info-item flex-between">
-      <text class="label">服务地址</text>
-      <text class="value">{{orderVO.order.addressSnapshot}}</text>
-    </view>
-    <view class="info-item flex-between">
-      <text class="label">联系人</text>
-      <text class="value">{{orderVO.order.contactNameSnapshot}} ({{orderVO.order.contactPhoneSnapshot}})</text>
-    </view>
-    <view class="info-item flex-between" wx:if="{{orderVO.order.remark}}">
-      <text class="label">备注说明</text>
-      <text class="value">{{orderVO.order.remark}}</text>
-    </view>
+    <view class="info-item is-multiline"><text class="label">费用说明</text><text class="value">{{orderVO.settlementNote || '老人本人或已绑定的家属均可支付，每笔订单只需支付一次'}}</text></view>
     <view class="info-item flex-between">
       <text class="label">订单编号</text>
       <text class="value code">{{orderVO.order.orderNo}}</text>

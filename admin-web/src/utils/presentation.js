@@ -160,8 +160,8 @@ export const OPERATION_ACTIONS = {
   'AuthController.wechatLogin': '微信授权登录',
   'MockAuthController.mockLogin': '模拟快速登录',
   // 系统清理与迁移
-  'LEGACY_PHOTO_PENDING': '历史私有图片待清理',
-  'LEGACY_PHOTO_CLEANED': '历史私有图片已清理归档'
+  LEGACY_PHOTO_PENDING: '历史私有图片待清理',
+  LEGACY_PHOTO_CLEANED: '历史私有图片已清理归档'
 }
 
 export const OPERATION_TARGETS = {
@@ -249,7 +249,13 @@ export function actionTagType(action) {
   if (str.includes('audit') || str.includes('confirm') || str.includes('accept') || str.includes('cleaned')) {
     return 'success'
   }
-  if (str.includes('cancel') || str.includes('reject') || str.includes('delete') || str.includes('remove') || str.includes('revoke')) {
+  if (
+    str.includes('cancel') ||
+    str.includes('reject') ||
+    str.includes('delete') ||
+    str.includes('remove') ||
+    str.includes('revoke')
+  ) {
     return 'danger'
   }
   if (str.includes('reassign') || str.includes('status') || str.includes('complaint')) {

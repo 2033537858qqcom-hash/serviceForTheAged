@@ -15,6 +15,10 @@ const TASK_TABS = [
   { key: 'WAIT_CONFIRM,COMPLETED', label: '已完工' }
 ];
 
+function draftStorageKey(orderId) {
+  return orderId != null ? `workbench_record_draft_${orderId}` : '';
+}
+
 Page({
   data: {
     staffProfile: null,
@@ -38,6 +42,7 @@ Page({
     showRejectSheet: false,
     rejectDispatchId: null,
     loadError: false,
+    locationAuthDenied: false,
     isElderMode: false,
     statusTextMap: { ...ORDER_STATUS_TEXT },
     statusTagMap: {
@@ -64,7 +69,7 @@ Page({
       this._staffPromise = null;
       this._tasksPromise = null;
       this._taskPage = 0;
-      this.setData({ staffProfile: null, pendingAttempt: null, filteredTasks: [], tasksHasMore: false, tasksLoading: false });
+      this.setData({ staffProfile: null, pendingAttempt: null, filteredTasks: [], tasksHasMore: false, tasksLoading: false, locationAuthDenied: false });
     }
     const isElder = Boolean(app.globalData?.isElderMode);
     if (this.data.isElderMode !== isElder) this.setData({ isElderMode: isElder });
@@ -195,7 +200,8 @@ Page({
       if (this._disposed) return;
       try { lightTap(); } catch (_) {}
       wx.showToast({ title: message, icon: 'success' });
-      this.closeRecordModal();
+      this._clearRecordDraft(this.data.currentOrderId);
+      this._resetRecordModal();
       this.closeStartSheet();
       this.closeRejectSheet();
       return Promise.all([this._staffPromise, this._tasksPromise].map(pending => Promise.resolve(pending).catch(() => {})))
@@ -272,14 +278,57 @@ Page({
     return this.openStartService(e);
   },
 
+  _saveRecordDraft(orderId, summary, photos, photoSources) {
+    const key = draftStorageKey(orderId);
+    if (!key || typeof wx === 'undefined' || typeof wx.setStorageSync !== 'function') return;
+    try {
+      wx.setStorageSync(key, {
+        summary: summary || '',
+        photos: Array.isArray(photos) ? photos : [],
+        photoSources: Array.isArray(photoSources) ? photoSources : []
+      });
+    } catch (_) {}
+  },
+
+  _loadRecordDraft(orderId) {
+    const key = draftStorageKey(orderId);
+    if (!key || typeof wx === 'undefined' || typeof wx.getStorageSync !== 'function') return null;
+    try {
+      const draft = wx.getStorageSync(key);
+      if (draft && typeof draft === 'object' && (draft.summary || (Array.isArray(draft.photos) && draft.photos.length))) {
+        return draft;
+      }
+    } catch (_) {}
+    return null;
+  },
+
+  _clearRecordDraft(orderId) {
+    const key = draftStorageKey(orderId);
+    if (!key || typeof wx === 'undefined') return;
+    try {
+      if (typeof wx.removeStorageSync === 'function') wx.removeStorageSync(key);
+      else if (typeof wx.setStorageSync === 'function') wx.setStorageSync(key, null);
+    } catch (_) {}
+  },
+
+  _resetRecordModal() {
+    this._recordSummary = '';
+    this.setData({ showRecordModal: false, recordSummary: '', recordPhotos: [], recordPhotoSources: [], photoUploading: false });
+  },
+
   openSubmitRecordModal(e) {
     const orderId = e?.currentTarget?.dataset?.id || e;
-    this._recordSummary = '';
+    const draft = this._loadRecordDraft(orderId);
+    const summary = draft?.summary || '';
+    const photos = Array.isArray(draft?.photos) ? draft.photos : [];
+    const photoSources = Array.isArray(draft?.photoSources) ? draft.photoSources : [];
+    this._recordSummary = summary;
     this.setData({
       showRecordModal: true,
       currentOrderId: orderId,
-      recordSummary: '',
-      recordPhotos: [], recordPhotoSources: [],
+      recordSummary: summary,
+      recordPhotos: photos,
+      recordPhotoSources: photoSources,
       photoUploading: false
     });
   },
@@ -287,6 +336,7 @@ Page({
   closeRecordModal() {
     const summary = this._recordSummary || this.data.recordSummary;
     const hasPhotos = this.data.recordPhotos && this.data.recordPhotos.length > 0;
+    const orderId = this.data.currentOrderId;
     if ((summary && summary.trim()) || hasPhotos) {
       const that = this;
       if (typeof wx !== 'undefined' && typeof wx.showModal === 'function') {
@@ -298,20 +348,21 @@ Page({
           confirmColor: '#b83a3a',
           success(res) {
             if (res.confirm) {
-              that._recordSummary = '';
-              that.setData({ showRecordModal: false, recordSummary: '', recordPhotos: [], recordPhotoSources: [], photoUploading: false });
+              that._clearRecordDraft(orderId);
+              that._resetRecordModal();
             }
           }
         });
         return;
       }
     }
-    this._recordSummary = '';
-    this.setData({ showRecordModal: false, recordSummary: '', recordPhotos: [], recordPhotoSources: [], photoUploading: false });
+    this._clearRecordDraft(orderId);
+    this._resetRecordModal();
   },
 
   onInputSummary(e) {
     this._recordSummary = e.detail.value;
+    this._saveRecordDraft(this.data.currentOrderId, this._recordSummary, this.data.recordPhotos, this.data.recordPhotoSources);
   },
 
   chooseRecordPhoto() {
@@ -389,7 +440,9 @@ Page({
         });
         if (newUrls.length > 0) {
           const updated = [...(that.data.recordPhotos || []), ...newUrls.map(item => item.url)];
-          that.setData({ recordPhotos: updated, recordPhotoSources: [...(that.data.recordPhotoSources || []), ...newUrls.map(item => item.preview)] });
+          const updatedSources = [...(that.data.recordPhotoSources || []), ...newUrls.map(item => item.preview)];
+          that.setData({ recordPhotos: updated, recordPhotoSources: updatedSources });
+          that._saveRecordDraft(orderId, that._recordSummary || that.data.recordSummary, updated, updatedSources);
         }
         if (failCount > 0 && typeof wx !== 'undefined' && typeof wx.showToast === 'function') {
           wx.showToast({ title: `${failCount}张图片上传失败，请重试`, icon: 'none' });
@@ -427,6 +480,7 @@ Page({
     const previews = [...(this.data.recordPhotoSources || [])];
     previews.splice(idx, 1);
     this.setData({ recordPhotos: photos, recordPhotoSources: previews });
+    this._saveRecordDraft(this.data.currentOrderId, this._recordSummary || this.data.recordSummary, photos, previews);
   },
 
   previewRecordPhoto(e) {
@@ -515,10 +569,21 @@ Page({
     });
   },
 
+  openLocationSetting() {
+    if (typeof wx === 'undefined' || typeof wx.openSetting !== 'function') return;
+    wx.openSetting({
+      success: (res) => {
+        if (res?.authSetting?.['scope.userLocation']) {
+          this.setData({ locationAuthDenied: false });
+          this.startLocationReporting();
+        }
+      }
+    });
+  },
+
   startLocationReporting() {
     this.stopLocationReporting();
     if (typeof wx === 'undefined' || typeof wx.getLocation !== 'function') return;
-    this.reportCurrentLocation();
     this._locationTimer = setInterval(() => {
       if (!this._disposed && !this._hidden) {
         this.reportCurrentLocation();
@@ -527,6 +592,7 @@ Page({
     if (this._locationTimer && typeof this._locationTimer.unref === 'function') {
       this._locationTimer.unref();
     }
+    this.reportCurrentLocation();
   },
 
   stopLocationReporting() {
@@ -545,13 +611,22 @@ Page({
       type: 'gcj02',
       success: (res) => {
         if (this._disposed || this._hidden || sessionKey(getAppSafe()) !== context || !hasCoordinates(res.latitude, res.longitude)) return;
+        if (this.data.locationAuthDenied) this.setData({ locationAuthDenied: false });
         request.post('/staff/location/report', {
           longitude: res.longitude,
           latitude: res.latitude,
           speed: Math.max(0, Number(res.speed) || 0)
         }).catch(() => {});
       },
-      fail: () => {},
+      fail: (err) => {
+        const msg = (err && err.errMsg) || '';
+        if (/auth deny|authorize no response|permission/i.test(msg)) {
+          this.stopLocationReporting();
+          if (!this._disposed && !this.data.locationAuthDenied) {
+            this.setData({ locationAuthDenied: true });
+          }
+        }
+      },
       complete: () => { this._locationPending = false; }
     });
   }

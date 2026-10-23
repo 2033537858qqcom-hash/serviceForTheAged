@@ -2,9 +2,9 @@ const navigation = require('../../utils/navigation.js');
 const { syncTabBar } = require('../../utils/tab-bar.js');
 const request = require('../../utils/request.js');
 const { orderCard, visibleTabs, sessionKey } = require('../../utils/list-state.js');
-const { sliderShift } = require('../../utils/slider-shift.js');
+const { createSwipeMethods } = require('../../utils/slider-shift.js');
 const { ORDER_STATUS_TEXT } = require('../../utils/order-status.js');
-const { getAppSafe, app } = require('../../utils/app-state.js');
+const { app } = require('../../utils/app-state.js');
 
 const TTL = 15 * 1000;
 const PAGE_SIZE = 10;
@@ -40,6 +40,8 @@ Page({
       WAIT_MANUAL: 'tag-danger', CANCELLED: 'tag-danger'
     }
   },
+
+  ...createSwipeMethods({ indexKey: 'currentTabIndex', count: TABS.length }),
 
   onLoad(options = {}) {
     this._disposed = false;
@@ -152,34 +154,6 @@ Page({
     if (this.data.isLoggedIn) {
       return this.ensureTab(index);
     }
-  },
-
-  onResize() {
-    this.measurePage();
-    this._gesturing = false;
-    this._gestureIndex = null;
-    this.setData({ sliderShift: this.data.currentTabIndex * 100, sliderLive: false });
-  },
-
-  measurePage() {
-    try {
-      const info = typeof wx.getWindowInfo === 'function' ? wx.getWindowInfo() : wx.getSystemInfoSync();
-      this._pageWidth = info.windowWidth || 375;
-    } catch (_) {
-      this._pageWidth = 375;
-    }
-  },
-
-  onSwiperTouchStart() {
-    this._gesturing = true;
-    this._gestureIndex = this.data.currentTabIndex;
-  },
-
-  onSwiperTransition(e) {
-    const index = this._gestureIndex == null ? this.data.currentTabIndex : this._gestureIndex;
-    const shift = Math.round(sliderShift(index, e.detail.dx || 0, this._pageWidth || 375, TABS.length) * 1000) / 10;
-    if (shift === this.data.sliderShift && this.data.sliderLive) return;
-    this.setData({ sliderShift: shift, sliderLive: true });
   },
 
   onSwiperChange(e) {

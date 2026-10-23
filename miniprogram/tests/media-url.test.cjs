@@ -27,20 +27,26 @@ test('workbench preview expands relative photos while retaining raw paths for su
   assert.equal(page.data.recordPhotos[0], raw);
 });
 
-test('private download uses auth headers and resolves only to a local image file', async () => {
+test('private download uses auth headers, resolves to a local image file and caches repeat loads', async () => {
   const app = { globalData: { token: 'staff-token', baseUrl: 'https://care.example/api' } };
-  let headersCallback, success, request;
+  let headersCallback, success, request, downloads = 0;
   const runtime = createRuntime(app, { downloadFile(options) {
+    downloads++;
     request = options; success = options.success;
     return { onHeadersReceived(callback) { headersCallback = callback; } };
   } });
   const { loadMedia } = runtime.require('utils/media-url');
   const pending = loadMedia('/media/private/fulfillment/1/2/photo.jpg');
+  const duplicate = loadMedia('/media/private/fulfillment/1/2/photo.jpg');
+  assert.equal(downloads, 1);
   assert.equal(request.header.Authorization, 'Bearer staff-token');
   assert.equal(request.url, 'https://care.example/api/media/private/fulfillment/1/2/photo.jpg');
   headersCallback({ header: { 'Content-Type': 'image/jpeg' } });
   success({ statusCode: 200, tempFilePath: 'wxfile://private-photo.jpg' });
   assert.equal(await pending, 'wxfile://private-photo.jpg');
+  assert.equal(await duplicate, 'wxfile://private-photo.jpg');
+  assert.equal(await loadMedia('/media/private/fulfillment/1/2/photo.jpg'), 'wxfile://private-photo.jpg');
+  assert.equal(downloads, 1);
 });
 
 test('private download rejects JSON errors and deletes a late previous-account download', async () => {

@@ -17,7 +17,7 @@
         <div class="panel-heading">
           <h2>
             待安排服务
-            <span class="queue-total">{{ pagination.total }}</span>
+            <span class="queue-total">{{ queue.total.value }}</span>
           </h2>
           <span class="queue-hint">选择预约查看推荐</span>
         </div>
@@ -25,8 +25,8 @@
           <button
             v-for="filter in filters"
             :key="filter.value"
-            :class="{ active: queueStatus === filter.value }"
-            :aria-pressed="queueStatus === filter.value"
+            :class="{ active: queue.filters.queue === filter.value }"
+            :aria-pressed="queue.filters.queue === filter.value"
             @click="changeFilter(filter.value)"
           >
             {{ filter.label }}
@@ -66,15 +66,15 @@
             <p>{{ queueError ? '点击上方刷新重新加载。' : '新的待安排预约会在这里出现。' }}</p>
           </div>
         </div>
-        <div v-if="pagination.total" class="queue-pagination">
+        <div v-if="queue.total.value" class="queue-pagination">
           <el-pagination
-            v-model:current-page="pagination.pageNum"
-            :page-size="pagination.pageSize"
-            :total="pagination.total"
+            :current-page="queue.pageNum.value"
+            :page-size="queue.pageSize.value"
+            :total="queue.total.value"
             layout="prev, pager, next"
             :pager-count="5"
             small
-            @current-change="fetchData"
+            @current-change="queue.setPage"
           />
         </div>
       </section>
@@ -136,13 +136,13 @@
               >
                 <div class="candidate-top">
                   <div class="candidate-person">
-                    <span class="person-avatar">{{ staffName(candidate.staffId).slice(-2) }}</span>
+                    <span class="person-avatar">{{ staffName(candidate).slice(-2) }}</span>
                     <div>
                       <div class="candidate-name">
-                        {{ staffName(candidate.staffId) }}
-                        <span v-if="index === 0" class="recommended-label">优先推荐</span>
+                        {{ staffName(candidate) }}
+                        <span v-if="index === 0" class="recommended-label">最优匹配</span>
                       </div>
-                      <p>{{ staffArea(candidate.staffId) }}</p>
+                      <p>{{ staffArea(candidate) }}</p>
                     </div>
                   </div>
                   <div class="match-score">
@@ -168,6 +168,44 @@
                     {{ Number(candidate.metricF) > 0 ? '曾为该老人提供服务' : '首次为该老人服务' }}
                   </span>
                 </div>
+                <div class="score-bars" aria-label="多维匹配指标">
+                  <div class="score-bar-item">
+                    <div class="score-bar-head">
+                      <span>路程就近</span>
+                      <span class="stat-number">{{ scorePercent(candidate.metricT) }}%</span>
+                    </div>
+                    <div class="score-bar-track">
+                      <span class="score-bar-fill" :style="{ width: `${scorePercent(candidate.metricT)}%` }"></span>
+                    </div>
+                  </div>
+                  <div class="score-bar-item">
+                    <div class="score-bar-head">
+                      <span>质量评分</span>
+                      <span class="stat-number">{{ scorePercent(candidate.metricQ) }}%</span>
+                    </div>
+                    <div class="score-bar-track">
+                      <span class="score-bar-fill" :style="{ width: `${scorePercent(candidate.metricQ)}%` }"></span>
+                    </div>
+                  </div>
+                  <div class="score-bar-item">
+                    <div class="score-bar-head">
+                      <span>工作余量</span>
+                      <span class="stat-number">{{ scorePercent(candidate.metricL) }}%</span>
+                    </div>
+                    <div class="score-bar-track">
+                      <span class="score-bar-fill" :style="{ width: `${scorePercent(candidate.metricL)}%` }"></span>
+                    </div>
+                  </div>
+                  <div class="score-bar-item">
+                    <div class="score-bar-head">
+                      <span>长辈熟悉度</span>
+                      <span class="stat-number">{{ scorePercent(candidate.metricF) }}%</span>
+                    </div>
+                    <div class="score-bar-track">
+                      <span class="score-bar-fill" :style="{ width: `${scorePercent(candidate.metricF)}%` }"></span>
+                    </div>
+                  </div>
+                </div>
                 <div class="candidate-bottom">
                   <span>
                     服务质量匹配 {{ scorePercent(candidate.metricQ) }}%
@@ -192,7 +230,7 @@
             <el-collapse v-if="excludedCandidates.length" class="excluded-list">
               <el-collapse-item :title="`查看 ${excludedCandidates.length} 位暂不可安排人员的原因`" name="excluded">
                 <div v-for="candidate in excludedCandidates" :key="candidate.staffId" class="excluded-person">
-                  <span>{{ staffName(candidate.staffId) }}</span>
+                  <span>{{ staffName(candidate) }}</span>
                   <p>{{ candidate.excludeReason || '暂不满足本次服务要求' }}</p>
                 </div>
               </el-collapse-item>
@@ -231,105 +269,122 @@
 <script setup>
 import PageHeader from '../../components/PageHeader.vue'
 import StaffSelect from '../../components/StaffSelect.vue'
-import { computed, ref, reactive, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { computed, ref, reactive, watch, onMounted, onBeforeUnmount } from 'vue'
 import { ElMessage } from 'element-plus'
 import request from '../../utils/request'
 import { latestCandidateScores, orderStatusText, shortDate } from '../../utils/presentation'
-const loading = ref(false),
-  queueError = ref(false),
-  scoresLoading = ref(false),
-  scoreError = ref(false),
-  actionLoading = ref(false)
-const tableData = ref([]),
-  scoresList = ref([]),
-  selectedOrder = ref(null),
-  assignVisible = ref(false),
-  staffList = ref([])
+import { usePagedQuery } from '../../composables/usePagedQuery.js'
+
 const filters = [
   { label: '全部待办', value: 'WAIT_MANUAL,WAIT_DISPATCH' },
   { label: '需要协调', value: 'WAIT_MANUAL' },
   { label: '等待安排', value: 'WAIT_DISPATCH' }
 ]
-// 队列筛选与页码保存在 ?queue=&page=，刷新/分享后保持（RT4）
-const route = useRoute()
-const router = useRouter()
-const initialQueue = filters.find(filter => filter.value === route.query.queue)?.value || filters[0].value
-const queueStatus = ref(initialQueue)
-const pagination = reactive({ pageNum: Math.max(1, Number.parseInt(route.query.page, 10) || 1), pageSize: 6, total: 0 })
-function syncQuery() {
-  const query = { ...route.query }
-  if (queueStatus.value !== filters[0].value) query.queue = queueStatus.value
-  else delete query.queue
-  if (pagination.pageNum > 1) query.page = String(pagination.pageNum)
-  else delete query.page
-  if (query.queue !== route.query.queue || query.page !== route.query.page) router.replace({ query })
-}
-let fetchSeq = 0
+const validQueues = new Set(filters.map(f => f.value))
+
+// 复用通用分页状态机（RT4/C1）：支持竞态取消、最后一页自动回退与 URL 同步
+const queue = usePagedQuery({
+  fetcher: ({ pageNum, pageSize, queue: queueVal }, { signal }) => {
+    const status = validQueues.has(queueVal) ? queueVal : filters[0].value
+    return request.get('/orders/page', {
+      params: { pageNum, pageSize, status },
+      signal
+    })
+  },
+  defaults: { queue: filters[0].value },
+  pageSize: 6
+})
+
+const loading = queue.loading
+const queueError = queue.error
+const tableData = queue.rows
+
+const scoresLoading = ref(false)
+const scoreError = ref(false)
+const actionLoading = ref(false)
+const scoresList = ref([])
+const selectedOrder = ref(null)
+const assignVisible = ref(false)
+const staffList = ref([])
+
+let scoreController = null
+let staffController = null
+let pollTimer = null
+
 const assignForm = reactive({ orderId: null, staffId: null })
 const currentScores = computed(() => latestCandidateScores(scoresList.value))
 const qualifiedCandidates = computed(() => currentScores.value.filter(item => Number(item.isQualified) === 1))
 const excludedCandidates = computed(() => currentScores.value.filter(item => Number(item.isQualified) !== 1))
 const staffById = computed(() => new Map(staffList.value.map(staff => [String(staff.profile.id), staff])))
-function staffName(id) {
+
+function resolveCandidateId(candidateOrId) {
+  return typeof candidateOrId === 'object' && candidateOrId !== null ? candidateOrId.staffId : candidateOrId
+}
+function staffName(candidateOrId) {
+  if (typeof candidateOrId === 'object' && candidateOrId !== null) {
+    if (candidateOrId.staffName) return candidateOrId.staffName
+    if (candidateOrId.realName) return candidateOrId.realName
+  }
+  const id = resolveCandidateId(candidateOrId)
   return staffById.value.get(String(id))?.user?.realName || `服务人员 ${String(id).slice(-4)}`
 }
-function staffArea(id) {
+function staffArea(candidateOrId) {
+  if (typeof candidateOrId === 'object' && candidateOrId?.serviceArea) {
+    return candidateOrId.serviceArea
+  }
+  const id = resolveCandidateId(candidateOrId)
   return staffById.value.get(String(id))?.profile?.serviceArea || '社区服务人员'
 }
 function scorePercent(value) {
   return Math.round(Math.min(1, Math.max(0, Number(value) || 0)) * 100)
 }
-async function fetchData() {
-  const seq = ++fetchSeq
-  loading.value = true
-  queueError.value = false
-  syncQuery()
-  try {
-    const result = await request.get('/orders/page', {
-      params: { pageNum: pagination.pageNum, pageSize: pagination.pageSize, status: queueStatus.value }
-    })
-    if (seq !== fetchSeq) return
-    tableData.value = result?.records || []
-    pagination.total = Number(result?.total || 0)
-    const current = tableData.value.find(row => row.order.id === selectedOrder.value?.order.id) || tableData.value[0]
-    if (current) selectOrder(current)
-    else {
-      selectedOrder.value = null
-      scoresList.value = []
-    }
-  } catch {
-    if (seq === fetchSeq) queueError.value = true
-  } finally {
-    if (seq === fetchSeq) loading.value = false
+
+watch(tableData, rows => {
+  const current = rows.find(row => row.order.id === selectedOrder.value?.order.id) || rows[0]
+  if (current) selectOrder(current)
+  else {
+    scoreController?.abort()
+    selectedOrder.value = null
+    scoresList.value = []
   }
+})
+
+function fetchData() {
+  return queue.load()
 }
 function changeFilter(status) {
-  queueStatus.value = status
-  pagination.pageNum = 1
-  fetchData()
+  queue.filters.queue = status
+  return queue.search()
 }
 async function selectOrder(row) {
   selectedOrder.value = row
   scoresList.value = []
   scoresLoading.value = true
   scoreError.value = false
+  scoreController?.abort()
+  const controller = (scoreController = typeof AbortController === 'undefined' ? null : new AbortController())
   const id = row.order.id
   try {
-    const scores = await request.get(`/dispatch/scores/${id}`)
+    const scores = await request.get(`/dispatch/scores/${id}`, { signal: controller?.signal })
     if (selectedOrder.value?.order.id === id) scoresList.value = scores || []
-  } catch {
-    if (selectedOrder.value?.order.id === id) scoreError.value = true
+  } catch (err) {
+    if (selectedOrder.value?.order.id === id && err?.kind !== 'canceled') scoreError.value = true
   } finally {
-    if (selectedOrder.value?.order.id === id) scoresLoading.value = false
+    if (selectedOrder.value?.order.id === id && scoreController === controller) scoresLoading.value = false
   }
 }
 async function loadStaff() {
+  staffController?.abort()
+  const controller = (staffController = typeof AbortController === 'undefined' ? null : new AbortController())
   try {
-    const result = await request.get('/staff/page', { params: { pageNum: 1, pageSize: 100, auditStatus: 'APPROVED' } })
-    staffList.value = result?.records || []
-  } catch {
-    staffList.value = []
+    const result = await request.get('/staff/page', {
+      params: { pageNum: 1, pageSize: 100, auditStatus: 'APPROVED' },
+      signal: controller?.signal,
+      silent: true
+    })
+    if (staffController === controller) staffList.value = result?.records || []
+  } catch (err) {
+    if (staffController === controller && err?.kind !== 'canceled') staffList.value = []
   }
 }
 function openAssign(row, staffId = null) {
@@ -368,8 +423,20 @@ async function autoDispatch(orderId) {
   }
 }
 onMounted(() => {
-  fetchData()
+  if (!validQueues.has(queue.filters.queue)) queue.filters.queue = filters[0].value
   loadStaff()
+  if (typeof document !== 'undefined') {
+    pollTimer = setInterval(() => {
+      if (document.visibilityState === 'visible' && !loading.value && !actionLoading.value && !assignVisible.value) {
+        fetchData()
+      }
+    }, 30000)
+  }
+})
+onBeforeUnmount(() => {
+  clearInterval(pollTimer)
+  scoreController?.abort()
+  staffController?.abort()
 })
 </script>
 
@@ -661,6 +728,41 @@ onMounted(() => {
   color: #8ca283;
   font-size: 14px;
 }
+.score-bars {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  padding: 0 0 16px;
+}
+.score-bar-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.score-bar-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--muted);
+}
+.score-bar-head .stat-number {
+  color: var(--ink);
+  font-weight: 550;
+}
+.score-bar-track {
+  height: 5px;
+  border-radius: 999px;
+  background: #eaeee5;
+  overflow: hidden;
+}
+.score-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--brand);
+  transition: width 240ms ease;
+}
 .candidate-bottom {
   display: flex;
   justify-content: space-between;
@@ -764,6 +866,9 @@ onMounted(() => {
   .candidate-facts {
     grid-template-columns: 1fr;
     gap: 11px;
+  }
+  .score-bars {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .selected-service-main h2 {
     font-size: 19px;

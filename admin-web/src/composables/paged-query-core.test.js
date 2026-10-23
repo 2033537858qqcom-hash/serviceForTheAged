@@ -72,3 +72,24 @@ test('an emptied last page falls back to the previous page', async () => {
   assert.equal(list.pageNum.value, 2)
   assert.equal(list.rows.value.length, 1)
 })
+
+test('syncFromQuery reloads only when external route query parameters change', async () => {
+  let calls = 0
+  const list = createPagedQuery({
+    fetcher: async params => {
+      calls++
+      return { records: [{ status: params.status || 'ALL' }], total: 1 }
+    },
+    defaults: { status: '' }
+  })
+  await list.load()
+  assert.equal(calls, 1)
+  // Same query state should be a no-op
+  await list.syncFromQuery({})
+  assert.equal(calls, 1)
+  // External navigation changes query
+  await list.syncFromQuery({ status: 'WAIT_MANUAL', page: '2' })
+  assert.equal(calls, 2)
+  assert.equal(list.filters.status, 'WAIT_MANUAL')
+  assert.equal(list.pageNum.value, 2)
+})

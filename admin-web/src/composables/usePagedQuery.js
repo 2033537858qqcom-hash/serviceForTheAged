@@ -1,4 +1,4 @@
-import { onBeforeUnmount, onMounted } from 'vue'
+import { onBeforeUnmount, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { createPagedQuery } from './paged-query-core.js'
 
@@ -11,6 +11,14 @@ export function usePagedQuery({ syncRoute = true, immediate = true, ...options }
     readQuery: () => route.query,
     writeQuery: syncRoute ? query => router.replace({ query }) : undefined
   })
+  if (syncRoute) {
+    watch(
+      () => route.query,
+      query => {
+        list.syncFromQuery(query)
+      }
+    )
+  }
   if (immediate) onMounted(list.load)
   onBeforeUnmount(list.dispose)
   return list

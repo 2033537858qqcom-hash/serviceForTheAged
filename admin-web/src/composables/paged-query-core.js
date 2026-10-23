@@ -100,6 +100,27 @@ export function createPagedQuery({ fetcher, defaults = {}, pageSize = 20, prefix
     }
   }
 
+  function syncFromQuery(query = readQuery?.() || {}) {
+    const next = fromQuery(query, defaults, { prefix, pageSize })
+    let changed = false
+    for (const [key, value] of Object.entries(next.filters)) {
+      if (filters[key] !== value) {
+        filters[key] = value
+        changed = true
+      }
+    }
+    if (pageNum.value !== next.pageNum) {
+      pageNum.value = next.pageNum
+      changed = true
+    }
+    if (size.value !== next.pageSize) {
+      size.value = next.pageSize
+      changed = true
+    }
+    if (changed) return load()
+    return Promise.resolve()
+  }
+
   function search() {
     pageNum.value = 1
     return load()
@@ -135,6 +156,7 @@ export function createPagedQuery({ fetcher, defaults = {}, pageSize = 20, prefix
     loading,
     error,
     load,
+    syncFromQuery,
     search,
     reset,
     setPage,

@@ -9,8 +9,8 @@
       <el-tabs :model-value="activeTab" @update:model-value="switchTab">
         <!-- Tab 1: 老人档案管理 -->
         <el-tab-pane label="老人档案" name="elders">
-          <div class="filter-bar flex-between">
-            <el-form :inline="true" :model="elders.filters" @submit.prevent="elders.search">
+          <div class="toolbar-split">
+            <el-form :inline="true" :model="elders.filters" class="toolbar-filters" @submit.prevent="elders.search">
               <el-form-item label="老人姓名">
                 <el-input
                   v-model="elders.filters.name"
@@ -21,9 +21,12 @@
               </el-form-item>
               <el-form-item>
                 <el-button type="primary" icon="Search" native-type="submit">查询</el-button>
+                <el-button v-if="elders.filters.name" icon="Refresh" @click="elders.reset">重置</el-button>
               </el-form-item>
             </el-form>
-            <el-button type="primary" icon="Plus" @click="openElderModal(null)">录入老人档案</el-button>
+            <div class="toolbar-actions">
+              <el-button type="primary" icon="Plus" @click="openElderModal(null)">录入老人档案</el-button>
+            </div>
           </div>
 
           <DataTable
@@ -41,7 +44,7 @@
           >
             <el-table-column prop="name" label="姓名" min-width="120">
               <template #default="{ row }">
-                <span style="font-weight: bold">{{ row.name }}</span>
+                <span class="cell-title">{{ row.name }}</span>
               </template>
             </el-table-column>
             <el-table-column prop="gender" label="性别" width="80">
@@ -89,16 +92,18 @@
 
         <!-- Tab 2: 家属代约绑定审核 -->
         <el-tab-pane label="家属代约审核" name="bindings">
-          <div class="filter-bar">
-            <el-select
-              v-model="bindings.filters.status"
-              placeholder="全部审核状态"
-              clearable
-              style="width: 180px"
-              @change="bindings.search"
-            >
-              <el-option v-for="option in bindingStatusOptions" :key="option.value" v-bind="option" />
-            </el-select>
+          <div class="toolbar-split">
+            <div class="toolbar-filters">
+              <el-select
+                v-model="bindings.filters.status"
+                placeholder="全部审核状态"
+                clearable
+                style="width: 180px"
+                @change="bindings.search"
+              >
+                <el-option v-for="option in bindingStatusOptions" :key="option.value" v-bind="option" />
+              </el-select>
+            </div>
           </div>
           <DataTable
             :rows="bindings.rows.value"
@@ -115,7 +120,7 @@
           >
             <el-table-column label="老人姓名" width="140">
               <template #default="{ row }">
-                <strong>{{ row.elder ? row.elder.name : '老人' }}</strong>
+                <span class="cell-title">{{ row.elder ? row.elder.name : '老人' }}</span>
               </template>
             </el-table-column>
             <el-table-column label="申请家属" width="220">

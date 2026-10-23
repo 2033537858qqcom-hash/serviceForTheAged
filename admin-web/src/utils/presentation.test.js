@@ -67,15 +67,7 @@ test('one status table drives labels, tag colours and filter options', () => {
   assert.equal(skillText('COOKING, NURSING,X'), '助餐烹饪、基础照护护理、X')
 })
 
-
-import {
-  formatAction,
-  formatTargetType,
-  formatDetails,
-  actionTagType,
-  OPERATION_ACTIONS,
-  OPERATION_TARGETS
-} from './presentation.js'
+import { formatAction, formatTargetType, formatDetails, actionTagType } from './presentation.js'
 
 test('operation log action formatting translates controller methods to administrator Chinese', () => {
   assert.equal(formatAction('ServiceItemController.saveOrUpdate'), '保存服务项目')
